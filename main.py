@@ -8,7 +8,7 @@ from prompts import *
 from functions import *
 
 
-st.set_page_config(page_title='Web Answers', layout = 'centered', page_icon = ':stethoscope:', initial_sidebar_state = 'auto')
+st.set_page_config(page_title='Basic Answers', layout = 'centered', page_icon = ':stethoscope:', initial_sidebar_state = 'auto')
 
 
 
@@ -88,85 +88,20 @@ def answer_using_prefix(prefix, sample_question, sample_answer, my_ask, temperat
     answer = ""
     full_answer = ""
     c = st.empty()
-    function_call_detected = False
-    response_text =""
-    for event in completion:
-        
-        if "choices" in event:
-            deltas = event["choices"][0]["delta"]
-            if "function_call" in deltas:
-                function_call_detected = True
-                if "name" in deltas["function_call"]:
-                    function_call["name"] = deltas["function_call"]["name"]
-                if "arguments" in deltas["function_call"]:
-                    function_call["arguments"] += deltas["function_call"]["arguments"]
-            if (
-                function_call_detected
-                and event["choices"][0].get("finish_reason") == "function_call"
-            ):
-                st.write(f"Function generation requested, calling function")
-                function_response_generator = function_call(
-                    messages)                
-                for function_response_chunk in function_response_generator:
-                    if "choices" in function_response_chunk:
-                        deltas = function_response_chunk["choices"][0]["delta"]
-                        if "content" in deltas:
-                            response_text += deltas["content"]
-                            st.write(response_text)
-            elif "content" in deltas and not function_call_detected:
-                response_text += deltas["content"]
-                # yield response_text
-
-                c.markdown(response_text)
-                    # full_answer += answer
-                event_time = time.time() - start_time
-                event_text = event['choices'][0]['delta']
-                answer += event_text.get('content', '')
-                full_answer += event_text.get('content', '')
-                time.sleep(delay_time)
+    for event in completion:        
+        c.markdown(answer)
+        event_time = time.time() - start_time
+        event_text = event['choices'][0]['delta']
+        answer += event_text.get('content', '')
+        full_answer += event_text.get('content', '')
+        time.sleep(delay_time)
     # st.write(history_context + prefix + my_ask)
     # st.write(full_answer)
     return full_answer # Change how you access the message content
 
-def websearch(web_query: str) -> float:
-    """
-    Obtains real-time search results from across the internet. 
-    Supports all Google Advanced Search operators such (e.g. inurl:, site:, intitle:, etc).
-    
-    :param web_query: A search query, including any Google Advanced Search operators
-    :type web_query: string
-    :return: A list of search results
-    :rtype: json
-    
-    """
-    st.info(f'Here is the websearch input: **{web_query}**')
-    url = "https://real-time-web-search.p.rapidapi.com/search"
-    querystring = {"q":web_query,"limit":"10"}
-    headers = {
-        "X-RapidAPI-Key": st.secrets["X-RapidAPI-Key"],
-        "X-RapidAPI-Host": "real-time-web-search.p.rapidapi.com"
-    }
 
-    response = requests.get(url, headers=headers, params=querystring)
-    response_data = response.json()
-    def display_search_results(json_data):
-        data = json_data['data']
-        for item in data:
-            st.sidebar.markdown(f"### [{item['title']}]({item['url']})")
-            st.sidebar.write(item['snippet'])
-            st.sidebar.write("---")
-    # st.info('Searching the web using: **{web_query}**')
-    display_search_results(response_data)
-    # st.session_state.done = True
-    st.write('Done with websearch function')
-    return response_data
 
-def function_call(initial_response):
-    function_call = initial_response["choices"][0]["message"]["function_call"]
-    function_name = function_call["name"]
-    arguments = function_call["arguments"]
-    if function_name == "websearch":
-        return websearch()
+
 
 if 'history' not in st.session_state:
             st.session_state.history = []
@@ -174,8 +109,7 @@ if 'history' not in st.session_state:
 if 'output_history' not in st.session_state:
             st.session_state.output_history = []
             
-if 'mcq_history' not in st.session_state:
-            st.session_state.mcq_history = []
+
             
 if 'openai_api_key' not in st.session_state:
     st.session_state.openai_api_key = ""
