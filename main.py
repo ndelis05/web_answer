@@ -122,7 +122,7 @@ if 'temp' not in st.session_state:
 
 if check_password():
     
-    st.title("Basic Answers")
+    st.title("GPT and Medical Education")
     st.write("ALPHA version 0.3")
     os.environ['OPENAI_API_KEY'] = fetch_api_key()
 
@@ -131,7 +131,7 @@ if check_password():
     2. This tool is not a real doctor. \n    
     3. You will not take any medical action based on the output of this tool. \n   
     """
-    with st.expander('About Basic Answers - Important Disclaimer'):
+    with st.expander('About GPT and Med Ed - Important Disclaimer'):
         st.write("Author: David Liebovitz, MD, Northwestern University")
         st.info(disclaimer)
         st.session_state.model = st.radio("Select model - leave default for now", ("gpt-3.5-turbo", "gpt-3.5-turbo-16k", "gpt-4"), index=0)
