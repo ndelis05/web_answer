@@ -147,7 +147,8 @@ if check_password():
         persona = st.radio("Select teaching persona", ("Teacher 1 (academic)", "Teacher 2 (analogies)", "Create Your Own"), index=0)
 
         if persona == "Create Your Own":
-            system_context = st.sidebar.text_area('Enter a persona description: (e.g., "I am a cardiologist who is teaching a medical student about the RAAS")', height=100, key="system_context")
+            system_context = st.sidebar.text_area('Enter a persona description: (e.g., "You are a cardiologist who is teaching a medical student on inpatient service.")', 
+                                                  placeholder="e.g, you are a medical educator skilled in educational techniques", label_visibility='visible', height=100, key="system_context")
             system_context = system_context.replace("\n", " ")
             system_context = system_context + " " + base_teacher
             if st.sidebar.button("Set Persona"):
@@ -161,7 +162,7 @@ if check_password():
         if show_prompt:
             st.sidebar.markdown(system_context)
             
-        my_ask = st.text_area('Enter a topic: (e.g., RAAS, Frank-Starling, sarcoidosis, etc.)', height=100, key="my_ask")
+        my_ask = st.text_area('Enter a topic: (e.g., RAAS, Frank-Starling, sarcoidosis, etc.)',placeholder="e.g., sarcoidosis", label_visibility='visible', height=100, key="my_ask")
         my_ask = my_ask.replace("\n", " ")
         my_ask = "Teach me about: " + my_ask
         
@@ -215,8 +216,8 @@ if check_password():
         if task == "Generate discharge instructions":
             answer = ''
             start_time = time.time()
-            surg_procedure = st.text_area("Please enter the procedure performed and any special concerns.")
-            dc_meds = st.text_area("Please enter the discharge medications.")
+            surg_procedure = st.text_area("Please enter the procedure performed and any special concerns.", placeholder="e.g., right total hip arthroplasty", label_visibility='visible',)
+            dc_meds = st.text_area("Please enter the discharge medications.", placeholder="e.g., lisinopril 10 mg daily for HTN", label_visibility='visible',)
             dc_instructions_context = f'Generate discharge instructions for a patient as if it is authored by a physician for her patient with {health_literacy_level} with this {surg_procedure} on {dc_meds}'
             if st.button("Generate Discharge Instructions"):
                 try:
@@ -391,8 +392,7 @@ if check_password():
         
         sample_topic = "dietary guidance for a patient with diabetes, kidney disease, hypertension, obesity, and CAD"
         patient_ed_temp = st.session_state.temp
-        my_ask_for_pt_ed = st.text_area("Generate patient education materials:", placeholder="dietary guidance needed for obesity, e.g.", 
-                                    label_visibility='visible', height=100)
+        my_ask_for_pt_ed = st.text_area("Generate patient education materials:", placeholder="e.g., dietary guidance needed for obesity", label_visibility='visible', height=100)
         if st.button("Click to Generate **Draft** Custom Patient Education Materials"):
             st.info("Review all content carefully before considering any use!")
             pt_ed_output_text = answer_using_prefix(pt_ed_system_content, sample_topic, pt_ed_content_sample, my_ask_for_pt_ed, patient_ed_temp, history_context="")
