@@ -134,7 +134,7 @@ if check_password():
         st.write("Author: David Liebovitz, MD, Northwestern University")
         st.info(disclaimer)
         st.session_state.model = st.radio("Select model (Costs: $, $$, and $$$$)", ("gpt-3.5-turbo", "gpt-3.5-turbo-16k", "gpt-4"), index=0)
-        st.session_state.temp = st.slider("Select temperature", 0.0, 1.0, 0.3, 0.01)
+        st.session_state.temp = st.slider("Select temperature (Higher values more creative but tangential and more error prone)", 0.0, 1.0, 0.3, 0.01)
         st.write("Last updated 8/12/23")
 
 
