@@ -144,17 +144,26 @@ if check_password():
         
     with tab1:
     
-        persona = st.radio("Select teaching persona", ("Teacher 1 (academic)", "Teacher 2 (analogies)", "Minimal prompt"), index=0)
-        my_ask = st.text_area('Enter a topic: (e.g., RAAS, Frank-Starling, sarcoidosis, etc.)', height=100, key="my_ask")
-        my_ask = my_ask.replace("\n", " ")
-        my_ask = "Teach me about: " + my_ask
+        persona = st.radio("Select teaching persona", ("Teacher 1 (academic)", "Teacher 2 (analogies)", "Create Your Own"), index=0)
 
-        if persona == "Minimal prompt":
-            system_context = base_teacher
+        if persona == "Create Your Own":
+            system_context = st.sidebar.text_area('Enter a persona description: (e.g., "I am a cardiologist who is teaching a medical student about the RAAS")', height=100, key="system_context")
+            system_context = system_context.replace("\n", " ")
+            system_context = system_context + " " + base_teacher
+            if st.sidebar.button("Set Persona"):
+                st.sidebar.info("Your persona is set.")
         elif persona == "Teacher 1 (academic)":
             system_context = teacher1
         elif persona == "Teacher 2 (analogies)":
             system_context = teacher2
+        
+        show_prompt = st.checkbox("Show selected persona details")
+        if show_prompt:
+            st.sidebar.markdown(system_context)
+            
+        my_ask = st.text_area('Enter a topic: (e.g., RAAS, Frank-Starling, sarcoidosis, etc.)', height=100, key="my_ask")
+        my_ask = my_ask.replace("\n", " ")
+        my_ask = "Teach me about: " + my_ask
         
         if st.button("Enter"):
             openai.api_key = os.environ['OPENAI_API_KEY']
