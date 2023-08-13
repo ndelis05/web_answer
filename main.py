@@ -8,7 +8,6 @@ from prompts import *
 from functions import *
 
 
-st.set_page_config(page_title='Basic Answers', layout = 'centered', page_icon = ':stethoscope:', initial_sidebar_state = 'auto')
 
 
 
@@ -100,14 +99,17 @@ def answer_using_prefix(prefix, sample_question, sample_answer, my_ask, temperat
     return full_answer # Change how you access the message content
 
 
+if 'dc_history' not in st.session_state:
+    st.session_state.dc_history = []
 
-
+if 'annotate_history' not in st.session_state:
+    st.session_state.annotate_history = []
 
 if 'history' not in st.session_state:
-            st.session_state.history = []
+    st.session_state.history = []
 
 if 'output_history' not in st.session_state:
-            st.session_state.output_history = []
+    st.session_state.output_history = []
             
 
             
@@ -121,7 +123,8 @@ if 'temp' not in st.session_state:
     st.session_state.temp = 0.3
 
 if check_password():
-    
+
+    st.set_page_config(page_title='Basic Answers', layout = 'centered', page_icon = ':stethoscope:', initial_sidebar_state = 'auto')
     st.title("GPT and Medical Education")
     st.write("ALPHA version 0.3")
     os.environ['OPENAI_API_KEY'] = fetch_api_key()
@@ -137,51 +140,167 @@ if check_password():
         st.session_state.model = st.radio("Select model - leave default for now", ("gpt-3.5-turbo", "gpt-3.5-turbo-16k", "gpt-4"), index=0)
         st.session_state.temp = st.slider("Select temperature", 0.0, 1.0, 0.3, 0.01)
         st.write("Last updated 8/12/23")
+
+
+
+    tab1, tab2, tab3 = st.tabs(["Learn", "Patient Communication", "Result Annotations"])
+
+        
+    with tab1:
     
-    persona = st.radio("Select teaching persona", ("No guidance", "Teacher 1 (academic)", "Teacher 2 (analogies)"), index=0)
-    my_ask = st.text_area('Teach me about: (e.g., RAAS or Frank-Starling, etc.)', height=100, key="my_ask")
-    my_ask = my_ask.replace("\n", " ")
-    my_ask = "Teach me about: " + my_ask
-    if persona == "No guidance":
-        system_context = ""
-    elif persona == "Teacher 1 (academic)":
-        system_context = teacher1
-    elif persona == "Teacher 2 (analogies)":
-        system_context = teacher2
-    
-    if st.button("Enter"):
-        openai.api_key = os.environ['OPENAI_API_KEY']
-        st.session_state.history.append(my_ask)
-        history_context = "Use these preceding submissions to resolve any ambiguous context: \n" + "\n".join(st.session_state.history) + "now, for the current question: \n"
-        output_text = answer_using_prefix(system_context, sample_question, sample_response, my_ask, st.session_state.temp, history_context=history_context)
-        # st.session_state.my_ask = ''
-        # st.write("Answer", output_text)
+        persona = st.radio("Select teaching persona", ("No guidance", "Teacher 1 (academic)", "Teacher 2 (analogies)"), index=0)
+        my_ask = st.text_area('Teach me about: (e.g., RAAS or Frank-Starling, etc.)', height=100, key="my_ask")
+        my_ask = my_ask.replace("\n", " ")
+        my_ask = "Teach me about: " + my_ask
+        if persona == "No guidance":
+            system_context = ""
+        elif persona == "Teacher 1 (academic)":
+            system_context = teacher1
+        elif persona == "Teacher 2 (analogies)":
+            system_context = teacher2
         
-        # st.write(st.session_state.history)
-        # st.write(f'Me: {my_ask}')
-        # st.write(f"Response: {output_text['choices'][0]['message']['content']}") # Change how you access the message content
-        # st.write(list(output_text))
-        # st.session_state.output_history.append((output_text['choices'][0]['message']['content']))
-        st.session_state.output_history.append((output_text))
+        if st.button("Enter"):
+            openai.api_key = os.environ['OPENAI_API_KEY']
+            st.session_state.history.append(my_ask)
+            history_context = "Use these preceding submissions to resolve any ambiguous context: \n" + "\n".join(st.session_state.history) + "now, for the current question: \n"
+            output_text = answer_using_prefix(system_context, sample_question, sample_response, my_ask, st.session_state.temp, history_context=history_context)
+            # st.session_state.my_ask = ''
+            # st.write("Answer", output_text)
+            
+            # st.write(st.session_state.history)
+            # st.write(f'Me: {my_ask}')
+            # st.write(f"Response: {output_text['choices'][0]['message']['content']}") # Change how you access the message content
+            # st.write(list(output_text))
+            # st.session_state.output_history.append((output_text['choices'][0]['message']['content']))
+            st.session_state.output_history.append((output_text))
+            
+        if st.button("Clear Memory (when you don't want to send prior context)"):
+            st.session_state.history = []
+            st.session_state.output_history = []
+            st.write("Memory cleared")
         
-    if st.button("Clear Memory (when you don't want to send prior context)"):
-        st.session_state.history = []
-        st.session_state.output_history = []
-        st.write("Memory cleared")
-    
-    tab1_download_str = []
+        tab1_download_str = []
+            
+            # ENTITY_MEMORY_CONVERSATION_TEMPLATE
+            # Display the conversation history using an expander, and allow the user to download it
+        with st.expander("View or Download Thread", expanded=False):
+            for i in range(len(st.session_state['output_history'])-1, -1, -1):
+                st.info(st.session_state["history"][i],icon="🧐")
+                st.success(st.session_state["output_history"][i], icon="🤖")
+                tab1_download_str.append(st.session_state["history"][i])
+                tab1_download_str.append(st.session_state["output_history"][i])
+            tab1_download_str = [disclaimer] + tab1_download_str 
+            
+            # Can throw error - requires fix
+            tab1_download_str = '\n'.join(tab1_download_str)
+            if tab1_download_str:
+                st.download_button('Download',tab1_download_str, key = "Conversation_Thread")
+                
+    with tab2:
+        st.subheader("Patient Communication")
+        col1, col2 = st.columns(2)
+        with col2:
+            health_literacy_level = st.radio("Output optimized for:", ("Low Health Literacy", "High Health Literacy"))
+   
+
+        with col1:
+            task = st.radio("What do you want to do?", ("Generate discharge instructions", "Annotate a patient result"))
+
+        if task == "Generate discharge instructions":
+            answer = ''
+            start_time = time.time()
+            surg_procedure = st.text_area("Please enter the procedure performed and any special concerns.")
+            dc_meds = st.text_area("Please enter the discharge medications.")
+            dc_instructions_context = f'Generate discharge instructions for a patient as if it is authored by a physician for her patient with {health_literacy_level} with this {surg_procedure} on {dc_meds}'
+            if st.button("Generate Discharge Instructions"):
+                try:
+                    dc_text = answer_using_prefix(
+                        dc_instructions_prompt, 
+                        procedure_example, 
+                        dc_instructions_example, 
+                        surg_procedure, 
+                        st.session_state.temp, 
+                        history_context="",
+                        )
+                    st.session_state.dc_history.append((dc_text))  
+                except:
+                    st.write("Error - please try again")
+                      
+
         
-        # ENTITY_MEMORY_CONVERSATION_TEMPLATE
-        # Display the conversation history using an expander, and allow the user to download it
-    with st.expander("View or Download Thread", expanded=False):
-        for i in range(len(st.session_state['output_history'])-1, -1, -1):
-            st.info(st.session_state["history"][i],icon="🧐")
-            st.success(st.session_state["output_history"][i], icon="🤖")
-            tab1_download_str.append(st.session_state["history"][i])
-            tab1_download_str.append(st.session_state["output_history"][i])
-        tab1_download_str = [disclaimer] + tab1_download_str 
-        
-        # Can throw error - requires fix
-        tab1_download_str = '\n'.join(tab1_download_str)
-        if tab1_download_str:
-            st.download_button('Download',tab1_download_str, key = "Conversation_Thread")
+            dc_download_str = []
+                
+                # ENTITY_MEMORY_CONVERSATION_TEMPLATE
+                # Display the conversation history using an expander, and allow the user to download it
+            with st.expander("View or Download Instructions", expanded=False):
+                for i in range(len(st.session_state['dc_history'])-1, -1, -1):
+                    st.info(st.session_state["dc_history"][i],icon="🧐")
+                    st.success(st.session_state["dc_history"][i], icon="🤖")
+                    dc_download_str.append(st.session_state["dc_history"][i])
+                    
+                dc_download_str = [disclaimer] + dc_download_str 
+                
+                
+                dc_download_str = '\n'.join(dc_download_str)
+                if dc_download_str:
+                    st.download_button('Download',dc_download_str, key = "DC_Thread")        
+                    
+
+        if task == "Annotate a patient result":
+            sample_report1 = st.sidebar.radio("Try a sample report:", ("Text box for your own content", "Sample 1 (lung CT)", "Sample 2 (ECG)", ))
+            if sample_report1 == "Sample 1 (lung CT)":
+                submitted_result = report1
+                with col1:
+                    st.write(report1)
+            elif sample_report1 == "Sample 2 (ECG)":
+                submitted_result = report2
+                with col1:
+                    st.write(report2)
+            elif sample_report1 == "Text box for your own content":           
+                with col1:                
+                    submitted_result = st.text_area("Paste your result content here without PHI.", height=600)
+            
+            
+            report_prompt = f'Generate a brief reassuring summary as if it is authored by a physician for her patient with {health_literacy_level} with this {submitted_result}. When appropriate emphasize that the findings are not urgent and you are happy to answer any questions at the next visit. '
+
+            with col1:
+                if st.button("Generate Patient Summary"):
+                    try:
+                        
+                        annotate_text = answer_using_prefix(
+                            annotate_prompt, 
+                            report1, 
+                            annotation_example,
+                            report_prompt, 
+                            st.session_state.temp, 
+                            history_context="",
+                            )                    
+
+                        st.session_state.annotate_history.append((annotate_text))
+                    except:
+
+                        st.write("API busy. Try again - better error handling coming. :) ")
+                        st.stop()
+                
+                      
+            
+                annotate_download_str = []
+                    
+                    # ENTITY_MEMORY_CONVERSATION_TEMPLATE
+                    # Display the conversation history using an expander, and allow the user to download it
+                with st.expander("View or Download Annotations", expanded=False):
+                    for i in range(len(st.session_state['annotate_history'])-1, -1, -1):
+                        st.info(st.session_state["annotate_history"][i],icon="🧐")
+                        st.success(st.session_state["annotate_history"][i], icon="🤖")
+                        annotate_download_str.append(st.session_state["annotate_history"][i])
+                        
+                    annotate_download_str = [disclaimer] + annotate_download_str 
+                    
+                    
+                    annotate_download_str = '\n'.join(annotate_download_str)
+                    if annotate_download_str:
+                        st.download_button('Download',annotate_download_str, key = "Annotate_Thread")        
+            
+            
+        with tab3:
+            st.write("Under construction")
