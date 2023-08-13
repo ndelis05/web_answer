@@ -124,7 +124,7 @@ if 'temp' not in st.session_state:
 
 if check_password():
 
-    st.set_page_config(page_title='Basic Answers', layout = 'centered', page_icon = ':stethoscope:', initial_sidebar_state = 'auto')
+    st.set_page_config(page_title='GPT and Med Ed', layout = 'centered', page_icon = ':stethoscope:', initial_sidebar_state = 'auto')
     st.title("GPT and Medical Education")
     st.write("ALPHA version 0.3")
     os.environ['OPENAI_API_KEY'] = fetch_api_key()
