@@ -138,10 +138,11 @@ if check_password():
         st.session_state.temp = st.slider("Select temperature", 0.0, 1.0, 0.3, 0.01)
         st.write("Last updated 8/12/23")
     
-    persona = st.radio("Select persona", ("None", "Teacher 1 (academic)", "Teacher 2 (analogies)"), index=0)
-    my_ask = st.text_area('Ask away!', height=100, key="my_ask")
-    
-    if persona == "None":
+    persona = st.radio("Select teaching persona", ("No guidance", "Teacher 1 (academic)", "Teacher 2 (analogies)"), index=0)
+    my_ask = st.text_area('Teach me about: (e.g., RAAS or Frank-Starling, etc.)', height=100, key="my_ask")
+    my_ask = my_ask.replace("\n", " ")
+    my_ask = "Teach me about: " + my_ask
+    if persona == "No guidance":
         system_context = ""
     elif persona == "Teacher 1 (academic)":
         system_context = teacher1
@@ -162,6 +163,11 @@ if check_password():
         # st.write(list(output_text))
         # st.session_state.output_history.append((output_text['choices'][0]['message']['content']))
         st.session_state.output_history.append((output_text))
+        
+    if st.button("Clear Memory (when you don't want to send prior context)"):
+        st.session_state.history = []
+        st.session_state.output_history = []
+        st.write("Memory cleared")
     
     tab1_download_str = []
         
