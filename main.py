@@ -143,7 +143,7 @@ if check_password():
 
 
 
-    tab1, tab2, tab3 = st.tabs(["Learn", "Patient Communication", "DDx",])
+    tab1, tab2, tab3, tab4 = st.tabs(["Learn", "Draft Communication", "Patient Education", "Differential Diagnosis",])
 
         
     with tab1:
@@ -198,7 +198,7 @@ if check_password():
                 st.download_button('Download',tab1_download_str, key = "Conversation_Thread")
                 
     with tab2:
-        st.subheader("Patient Communication")
+        # st.subheader("Patient Communication")
         col1, col2 = st.columns(2)
         with col2:
             health_literacy_level = st.radio("Output optimized for:", ("Low Health Literacy", "High Health Literacy"))
@@ -303,9 +303,11 @@ if check_password():
                     st.download_button('Download',annotate_download_str, key = "Annotate_Thread")        
             
             
-    with tab3:
+    with tab4:
         
-        st.subheader("Differential Diagnosis Tools")
+        # st.subheader("Differential Diagnosis Tools")
+        
+        # st.info("Avoid premature closure and consider alternative diagnoses")
         
         ddx_strategy = st.radio("Choose an approach for a differential diagnosis!", options=["Find Alternative Diagnoses to Consider","Provide Clinical Data"], index=0, key="ddx strategy")
 
@@ -355,7 +357,7 @@ if check_password():
         # Alternative Diagnosis Generator
         if ddx_strategy == "Find Alternative Diagnoses to Consider":
             # st.subheader("Alternative Diagnosis Generator")
-            st.write("Avoid premature closure and consider alternative diagnoses")
+            
             alt_dx_prompt = st.text_input("Enter your presumed diagnosis.")
 
             if st.button("Generate Alternative Diagnoses"):
@@ -368,7 +370,36 @@ if check_password():
                     if alt_dx_download_str:
                         st.download_button('Download', alt_dx_download_str, key = 'alt_dx_questions')
 
+    with tab3:
 
+        pt_ed_health_literacy = st.radio("Pick a desired health literacy level:", ("Basic", "Intermediate", "Advanced"))
         
-    
-                    
+        
+        
+        if pt_ed_health_literacy == "Basic":
+            pt_ed_content_sample = pt_ed_basic_example
+
+        if pt_ed_health_literacy == "Intermediate":
+            pt_ed_content_sample = pt_ed_intermediate_example
+        if pt_ed_health_literacy == "Advanced":
+            pt_ed_content_sample = pt_ed_advanced_example
+        
+        sample_topic = "dietary guidance for a patient with diabetes, kidney disease, hypertension, obesity, and CAD"
+        patient_ed_temp = st.session_state.temp
+        my_ask_for_pt_ed = st.text_area("Generate patient education materials:", placeholder="dietary guidance needed for obesity, e.g.", 
+                                    label_visibility='visible', height=100)
+        if st.button("Click to Generate **Draft** Custom Patient Education Materials"):
+            st.info("Review all content carefully before considering any use!")
+            pt_ed_output_text = answer_using_prefix(pt_ed_system_content, sample_topic, pt_ed_content_sample, my_ask_for_pt_ed, patient_ed_temp, history_context="")
+
+            
+            pt_ed_download_str = []
+            
+            # ENTITY_MEMORY_CONVERSATION_TEMPLATE
+            # Display the conversation history using an expander, and allow the user to download it
+            with st.expander("Patient Education Draft", expanded=False):
+                st.info(f'Topic: {my_ask_for_pt_ed}',icon="🧐")
+                st.success(f'Draft Patient Education Materials: **REVIEW CAREFULLY FOR ERRORS** \n\n {pt_ed_output_text}', icon="🤖")      
+                pt_ed_download_str = f"{disclaimer}\n\nDraft Patient Education Materials: {my_ask_for_pt_ed}:\n\n{pt_ed_output_text}"
+                if pt_ed_download_str:
+                        st.download_button('Download', pt_ed_download_str, key = 'pt_ed_questions')
