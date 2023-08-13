@@ -10,7 +10,11 @@ from functions import *
 
 st.set_page_config(page_title='Web Answers', layout = 'centered', page_icon = ':stethoscope:', initial_sidebar_state = 'auto')
 
-
+if "current_fn" not in st.session_state:
+    st.session_state["current_fn"] = "websearch"
+    
+if "current_param" not in st.session_state:
+    st.session_state["current_param"] = "topic"
 
 def fetch_api_key():
     api_key = None
@@ -111,23 +115,24 @@ def answer_using_prefix(prefix, sample_question, sample_answer, my_ask, temperat
     c = st.empty()
     function_call_detected = False
     response_text =""
+    function_parameters = []
     for event in completion:
         
         if "choices" in event:
             deltas = event["choices"][0]["delta"]
             if "function_call" in deltas:
                 function_call_detected = True
+                st.write(f"Function call detected: {deltas['function_call']}")
                 if "name" in deltas["function_call"]:
-                    function_call["name"] = deltas["function_call"]["name"]
+                    function_called = deltas["function_call"]["name"]
+                    st.write(f"Function called: {function_called}")
                 if "arguments" in deltas["function_call"]:
-                    function_call["arguments"] += deltas["function_call"]["arguments"]
-            if (
-                function_call_detected
-                and event["choices"][0].get("finish_reason") == "function_call"
-            ):
+                    function_parameters += deltas["function_call"]["arguments"]
+                    st.write(f"Function parameters: {function_parameters}")
+            # if (function_call_detected and event["choices"][0].get("finish_reason") == "function_call"):
                 st.write(f"Function generation requested, calling function")
-                function_response_generator = function_call(
-                    messages)                
+
+                function_response_generator = function_call(function_called)                
                 for function_response_chunk in function_response_generator:
                     if "choices" in function_response_chunk:
                         deltas = function_response_chunk["choices"][0]["delta"]
@@ -147,7 +152,7 @@ def answer_using_prefix(prefix, sample_question, sample_answer, my_ask, temperat
                 time.sleep(delay_time)
     # st.write(history_context + prefix + my_ask)
     # st.write(full_answer)
-    return full_answer # Change how you access the message content
+    return full_answer, completion # Change how you access the message content
 
 def websearch(web_query: str) -> float:
     """
@@ -183,10 +188,11 @@ def websearch(web_query: str) -> float:
     return response_data
 
 def function_call(initial_response):
-    function_call = initial_response["choices"][0]["message"]["function_call"]
-    function_name = function_call["name"]
-    arguments = function_call["arguments"]
-    if function_name == "websearch":
+    st.write('Here is the initial response in functioncall fn: ', initial_response)
+    # function_call = initial_response["choices"][0]["message"]["function_call"]
+    # function_name = function_call["name"]
+    # arguments = function_call["arguments"]
+    if initial_response == "websearch":
         return websearch()
 
 if 'history' not in st.session_state:
@@ -231,7 +237,7 @@ if check_password():
         openai.api_key = os.environ['OPENAI_API_KEY']
         st.session_state.history.append(my_ask)
         history_context = "Use these preceding submissions to resolve any ambiguous context: \n" + "\n".join(st.session_state.history) + "now, for the current question: \n"
-        output_text = answer_using_prefix(system_context, sample_question, sample_response, my_ask, st.session_state.temp, history_context=history_context)
+        output_text, usual_output = answer_using_prefix(system_context, sample_question, sample_response, my_ask, st.session_state.temp, history_context=history_context)
         # st.session_state.my_ask = ''
         # st.write("Answer", output_text)
         
