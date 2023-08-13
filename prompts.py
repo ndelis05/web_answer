@@ -134,3 +134,69 @@ Since the previous ECG of 01-Jan-2017
 Inferior infarct has (have) appeared 
 Anteroseptal infarct has (have) appeared 
 Atrial premature beat(s) has (have) appeared """
+
+
+ddx_prefix = """You apply the knowledge and wisdom of an expert diagnostician to generate a differential diagnosis 
+based on the patient context provided. You always reason step by step to ensure accuracy and precision in your responses. 
+You then double check your generated differential diagnosis to ensure that it is organized by probability and includes the 
+most applicable diagnoses from each probability category. """
+
+ddx_sample_question = """Patient Information:
+- Age: 54
+- Sex: Male
+- Presenting Symptoms: Persistent dry cough, weight loss, fatigue
+- Duration of Symptoms: 3 months
+- Past Medical History: Smoker for 30 years
+- Current Medications: Lisinopril for hypertension
+- Relevant Social History: Works in construction
+- Physical Examination Findings: Decreased breath sounds on right side of chest
+- Any relevant Laboratory or Imaging results: Chest X-ray shows mass in right lung
+"""
+
+ddx_sample_answer = """Here is a list of possible diagnoses:
+            
+*High Probability:*
+
+🌟 1. **Lung Cancer:** Given the patient's long history of smoking and the presence of a mass in the lung, lung cancer is a significant concern.
+
+
+*Moderate Probability:*
+1. **Chronic Obstructive Pulmonary Disease (COPD):** The patient's history of smoking also makes COPD a potential diagnosis, but this wouldn't typically cause a mass on the chest X-ray.
+2. **Tuberculosis (TB):** If the patient has been exposed to TB, this could explain his symptoms and the mass, particularly if the mass is a result of a Ghon complex or calcified granuloma.
+3. **Pneumonia:** Although less likely given the duration of symptoms and presence of a mass, a complicated pneumonia could potentially appear as a mass on a chest X-ray.
+4. **Pulmonary Abscess:** Similar to pneumonia, an abscess could potentially appear as a mass, though this is less likely without other signs of acute infection.
+5. **Fungal Infection:** Certain fungal infections, such as histoplasmosis or aspergillosis, can mimic cancer on imaging and cause chronic respiratory symptoms, particularly in certain geographic areas or with certain exposures.
+
+
+*Lower Probability:*
+1. **Sarcoidosis:** This is less common, but can cause similar symptoms and imaging findings.
+2. **Lung Adenoma or Pulmonary Hamartoma:** These benign tumors could theoretically cause a mass, but are less likely and typically don't cause symptoms unless they're large.
+3. **Silicosis:** Given the patient's occupational exposure, this could be a consideration, but typically causes a more diffuse process rather than a single mass.
+"""
+
+alt_dx_prefix = """Leverage the combined experience of expert diagnosticians to display a list of alternative diagnoses to consider when given a presumed diagnosis. You reason 
+step by step to ensure accuracy, completeness, and precision in your responses and double check your final list using the same criteria."""
+alt_dx_sample_question = "Constrictive pericarditis"
+alt_dx_sample_answer = """Constrictive pericarditis is a relatively rare condition that can be challenging to diagnose, given that its symptoms can be similar to those of several other cardiovascular and systemic disorders. The following is a list of some alternative diagnoses a clinician might consider if initially suspecting constrictive pericarditis:
+
+1. Restrictive Cardiomyopathy: Similar to constrictive pericarditis, restrictive cardiomyopathy can cause reduced filling of the ventricles and can result in similar signs and symptoms.
+
+2. Right Heart Failure: The symptoms of right heart failure such as peripheral edema, ascites, and jugular venous distention can mimic constrictive pericarditis.
+
+3. Tricuspid Regurgitation: The backflow of blood into the right atrium due to valve dysfunction can cause symptoms that overlap with those of constrictive pericarditis.
+
+4. Pericardial Effusion or Tamponade: Fluid accumulation in the pericardial sac can also mimic the symptoms of constrictive pericarditis.
+
+5. Hepatic Cirrhosis: This can cause ascites and peripheral edema, symptoms that can resemble those of constrictive pericarditis.
+
+6. Nephrotic Syndrome: Characterized by heavy proteinuria, hypoalbuminemia, and edema, nephrotic syndrome can cause systemic symptoms that may be mistaken for constrictive pericarditis.
+
+7. Chronic Obstructive Pulmonary Disease (COPD) or Cor Pulmonale: These conditions can cause right-sided heart symptoms that can resemble those of constrictive pericarditis.
+
+8. Pulmonary Hypertension: This condition increases pressure on the right side of the heart and can mimic symptoms of constrictive pericarditis.
+
+9. Superior Vena Cava (SVC) Syndrome: This condition, often caused by a malignancy or thrombosis in the SVC, can present with symptoms similar to constrictive pericarditis.
+
+10. Constrictive Bronchiolitis: Although primarily a pulmonary condition, severe cases can affect the cardiovascular system and mimic constrictive pericarditis.
+
+These are just a few of the conditions that could be considered in a differential diagnosis when constrictive pericarditis is suspected. As with any diagnostic process, a thorough patient history, physical examination, and appropriate investigations are key to reaching an accurate diagnosis."""

@@ -143,7 +143,7 @@ if check_password():
 
 
 
-    tab1, tab2 = st.tabs(["Learn", "Patient Communication", ])
+    tab1, tab2, tab3 = st.tabs(["Learn", "Patient Communication", "DDx",])
 
         
     with tab1:
@@ -303,3 +303,72 @@ if check_password():
                     st.download_button('Download',annotate_download_str, key = "Annotate_Thread")        
             
             
+    with tab3:
+        
+        st.subheader("Differential Diagnosis Tools")
+        
+        ddx_strategy = st.radio("Choose an approach for a differential diagnosis!", options=["Find Alternative Diagnoses to Consider","Provide Clinical Data"], index=0, key="ddx strategy")
+
+
+        if ddx_strategy == "Provide Clinical Data":    
+            # st.title("Differential Diagnosis Generator")
+            st.write("Add as many details as possible to improve the response. The prompts do not request any unique details; however, *modify values and do not include dates to ensure privacy.")
+
+            age = st.slider("Age", 0, 120, 50)
+            sex_at_birth = st.radio("Sex at Birth", options=["Female", "Male", "Other"], horizontal=True)
+            presenting_symptoms = st.text_input("Presenting Symptoms")
+            duration_of_symptoms = st.text_input("Duration of Symptoms")
+            past_medical_history = st.text_input("Past Medical History")
+            current_medications = st.text_input("Current Medications")
+            relevant_social_history = st.text_input("Relevant Social History")
+            physical_examination_findings = st.text_input("Physical Examination Findings")
+            lab_or_imaging_results = st.text_input("Any relevant Laboratory or Imaging results")
+            ddx_prompt = f"""
+            Patient Information:
+            - Age: {age}
+            - Sex: {sex_at_birth}
+            - Presenting Symptoms: {presenting_symptoms}
+            - Duration of Symptoms: {duration_of_symptoms}
+            - Past Medical History: {past_medical_history}
+            - Current Medications: {current_medications}
+            - Relevant Social History: {relevant_social_history}
+            - Physical Examination Findings: {physical_examination_findings}
+            - Any relevant Laboratory or Imaging results: {lab_or_imaging_results}
+            """
+            
+            
+            if st.button("Generate Differential Diagnosis"):
+                # Your differential diagnosis generation code goes here
+                ddx_output_text = answer_using_prefix(ddx_prefix, ddx_sample_question, ddx_sample_answer, ddx_prompt, temperature=0.3, history_context='')
+                # st.write("Differential Diagnosis will appear here...")
+                
+                ddx_download_str = []
+                
+                with st.expander("Differential Diagnosis Draft", expanded=False):
+                    st.info(f'Topic: {ddx_prompt}',icon="🧐")
+                    st.success(f'Educational Use Only: **NOT REVIEWED FOR CLINICAL CARE** \n\n {ddx_output_text}', icon="🤖")                         
+                    ddx_download_str = f"{disclaimer}\n\nDifferential Diagnoses for {ddx_prompt}:\n\n{ddx_output_text}"
+                    if ddx_download_str:
+                        st.download_button('Download', ddx_download_str, key = 'alt_dx_questions')
+                        
+                        
+        # Alternative Diagnosis Generator
+        if ddx_strategy == "Find Alternative Diagnoses to Consider":
+            # st.subheader("Alternative Diagnosis Generator")
+            st.write("Avoid premature closure and consider alternative diagnoses")
+            alt_dx_prompt = st.text_input("Enter your presumed diagnosis.")
+
+            if st.button("Generate Alternative Diagnoses"):
+                alt_dx_output_text = answer_using_prefix(alt_dx_prefix, alt_dx_sample_question, alt_dx_sample_answer, alt_dx_prompt, temperature=0.0, history_context='')
+                alt_dx_download_str = []
+                with st.expander("Alternative Diagnoses Draft", expanded=False):
+                    st.info(f'Topic: {alt_dx_prompt}',icon="🧐")
+                    st.success(f'Educational Use Only: **NOT REVIEWED FOR CLINICAL CARE** \n\n {alt_dx_output_text}', icon="🤖")
+                    alt_dx_download_str = f"{disclaimer}\n\nAlternative Diagnoses for {alt_dx_prompt}:\n\n{alt_dx_output_text}"
+                    if alt_dx_download_str:
+                        st.download_button('Download', alt_dx_download_str, key = 'alt_dx_questions')
+
+
+        
+    
+                    
