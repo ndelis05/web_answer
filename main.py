@@ -143,17 +143,18 @@ if check_password():
 
 
 
-    tab1, tab2, tab3 = st.tabs(["Learn", "Patient Communication", "Result Annotations"])
+    tab1, tab2 = st.tabs(["Learn", "Patient Communication", ])
 
         
     with tab1:
     
-        persona = st.radio("Select teaching persona", ("No guidance", "Teacher 1 (academic)", "Teacher 2 (analogies)"), index=0)
-        my_ask = st.text_area('Teach me about: (e.g., RAAS or Frank-Starling, etc.)', height=100, key="my_ask")
+        persona = st.radio("Select teaching persona", ("Teacher 1 (academic)", "Teacher 2 (analogies)", "Minimal prompt"), index=0)
+        my_ask = st.text_area('Enter a topic: (e.g., RAAS, Frank-Starling, sarcoidosis, etc.)', height=100, key="my_ask")
         my_ask = my_ask.replace("\n", " ")
         my_ask = "Teach me about: " + my_ask
-        if persona == "No guidance":
-            system_context = ""
+
+        if persona == "Minimal prompt":
+            system_context = base_teacher
         elif persona == "Teacher 1 (academic)":
             system_context = teacher1
         elif persona == "Teacher 2 (analogies)":
@@ -263,10 +264,10 @@ if check_password():
             
             report_prompt = f'Generate a brief reassuring summary as if it is authored by a physician for her patient with {health_literacy_level} with this {submitted_result}. When appropriate emphasize that the findings are not urgent and you are happy to answer any questions at the next visit. '
 
-            with col1:
-                if st.button("Generate Patient Summary"):
-                    try:
-                        
+            
+            if st.button("Generate Annotation"):
+                try:
+                    with col2:
                         annotate_text = answer_using_prefix(
                             annotate_prompt, 
                             report1, 
@@ -277,30 +278,28 @@ if check_password():
                             )                    
 
                         st.session_state.annotate_history.append((annotate_text))
-                    except:
-
+                except:
+                    with col2:
                         st.write("API busy. Try again - better error handling coming. :) ")
                         st.stop()
+            
+                    
+        
+            annotate_download_str = []
                 
-                      
-            
-                annotate_download_str = []
+                # ENTITY_MEMORY_CONVERSATION_TEMPLATE
+                # Display the conversation history using an expander, and allow the user to download it
+            with st.expander("View or Download Annotations", expanded=False):
+                for i in range(len(st.session_state['annotate_history'])-1, -1, -1):
+                    st.info(st.session_state["annotate_history"][i],icon="🧐")
+                    st.success(st.session_state["annotate_history"][i], icon="🤖")
+                    annotate_download_str.append(st.session_state["annotate_history"][i])
                     
-                    # ENTITY_MEMORY_CONVERSATION_TEMPLATE
-                    # Display the conversation history using an expander, and allow the user to download it
-                with st.expander("View or Download Annotations", expanded=False):
-                    for i in range(len(st.session_state['annotate_history'])-1, -1, -1):
-                        st.info(st.session_state["annotate_history"][i],icon="🧐")
-                        st.success(st.session_state["annotate_history"][i], icon="🤖")
-                        annotate_download_str.append(st.session_state["annotate_history"][i])
-                        
-                    annotate_download_str = [disclaimer] + annotate_download_str 
-                    
-                    
-                    annotate_download_str = '\n'.join(annotate_download_str)
-                    if annotate_download_str:
-                        st.download_button('Download',annotate_download_str, key = "Annotate_Thread")        
+                annotate_download_str = [disclaimer] + annotate_download_str 
+                
+                
+                annotate_download_str = '\n'.join(annotate_download_str)
+                if annotate_download_str:
+                    st.download_button('Download',annotate_download_str, key = "Annotate_Thread")        
             
             
-        with tab3:
-            st.write("Under construction")

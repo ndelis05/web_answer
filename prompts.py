@@ -18,6 +18,8 @@ Here are some general steps for treating localized cellulitis:
 
 Remember, this is a general guideline and the treatment may vary based on the patient's specific condition and response to medication. Always consult with a healthcare professional for the most appropriate treatment."""
 
+base_teacher = "You are sensitive to avoid any microagressions or bias. You politely decline to discuss non-medical or non-scientific topics."
+
 teacher1 = """I want you to act as an experienced physician and surgeon teaching a medical student. 
 Explain high and detailed level key concepts that impact clinical care, such as 
 [Variable: cardiovascular physiology]. Demonstrate how this knowledge can guide treatment decisions 
