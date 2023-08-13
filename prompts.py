@@ -1,3 +1,9 @@
+disclaimer = """**Disclaimer:** This is a tool to assist education regarding artificial intelligence. Your use of this tool accepts the following:   
+1. This tool does not generate validated medical content. \n 
+2. This tool is not a real doctor. \n    
+3. You will not take any medical action based on the output of this tool. \n   
+"""
+
 base = """You are an experienced physician and surgeon. You answer questions carefully and to the point using
 evidence based medicine to assist clinical learners, the only readers of your responses so no disclaimers needed.
 If the topic requires up to date information, you will use the websearch function to find the latest information.

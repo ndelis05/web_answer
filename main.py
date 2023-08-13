@@ -129,11 +129,7 @@ if check_password():
     st.write("ALPHA version 0.3")
     os.environ['OPENAI_API_KEY'] = fetch_api_key()
 
-    disclaimer = """**Disclaimer:** This is a tool to assist education regarding artificial intelligence. Your use of this tool accepts the following:   
-    1. This tool does not generate validated medical content. \n 
-    2. This tool is not a real doctor. \n    
-    3. You will not take any medical action based on the output of this tool. \n   
-    """
+
     with st.expander('About GPT and Med Ed - Important Disclaimer'):
         st.write("Author: David Liebovitz, MD, Northwestern University")
         st.info(disclaimer)
