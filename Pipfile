@@ -6,6 +6,15 @@ name = "pypi"
 [packages]
 streamlit = "*"
 openai = "*"
+pdfquery = "*"
+streamlit-chat = "*"
+langchain = "*"
+pypdfium2 = "*"
+chromadb = "*"
+tiktoken = "*"
+pypdf = "*"
+pypdf2 = "*"
+scikit-learn = "*"
 
 [dev-packages]
 
