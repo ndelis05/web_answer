@@ -568,8 +568,8 @@ if check_password():
             # st.write("Documents uploaded and 'read.'")
 
             # Split the document into chunks
-            splits = split_texts(loaded_text, chunk_size=1000,
-                                overlap=100, split_method=splitter_type)
+            splits = split_texts(loaded_text, chunk_size=1250,
+                                overlap=200, split_method=splitter_type)
 
             # Display the number of text chunks
             num_chunks = len(splits)
@@ -622,11 +622,11 @@ if check_password():
 
                 # Question and answering
     
-            pdf_chat_option = st.radio("Select an Option", ("Summary", "Key facts", "Custom Question"))
+            pdf_chat_option = st.radio("Select an Option", ("Summary", "Custom Question"))
             if pdf_chat_option == "Key facts":
-                user_question = "List assertions from the context. If a conclusion section is present, also include any assertions noted."
+                user_question = "Focus on medical content in the context. Include assertions or observations from the full context."
             if pdf_chat_option == "Summary":
-                user_question = "Using context provided, generate a concise and comprehensive summary."
+                user_question = "Summary: Using context provided, generate a concise and comprehensive summary. Key Points: Generate a list of Key Points by using a conclusion section if present and the full context otherwise."
             if pdf_chat_option == "Custom Question":
                 user_question = st.text_input("Please enter your own question about the PDF(s):")
                 user_question = "Use only the reference document for knowledge. Question: " + user_question
