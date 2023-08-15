@@ -4,6 +4,7 @@ import requests
 import time
 import json
 import os
+from io import StringIO
 import random
 import itertools
 from prompts import *
@@ -17,7 +18,9 @@ from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.callbacks.manager import CallbackManager
 from langchain.chains import QAGenerationChain
 from langchain.retrievers import SVMRetriever
+from langchain.vectorstores import FAISS
 import PyPDF2
+import pdfplumber
 
 
 
@@ -110,14 +113,12 @@ def answer_using_prefix(prefix, sample_question, sample_answer, my_ask, temperat
     # st.write(full_answer)
     return full_answer # Change how you access the message content
 
-
 def load_docs(files):
-    # st.info("`Reading doc ...`")
     all_text = ""
     for file_path in files:
         file_extension = os.path.splitext(file_path.name)[1]
         if file_extension == ".pdf":
-            pdf_reader = PyPDF2.PdfReader(file_path)
+            pdf_reader = pdfplumber.open(file_path)
             text = ""
             for page in pdf_reader.pages:
                 text += page.extract_text()
@@ -132,6 +133,7 @@ def load_docs(files):
     return all_text
 
 
+
 def create_retriever(_embeddings, splits, retriever_type):
     # openai_api_key = st.secrets.OPENAI_API_KEY
     # if retriever_type == "SIMILARITY SEARCH":
@@ -142,7 +144,15 @@ def create_retriever(_embeddings, splits, retriever_type):
     #         return
     #     retriever = vectorstore.as_retriever(k=5)
     # elif retriever_type == "SUPPORT VECTOR MACHINES":
-    retriever = SVMRetriever.from_texts(splits, _embeddings)
+    # vectorstore = FAISS.from_texts(splits, _embeddings)
+    # retriever = SVMRetriever.from_texts(splits, _embeddings)
+    
+    try:
+        vectorstore = FAISS.from_texts(splits, _embeddings)
+    except (IndexError, ValueError) as e:
+        st.error(f"Error creating vectorstore: {e}")
+        return
+    retriever = vectorstore.as_retriever(k=5)
 
     return retriever
 
@@ -161,7 +171,7 @@ def split_texts(text, chunk_size, overlap, split_method):
 
     splits = text_splitter.split_text(text)
     if not splits:
-        st.error("Failed to split document")
+        # st.error("Failed to split document")
         st.stop()
 
     return splits
@@ -192,7 +202,6 @@ def generate_eval(text, N, chunk):
 
 
 def fn_qa_run(_qa, user_question):
-    
     response = _qa.run(user_question)
     start_time = time.time()
     delay_time = 0.01
@@ -207,8 +216,8 @@ def fn_qa_run(_qa, user_question):
         full_answer += event_text
         time.sleep(delay_time)
     
-    
-    return _qa.run(user_question)
+    return full_answer
+
 
 
 
@@ -522,6 +531,7 @@ if check_password():
                 if pt_ed_download_str:
                         st.download_button('Download', pt_ed_download_str, key = 'pt_ed_questions')
                         
+                        
     with tab5:
         if "pdf_user_question" not in st.session_state:
             st.session_state["pdf_user_question"] = []
@@ -536,7 +546,7 @@ if check_password():
         embedding_option = "OpenAI Embeddings"
 
         
-        retriever_type = "SUPPORT VECTOR MACHINES"
+        retriever_type = "SIMILARITY SEARCH"
 
         # Use RecursiveCharacterTextSplitter as the default and only text splitter
         splitter_type = "RecursiveCharacterTextSplitter"
@@ -578,7 +588,7 @@ if check_password():
             callback_manager = CallbackManager([callback_handler])
 
             chat_openai = ChatOpenAI(
-                streaming=True, callback_manager=callback_manager, verbose=True, temperature=0.3)
+                streaming=False, callback_manager=callback_manager, verbose=True, temperature=0.3)
             
             
             _qa = RetrievalQA.from_chain_type(llm=chat_openai, retriever=retriever, chain_type="stuff", verbose=False)
@@ -588,57 +598,52 @@ if check_password():
 
             # Check if there are no generated question-answer pairs in the session state
             
-            if 'eval_set' not in st.session_state:
-                # Use the generate_eval function to generate question-answer pairs
-                # num_eval_questions = 10  # Number of question-answer pairs to generate
-                st.session_state.eval_set = generate_eval(
-                    loaded_text, num_eval_questions, 3000)
+            # if 'eval_set' not in st.session_state:
+            #     # Use the generate_eval function to generate question-answer pairs
+            #     # num_eval_questions = 10  # Number of question-answer pairs to generate
+            #     st.session_state.eval_set = generate_eval(
+            #         loaded_text, num_eval_questions, 3000)
 
-                # Display the question-answer pairs in the sidebar with smaller text
-            for i, qa_pair in enumerate(st.session_state.eval_set):
-                st.sidebar.markdown(
-                    f"""
-                    <div class="css-card">
-                    <span class="card-tag">Question {i + 1}</span>
-                        <p style="font-size: 12px;">{qa_pair['question']}</p>
-                        <p style="font-size: 12px;">{qa_pair['answer']}</p>
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
+            #     # Display the question-answer pairs in the sidebar with smaller text
+            # for i, qa_pair in enumerate(st.session_state.eval_set):
+            #     st.sidebar.markdown(
+            #         f"""
+            #         <div class="css-card">
+            #         <span class="card-tag">Question {i + 1}</span>
+            #             <p style="font-size: 12px;">{qa_pair['question']}</p>
+            #             <p style="font-size: 12px;">{qa_pair['answer']}</p>
+            #         </div>
+            #         """,
+            #         unsafe_allow_html=True,
+            #     )
                 # <h4 style="font-size: 14px;">Question {i + 1}:</h4>
                 # <h4 style="font-size: 14px;">Answer {i + 1}:</h4>
             st.write("Ready to answer your questions!")
 
                 # Question and answering
     
-            pdf_chat_option = st.radio("Select an Option", ("Key facts", "Summary", "Custom Question"))
+            pdf_chat_option = st.radio("Select an Option", ("Summary", "Key facts", "Custom Question"))
             if pdf_chat_option == "Key facts":
-                user_question = "Identify educational facts from the article."
+                user_question = "List assertions from the context. If a conclusion section is present, also include any assertions noted."
             if pdf_chat_option == "Summary":
-                user_question = "Generate an educational summary of the article."
+                user_question = "Using context provided, generate a concise and comprehensive summary."
             if pdf_chat_option == "Custom Question":
                 user_question = st.text_input("Please enter your own question about the PDF(s):")
+                user_question = "Use only the reference document for knowledge. Question: " + user_question
             
             if st.button("Generate a Response"):
                 index_context = f'Use only the reference document for knowledge. Question: {user_question}'
-                answer = fn_qa_run(_qa, index_context)
+                pdf_answer = fn_qa_run(_qa, index_context)
                 st.session_state.pdf_user_question.append(user_question)  
                 st.session_state.pdf_user_answer.append(answer)  
                 # st.write("Answer:", answer)
-            pdf_chat_download_str = []
-            with st.expander("PDF Questions", expanded=False):
-                for i in range(len(st.session_state['pdf_user_answer'])-1, -1, -1):
-                    st.info(st.session_state["pdf_user_question"][i],icon="🧐")
-                    st.success(st.session_state["pdf_user_answer"][i], icon="🤖")
-                    pdf_chat_download_str.append(st.session_state["pdf_user_question"][i])
-                    pdf_chat_download_str.append(st.session_state["pdf_user_answer"][i])
-                pdf_chat_download_str = [disclaimer] + pdf_chat_download_str
-            
-                # Can throw error - requires fix
-                pdf_chat_download_str = '\n'.join(pdf_chat_download_str)
-                if pdf_chat_download_str:
-                    st.download_button('Download',pdf_chat_download_str, key = "pdf_questions")
+                pdf_chat_download_str = []
+                with st.expander("PDF Questions", expanded=False):                     
+                    st.info(f'Your Question: {user_question}',icon="🧐")
+                    st.success(f'PDF Response:\n\n {pdf_answer}', icon="🤖")      
+                    pdf_download_str = f"{disclaimer}\n\nPDF Answers: {user_question}:\n\n{pdf_answer}"
+                    if pdf_download_str:
+                            st.download_button('Download', pdf_download_str, key = 'pdf_questions')
 
 
                 
