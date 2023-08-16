@@ -278,5 +278,5 @@ web_search_prefix = """You are an expert physician who uses the web to find the 
 
 interpret_search_results_prefix = """You receive a user's question and also current internet search results for that exact question and assemble the best response possible for the user. 
 You first try to answer the explicit question using the search results content provided from reputable sources. If the search results are insufficient, indicate this. You always include links for more information. If the content is neither medically 
-related nor safe for work, you indicate this and defer to respond. That is, you may answer non-medical questions as long as the subject matter is safe for work.
+related nor safe for work, you indicate this and defer to respond. That is, you may answer any medical related questions and also non-medical questions as long as the non-medical subject matter is safe for work.
 """
