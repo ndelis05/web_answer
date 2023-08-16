@@ -80,7 +80,7 @@ def check_password():
         # Password correct.
         return True
 
-@st.cache_resource
+@st.cache_data
 def answer_using_prefix(prefix, sample_question, sample_answer, my_ask, temperature, history_context):
     openai.api_key = os.environ['OPENAI_API_KEY']
     messages = [{'role': 'system', 'content': prefix},
@@ -113,6 +113,7 @@ def answer_using_prefix(prefix, sample_question, sample_answer, my_ask, temperat
     # st.write(full_answer)
     return full_answer # Change how you access the message content
 
+@st.cache_data
 def load_docs(files):
     all_text = ""
     for file_path in files:
@@ -133,7 +134,7 @@ def load_docs(files):
     return all_text
 
 
-
+@st.cache_data
 def create_retriever(_embeddings, splits, retriever_type):
     # openai_api_key = st.secrets.OPENAI_API_KEY
     # if retriever_type == "SIMILARITY SEARCH":
@@ -156,7 +157,7 @@ def create_retriever(_embeddings, splits, retriever_type):
 
     return retriever
 
-
+@st.cache_data
 def split_texts(text, chunk_size, overlap, split_method):
 
     # Split texts
@@ -200,7 +201,7 @@ def generate_eval(text, N, chunk):
     eval_set_full = list(itertools.chain.from_iterable(eval_set))
     return eval_set_full
 
-
+@st.cache_data
 def fn_qa_run(_qa, user_question):
     response = _qa.run(user_question)
     start_time = time.time()
