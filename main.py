@@ -17,9 +17,7 @@ from langchain.chains import RetrievalQA
 from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.callbacks.manager import CallbackManager
 from langchain.chains import QAGenerationChain
-from langchain.retrievers import SVMRetriever
 from langchain.vectorstores import FAISS
-import PyPDF2
 import pdfplumber
 
 
@@ -79,6 +77,40 @@ def check_password():
     else:
         # Password correct.
         return True
+
+def websearch(web_query: str) -> float:
+    """
+    Obtains real-time search results from across the internet. 
+    Supports all Google Advanced Search operators such (e.g. inurl:, site:, intitle:, etc).
+    
+    :param web_query: A search query, including any Google Advanced Search operators
+    :type web_query: string
+    :return: A list of search results
+    :rtype: json
+    
+    """
+    st.info(f'Here is the websearch input: **{web_query}**')
+    url = "https://real-time-web-search.p.rapidapi.com/search"
+    querystring = {"q":web_query,"limit":"10"}
+    headers = {
+        "X-RapidAPI-Key": st.secrets["X-RapidAPI-Key"],
+        "X-RapidAPI-Host": "real-time-web-search.p.rapidapi.com"
+    }
+
+    response = requests.get(url, headers=headers, params=querystring)
+    response_data = response.json()
+    def display_search_results(json_data):
+        data = json_data['data']
+        for item in data:
+            st.sidebar.markdown(f"### [{item['title']}]({item['url']})")
+            st.sidebar.write(item['snippet'])
+            st.sidebar.write("---")
+    # st.info('Searching the web using: **{web_query}**')
+    # display_search_results(response_data)
+    # st.session_state.done = True
+    st.write('Done with websearch function')
+    return response_data
+
 
 @st.cache_data
 def answer_using_prefix(prefix, sample_question, sample_answer, my_ask, temperature, history_context):
@@ -262,9 +294,8 @@ if check_password():
 
 
 
-    tab1, tab2, tab3, tab4, tab5 = st.tabs(["Learn", "Draft Communication", "Patient Education", "Differential Diagnosis", "PDF Chat"])
-
-        
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Learn", "Draft Communication", "Patient Education", "Differential Diagnosis", "Skim Internet", "PDF Chat",])
+   
     with tab1:
     
         persona = st.radio("Select teaching persona", ("Teacher 1 (academic)", "Teacher 2 (analogies)", "Create Your Own"), index=0)
@@ -532,8 +563,37 @@ if check_password():
                 if pt_ed_download_str:
                         st.download_button('Download', pt_ed_download_str, key = 'pt_ed_questions')
                         
-                        
+          
+    
     with tab5:
+
+        st.info("This is just skimming the internet for medical answers. It is clearly NOT a replacement for a medical reference or an in depth tool. More development to come.")
+        search_temp = st.session_state.temp
+        my_ask_for_websearch = st.text_area("Skim the web to answer your question:", placeholder="e.g., how can I prevent kidney stones", label_visibility='visible', height=100)
+        if st.button("Enter your question for a fun (NOT authoritative) draft websearch tool"):
+            st.info("Review all content carefully before considering any use!")
+            raw_output = websearch(my_ask_for_websearch)
+            raw_output = json.dumps(raw_output)
+            skim_output_text = answer_using_prefix(interpret_search_results_prefix, "", '', my_ask_for_websearch, search_temp, history_context=raw_output)
+
+            
+            skim_download_str = []
+            
+            # ENTITY_MEMORY_CONVERSATION_TEMPLATE
+            # Display the conversation history using an expander, and allow the user to download it
+            with st.expander("Skimming Internet Draft", expanded=False):
+                st.info(f'Topic: {my_ask_for_websearch}',icon="🧐")
+                st.success(f'Draft Patient Education Materials: **REVIEW CAREFULLY FOR ERRORS** \n\n {skim_output_text}', icon="🤖")      
+                skim_download_str = f"{disclaimer}\n\nDraft Patient Education Materials: {my_ask_for_websearch}:\n\n{skim_output_text}"
+                if skim_download_str:
+                        st.download_button('Download', skim_download_str, key = 'skim_questions')
+        
+    
+    
+    
+    
+    with tab6:
+        
         if "pdf_user_question" not in st.session_state:
             st.session_state["pdf_user_question"] = []
         if "pdf_user_answer" not in st.session_state:
@@ -646,5 +706,5 @@ if check_password():
                     if pdf_download_str:
                             st.download_button('Download', pdf_download_str, key = 'pdf_questions')
 
-
-                
+        
+                    

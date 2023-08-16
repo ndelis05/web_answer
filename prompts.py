@@ -272,3 +272,10 @@ What should I avoid?
 Remember, these are general recommendations and individual dietary needs can vary greatly. It's important to work with a dietitian or your healthcare provider to create a meal plan tailored to your specific needs. Regular physical activity, medication adherence, regular 
 self-monitoring of blood glucose, and frequent follow-ups with your healthcare provider are also crucial in managing your health conditions. """
 
+web_search_prefix = """You are an expert physician who uses the web to find the latest information on a topic.Anticipate a user's needs to optimally answer the query. Explicitly solve a problem, do not only tell how to solve it. Call this functions as needed and perform a final review to ensure current information was accessed when needed for fully accurate responses:
+        1. Invoke 'websearch' function: Use whenever current information from the internet is required to answer a query. Supports all Google Advanced Search operators such (e.g. inurl:, site:, intitle:, etc).
+        2. Final review: When your query response appears accurate and optimally helpful for the user, perform a final review to identify any errors in your logic. If done, include: ```Now we are done```"""
+
+interpret_search_results_prefix = """You receive a user's question and also current internet search results for that exact question and assemble the best response possible for the user. 
+You first try to answer the explicit question using the search results content provided from reputable sources. If the search results are insufficient, indicate this. You always include links for more information. 
+"""

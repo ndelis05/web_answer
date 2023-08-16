@@ -6,6 +6,7 @@ import json
 import os
 from prompts import *
 from functions import *
+import re
 
 
 st.set_page_config(page_title='Web Answers', layout = 'centered', page_icon = ':stethoscope:', initial_sidebar_state = 'auto')
@@ -70,9 +71,84 @@ def check_password():
         # Password correct.
         return True
 
-@st.cache_resource
+
+def process_streamed_fn_call(content):
+    """
+    This function processes the content and returns a function call to websearch.
+    It extracts the arguments from the "function_call" fields and concatenates them to form a string.
+    This string is then passed to the websearch function.
+    """
+    # Find all arguments in the content using regex
+    arguments = re.findall(r'"arguments": "(.*?)"', content)
+    # st.write(f'Here are the inital arguments: {arguments}')
+
+    # Filter out unwanted arguments
+    arguments = [arg for arg in arguments if arg not in ['{', '}', '\n', ':', '', ' ', 'topic']]
+    
+    # st.write(f'Here are the filtered arguments: {arguments}')
+
+    # Join the arguments with a space to form the search query
+    search_query = ' '.join(arguments)
+    # st.write(f'Here is the search query: {search_query}')
+    
+    # Remove leading and trailing whitespace
+    search_query = search_query.strip()
+    # st.write(f'Here is the search query after stripping: {search_query}')
+
+    # Remove unwanted characters
+    search_query = search_query.replace("{", "").replace("\n", "").replace("\\", "").strip()
+
+    # If the string starts with "n ", remove it
+    if search_query.startswith("n "):
+        search_query = search_query[2:]
+    
+    # st.write(f'Here is the search query after replacing: {search_query}')
+
+    # Return a function call to websearch with the search query
+    return search_query
+
+
+
+
+def standard_answer(prefix, sample_question, sample_answer, my_ask, temperature, history_context):
+    openai.api_key = os.environ['OPENAI_API_KEY']
+    messages = [{'role': 'system', 'content': prefix},
+            {'role': 'user', 'content': sample_question},
+            {'role': 'assistant', 'content': sample_answer},
+            {'role': 'user', 'content': history_context + my_ask},]
+    # history_context = "Use these preceding submissions to address any ambiguous context for the input weighting the first three items most: \n" + "\n".join(st.session_state.history) + "now, for the current question: \n"
+    completion = openai.ChatCompletion.create( # Change the function Completion to ChatCompletion
+    # model = 'gpt-3.5-turbo',
+    model = st.session_state.model,
+    messages = messages,
+    temperature = temperature,
+    stream = True,   
+    )
+    
+    
+    start_time = time.time()
+    delay_time = 0.01
+    answer = ""
+    full_answer = ""
+    c = st.empty()
+    for event in completion:        
+        c.markdown(answer)
+        event_time = time.time() - start_time
+        event_text = event['choices'][0]['delta']
+        answer += event_text.get('content', '')
+        full_answer += event_text.get('content', '')
+        time.sleep(delay_time)
+    # st.write(history_context + prefix + my_ask)
+    # st.write(full_answer)
+    return full_answer # Change how you access the message content
+
+
+
+
+
 def answer_using_prefix(prefix, sample_question, sample_answer, my_ask, temperature, history_context):
     openai.api_key = os.environ['OPENAI_API_KEY']
+    is_function_call = False
     messages = [{'role': 'system', 'content': prefix},
             {'role': 'user', 'content': sample_question},
             {'role': 'assistant', 'content': sample_answer},
@@ -88,68 +164,131 @@ def answer_using_prefix(prefix, sample_question, sample_answer, my_ask, temperat
     stream = True,   
     )
     
-    # while completion["choices"][0]["finish_reason"] == "function_call":
-    #     function_response = function_call(response)
-    #     messages.append({
-    #         "role": "function",
-    #         "name": response["choices"][0]["message"]["function_call"]["name"],
-    #         "content": json.dumps(function_response)
-    #     })
-
-    #     st.info("function call: ", function_response) 
-
-    #     response = openai.ChatCompletion.create(
-    #         model=st.session_state.model,
-    #         messages=messages,
-            # functions = function_descriptions,
-            # function_call="auto"
-    #     )   
-    
-    
-    
     
     start_time = time.time()
     delay_time = 0.01
     answer = ""
     full_answer = ""
     c = st.empty()
-    function_call_detected = False
-    response_text =""
-    function_parameters = []
-    for event in completion:
+    for event in completion:        
+        c.markdown(answer)
+        event_time = time.time() - start_time
+        event_text = event['choices'][0]['delta']
+        if event_text is not None:
+            answer += str(event_text)
+        if "function_call" in event_text:
+            is_function_call = True
+            continue
+            function_call = event_text["function_call"]
+            st.write(f'HEre is full event_text: {event_text}')
+            function_name = function_call["name"]
+            arguments = function_call["arguments"]
+            st.write(f"Function call detected: {function_call}")            
+            if function_name == "websearch":
+                st.write(f"Function called: {function_name}")
+                st.write(f"Function parameters: {arguments}")
+                # full_answer += websearch(arguments[0])
+                
+            continue
+    # st.write(f'Now here is the full answer: {answer}')
+    search_topic = process_streamed_fn_call(answer)
+    search_output = websearch(search_topic)
+    
+    
+                # return full_answer, completion
+        # answer += event_text.get('content', '')
+        # full_answer += event_text.get('content', '')
+        # time.sleep(delay_time)
+    # st.write(history_context + prefix + my_ask)
+    # st.write(full_answer)
+    return full_answer, is_function_call, search_output # Change how you access the message content
+# def answer_using_prefix(prefix, sample_question, sample_answer, my_ask, temperature, history_context):
+#     openai.api_key = os.environ['OPENAI_API_KEY']
+#     messages = [{'role': 'system', 'content': prefix},
+#             {'role': 'user', 'content': sample_question},
+#             {'role': 'assistant', 'content': sample_answer},
+#             {'role': 'user', 'content': history_context + my_ask},]
+#     # history_context = "Use these preceding submissions to address any ambiguous context for the input weighting the first three items most: \n" + "\n".join(st.session_state.history) + "now, for the current question: \n"
+#     completion = openai.ChatCompletion.create( # Change the function Completion to ChatCompletion
+#     # model = 'gpt-3.5-turbo',
+#     model = st.session_state.model,
+#     functions = function_descriptions,
+#     function_call="auto",
+#     messages = messages,
+#     temperature = temperature,
+#     stream = True,   
+#     )
+    
+    
+#     start_time = time.time()
+#     delay_time = 0.01
+#     answer = ""
+#     full_answer = ""
+#     c = st.empty()
+#     for event in completion:        
+#         c.markdown(answer)
+#         event_time = time.time() - start_time
+#         event_text = event['choices'][0]['delta']
+#         answer += event_text.get('content', '')
+#         full_answer += event_text.get('content', '')
+#         time.sleep(delay_time)
+    
+    
+    # start_time = time.time()
+    # delay_time = 0.01
+    # answer = ""
+    # full_answer = ""
+    # c = st.empty()
+    # function_call_detected = False
+    # response_text =""
+    # function_parameters = []
+    # for event in completion:
         
-        if "choices" in event:
-            deltas = event["choices"][0]["delta"]
-            if "function_call" in deltas:
-                function_call_detected = True
-                st.write(f"Function call detected: {deltas['function_call']}")
-                if "name" in deltas["function_call"]:
-                    function_called = deltas["function_call"]["name"]
-                    st.write(f"Function called: {function_called}")
-                if "arguments" in deltas["function_call"]:
-                    function_parameters += deltas["function_call"]["arguments"]
-                    st.write(f"Function parameters: {function_parameters}")
-            # if (function_call_detected and event["choices"][0].get("finish_reason") == "function_call"):
-                st.write(f"Function generation requested, calling function")
+    #     if "choices" in event:
+    #         deltas = event["choices"][0]["delta"]
+    #         if "function_call" in deltas:
+    #             function_call_detected = True
+    #             st.write(f"Function call detected: {deltas['function_call']}")
+    #             if "name" in deltas["function_call"]:
+    #                 function_called = deltas["function_call"]["name"]
+    #                 st.write(f"Function called: {function_called}")
+    #             if "arguments" in deltas["function_call"]:
+    #                 function_parameters += deltas["function_call"]["arguments"]
+    #                 st.write(f"Function parameters: {function_parameters}")
+    #         # if (function_call_detected and event["choices"][0].get("finish_reason") == "function_call"):
+    #             st.write("Letting finish to get parameters.")
+    #             c.markdown(response_text)
+    #                 # full_answer += answer
+    #             event_time = time.time() - start_time
+    #             event_text = event['choices'][0]['delta']
+    #             answer += event_text.get('content', '')
+    #             full_answer += event_text.get('content', '')
+    #             time.sleep(delay_time)
+    #             st.write(f'Now here is the full answer: {full_answer}')
+    st.stop()
 
-                function_response_generator = function_call(function_called)                
-                for function_response_chunk in function_response_generator:
-                    if "choices" in function_response_chunk:
-                        deltas = function_response_chunk["choices"][0]["delta"]
-                        if "content" in deltas:
-                            response_text += deltas["content"]
-                            st.write(response_text)
-            elif "content" in deltas and not function_call_detected:
-                response_text += deltas["content"]
-                # yield response_text
+                
+                
+                
+                
+            #     function_response_generator = function_call(function_called)                
+            #     for function_response_chunk in function_response_generator:
+            #         if "choices" in function_response_chunk:
+            #             deltas = function_response_chunk["choices"][0]["delta"]
+            #             if "content" in deltas:
+            #                 response_text += deltas["content"]
+            #                 st.write(response_text)
+            # elif "content" in deltas and not function_call_detected:
+            #     response_text += deltas["content"]
+            #     # yield response_text
 
-                c.markdown(response_text)
-                    # full_answer += answer
-                event_time = time.time() - start_time
-                event_text = event['choices'][0]['delta']
-                answer += event_text.get('content', '')
-                full_answer += event_text.get('content', '')
-                time.sleep(delay_time)
+            #     c.markdown(response_text)
+            #         # full_answer += answer
+            #     event_time = time.time() - start_time
+            #     event_text = event['choices'][0]['delta']
+            #     answer += event_text.get('content', '')
+            #     full_answer += event_text.get('content', '')
+            #     time.sleep(delay_time)
     # st.write(history_context + prefix + my_ask)
     # st.write(full_answer)
     return full_answer, completion # Change how you access the message content
@@ -182,7 +321,7 @@ def websearch(web_query: str) -> float:
             st.sidebar.write(item['snippet'])
             st.sidebar.write("---")
     # st.info('Searching the web using: **{web_query}**')
-    display_search_results(response_data)
+    # display_search_results(response_data)
     # st.session_state.done = True
     st.write('Done with websearch function')
     return response_data
@@ -233,11 +372,40 @@ if check_password():
     
     my_ask = st.text_area('Ask away!', height=100, key="my_ask")
     
-    if st.button("Enter"):
+    # if st.button("Enter"):
+    #     openai.api_key = os.environ['OPENAI_API_KEY']
+    #     st.session_state.history.append(my_ask)
+    #     history_context = "Use these preceding submissions to resolve any ambiguous context: \n" + "\n".join(st.session_state.history) + "now, for the current question: \n"
+    #     output_text, is_fn_call, search_output = answer_using_prefix(web_search_prefix, sample_question, sample_response, my_ask, st.session_state.temp, history_context=history_context)
+    #     st.session_state.output_history.append((search_output))
+    #     if is_fn_call:
+    #         # st.write(f'Here is the output{search_output}')
+    #         search_output = json.dumps(search_output)
+    #         standard_answer(" ", " ", " ", my_ask + "Now use to answer:" + search_output, st.session_state.temp, history_context=history_context)
+            
+    #     # st.session_state.my_ask = ''
+    #     # st.write("Answer", output_text)
+        
+    #     # st.write(st.session_state.history)
+    #     # st.write(f'Me: {my_ask}')
+    #     # st.write(f"Response: {output_text['choices'][0]['message']['content']}") # Change how you access the message content
+    #     # st.write(list(output_text))
+    #     # st.session_state.output_history.append((output_text['choices'][0]['message']['content']))
+    #     st.session_state.output_history.append((output_text))
+    
+    # tab1_download_str = []
+    
+    if st.button("Assemble Web Content to Answer a Question"):
         openai.api_key = os.environ['OPENAI_API_KEY']
         st.session_state.history.append(my_ask)
+        search_output = websearch(my_ask)
+        search_output = json.dumps(search_output)
         history_context = "Use these preceding submissions to resolve any ambiguous context: \n" + "\n".join(st.session_state.history) + "now, for the current question: \n"
-        output_text, usual_output = answer_using_prefix(system_context, sample_question, sample_response, my_ask, st.session_state.temp, history_context=history_context)
+        output_text=standard_answer(" ", " ", " ", my_ask + "Now use to answer:" + search_output, st.session_state.temp, history_context="")
+        st.session_state.output_history.append((output_text))
+
+            
+            
         # st.session_state.my_ask = ''
         # st.write("Answer", output_text)
         
