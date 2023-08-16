@@ -569,7 +569,7 @@ if check_password():
 
         st.info("This is just skimming the internet for medical answers. It is clearly NOT a replacement for a medical reference or an in depth tool. More development to come.")
         search_temp = st.session_state.temp
-        my_ask_for_websearch = st.text_area("Skim the web to answer your question:", placeholder="e.g., how can I prevent kidney stones", label_visibility='visible', height=100)
+        my_ask_for_websearch = st.text_area("Skim the web to answer your question:", placeholder="e.g., how can I prevent kidney stones, what is the weather in Chicago tomorrow, etc.", label_visibility='visible', height=100)
         if st.button("Enter your question for a fun (NOT authoritative) draft websearch tool"):
             st.info("Review all content carefully before considering any use!")
             raw_output = websearch(my_ask_for_websearch)
