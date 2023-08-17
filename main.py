@@ -93,9 +93,18 @@ def scrapeninja(url_list, max):
                 "X-RapidAPI-Host": "scrapeninja.p.rapidapi.com"
             }
             response = requests.post(url, json=payload, headers=headers)
-            response
-            response_data = response.json()
-    return response_data
+            # st.write(f'Status code: {response.status_code}')
+            # st.write(f'Response text: {response.text}')
+            # st.write(f'Response headers: {response.headers}')
+            try:
+                response_data = response.json()
+                return response_data
+            except:
+                json.JSONDecodeError
+                st.write("Error decoding JSON")
+            # response_data = response.json()
+            # response_string = response_data['body']
+            # return response_data
 
 
 def websearch(web_query: str, deep) -> float:
@@ -605,7 +614,8 @@ if check_password():
         if st.button("Enter your question for a fun (NOT authoritative) draft websearch tool"):
             st.info("Review all content carefully before considering any use!")
             raw_output = websearch(my_ask_for_websearch, deep)
-            raw_output = json.dumps(raw_output)
+            if not deep:
+                raw_output = json.dumps(raw_output)
             skim_output_text = answer_using_prefix(interpret_search_results_prefix, "", '', my_ask_for_websearch, search_temp, history_context=raw_output)
 
             
