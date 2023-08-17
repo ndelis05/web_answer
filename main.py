@@ -78,7 +78,27 @@ def check_password():
         # Password correct.
         return True
 
-def websearch(web_query: str) -> float:
+def scrapeninja(url_list, max):
+    i = 0
+    for url in url_list:
+        if i < max:
+            i += 1
+            st.write(url)
+            st.write("Scraping...")
+            st.write("Done scraping")
+            payload = { "url": "https://news.ycombinator.com/" }
+            headers = {
+                "content-type": "application/json",
+                "X-RapidAPI-Key": "6359cf0695msh0a6053d191f2fa4p16493djsnb5e33798ab5c",
+                "X-RapidAPI-Host": "scrapeninja.p.rapidapi.com"
+            }
+            response = requests.post(url, json=payload, headers=headers)
+            response
+            response_data = response.json()
+    return response_data
+
+
+def websearch(web_query: str, deep) -> float:
     """
     Obtains real-time search results from across the internet. 
     Supports all Google Advanced Search operators such (e.g. inurl:, site:, intitle:, etc).
@@ -108,8 +128,18 @@ def websearch(web_query: str) -> float:
     # st.info('Searching the web using: **{web_query}**')
     # display_search_results(response_data)
     # st.session_state.done = True
-    st.write('Done with websearch function')
-    return response_data
+    # st.write(response_data)
+    if deep:
+        urls = []
+        for item in response_data['data']:
+            urls.append(item['url'])
+        response_data = scrapeninja(urls, 1)
+        st.write("Proccessed deeply")
+        return response_data
+
+    else:
+        st.write("Proccessed shallowly")
+        return response_data
 
 
 @st.cache_data
@@ -570,9 +600,11 @@ if check_password():
         st.info("This is just skimming the internet for medical answers. It is clearly NOT a replacement for a medical reference or an in depth tool. More development to come.")
         search_temp = st.session_state.temp
         my_ask_for_websearch = st.text_area("Skim the web to answer your question:", placeholder="e.g., how can I prevent kidney stones, what is the weather in Chicago tomorrow, etc.", label_visibility='visible', height=100)
+        # deep = st.checkbox("Deep search (slower)", value=False)
+        deep = False
         if st.button("Enter your question for a fun (NOT authoritative) draft websearch tool"):
             st.info("Review all content carefully before considering any use!")
-            raw_output = websearch(my_ask_for_websearch)
+            raw_output = websearch(my_ask_for_websearch, deep)
             raw_output = json.dumps(raw_output)
             skim_output_text = answer_using_prefix(interpret_search_results_prefix, "", '', my_ask_for_websearch, search_temp, history_context=raw_output)
 
