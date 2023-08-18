@@ -88,7 +88,7 @@ def scrapeninja_old(url_list, max):
         i += 1
         url = url_list[i]
         st.write(f' here is a {url}')
-        st.write("Scraping...")
+        # st.write("Scraping...")
         payload = { "url": url }
         key = st.secrets["X-RapidAPI-Key"]
         headers = {
@@ -112,7 +112,7 @@ def scrapeninja_old(url_list, max):
         # response_string = response_data['body']
         # return response_data
 
-def limit_tokens(text, max_tokens=12000):
+def limit_tokens(text, max_tokens=10000):
     tokens = text.split()  # split the text into tokens (words)
     limited_tokens = tokens[:max_tokens]  # keep the first max_tokens tokens
     limited_text = ' '.join(limited_tokens)  # join the tokens back into a string
@@ -126,7 +126,7 @@ def scrapeninja(url_list, max):
     while i < max and i < len(url_list):
         url = url_list[i]
         url_parts = urlparse(url)
-        st.write("Scraping...")
+        # st.write("Scraping...")
         if 'uptodate.com' in url_parts.netloc:
             method = "GET"
             url_parts = url_parts._replace(path=url_parts.path + '/print')
@@ -161,13 +161,18 @@ def scrapeninja(url_list, max):
         }
         response = requests.request(method, url, json=payload, headers=headers)
         # response = requests.post(url, json=payload, headers=headers)
-        st.write(f'Status code: {response.status_code}')
+        if response.status_code == 200:
+            pass
+        else:
+            st.write(f'The site failed to release all content: {response.status_code}')
+            # st.write(f'Response text: {response.text}')
+            # st.write(f'Response headers: {response.headers}')
         try:
             # st.write(f'Response text: {response.text}')  # Print out the raw response text
             soup = BeautifulSoup(response.text, 'html.parser')
             clean_text = soup.get_text(separator=' ')
             # st.write(clean_text)
-            st.write("Scraped!")
+            # st.write("Scraped!")
             response_complete.append(clean_text)
         except json.JSONDecodeError:
             st.write("Error decoding JSON")
@@ -216,12 +221,12 @@ def websearch(web_query: str, deep) -> float:
         urls.append(item['url'])    
     if deep:
             # st.write(item['url'])
-        response_data = scrapeninja(urls, 3)
-        st.write("Processed deeply")
+        response_data = scrapeninja(urls, 2)
+        st.info("Web results reviewed.")
         return response_data, urls
 
     else:
-        st.write("Proccessed shallowly")
+        st.info("Web snippets reviewed.")
         return response_data, urls
 
 
@@ -687,11 +692,13 @@ if check_password():
         deep = st.checkbox("Deep search (even more experimental)", value=False)
         domain = "Only use reputable sites "
         if deep == True:            
-            set_domain = st.selectbox("Select a domain to use:", ( "CDC.gov", "You specify a domain", "Any", ))
+            set_domain = st.selectbox("Select a domain to use:", ( "Medscape.com", "CDC.gov", "You specify a domain", "Any", ))
             if set_domain == "UpToDate (very incomplete access!)":
                 domain = "site: UpToDate.com, "
             if set_domain == "CDC.gov":
                 domain = "site: cdc.gov, "
+            if set_domain == "Medscape.com":
+                domain = "site: medscape.com, "
             if set_domain == "PubMed":
                 domain = "site: pubmed.ncbi.nlm.nih.gov "
             if set_domain == "Google Scholar":
@@ -710,7 +717,7 @@ if check_password():
             raw_output, urls = websearch(my_ask_for_websearch, deep)
             if not deep:
                 raw_output = json.dumps(raw_output)
-            raw_output = limit_tokens(raw_output, 10000)
+            raw_output = limit_tokens(raw_output, 8000)
             skim_output_text = answer_using_prefix(interpret_search_results_prefix, "", '', my_ask_for_websearch, search_temp, history_context=raw_output)
 
             
