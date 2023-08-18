@@ -17,6 +17,7 @@ pypdf2 = "*"
 scikit-learn = "*"
 faiss-cpu = "*"
 pdfplumber = "*"
+beautifulsoup4 = "*"
 
 [dev-packages]
 

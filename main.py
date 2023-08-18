@@ -10,6 +10,7 @@ import itertools
 from prompts import *
 from functions import *
 import langchain
+from bs4 import BeautifulSoup
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
 from langchain.chat_models import ChatOpenAI
@@ -78,34 +79,76 @@ def check_password():
         # Password correct.
         return True
 
-def scrapeninja(url_list, max):
+def scrapeninja_old(url_list, max):
+    st.write(url_list)
+    response_complete = []
     i = 0
-    for url in url_list:
-        if i < max:
-            i += 1
-            st.write(url)
-            st.write("Scraping...")
-            st.write("Done scraping")
-            payload = { "url": "https://news.ycombinator.com/" }
-            key = st.secrets["X-RapidAPI-Key"]
-            headers = {
-                "content-type": "application/json",
-                "X-RapidAPI-Key": key,
-                "X-RapidAPI-Host": "scrapeninja.p.rapidapi.com"
-            }
-            response = requests.post(url, json=payload, headers=headers)
-            # st.write(f'Status code: {response.status_code}')
-            # st.write(f'Response text: {response.text}')
-            # st.write(f'Response headers: {response.headers}')
-            try:
-                response_data = response.json()
-                return response_data
-            except:
-                json.JSONDecodeError
-                st.write("Error decoding JSON")
-            # response_data = response.json()
-            # response_string = response_data['body']
-            # return response_data
+    while max > i:
+        i += 1
+        url = url_list[i]
+        st.write(f' here is a {url}')
+        st.write("Scraping...")
+        payload = { "url": url }
+        key = st.secrets["X-RapidAPI-Key"]
+        headers = {
+            "content-type": "application/json",
+            "X-RapidAPI-Key": key,
+            "X-RapidAPI-Host": "scrapeninja.p.rapidapi.com",
+        }
+        response = requests.post(url, json=payload, headers=headers)
+        st.write(f'Status code: {response.status_code}')
+        # st.write(f'Response text: {response.text}')
+        # st.write(f'Response headers: {response.headers}')
+        try:
+            st.write(f'Response: {response}')
+            response_data = response.json()
+            st.write("Scraped!")
+            return response_data
+        except:
+            json.JSONDecodeError
+            st.write("Error decoding JSON")
+        # response_data = response.json()
+        # response_string = response_data['body']
+        # return response_data
+
+def limit_tokens(text, max_tokens=12000):
+    tokens = text.split()  # split the text into tokens (words)
+    limited_tokens = tokens[:max_tokens]  # keep the first max_tokens tokens
+    limited_text = ' '.join(limited_tokens)  # join the tokens back into a string
+    return limited_text
+
+def scrapeninja(url_list, max):
+    # st.write(url_list)
+    response_complete = []
+    i = 0
+    while i < max and i < len(url_list):
+        url = url_list[i]
+        # st.write(f' here is a {url}')
+        st.write("Scraping...")
+        payload = { "url": url }
+        key = st.secrets["X-RapidAPI-Key"]
+        headers = {
+            "content-type": "application/json",
+            "X-RapidAPI-Key": key,
+            "X-RapidAPI-Host": "scrapeninja.p.rapidapi.com",
+        }
+        response = requests.post(url, json=payload, headers=headers)
+        st.write(f'Status code: {response.status_code}')
+        try:
+            # st.write(f'Response text: {response.text}')  # Print out the raw response text
+            soup = BeautifulSoup(response.text, 'html.parser')
+            clean_text = soup.get_text(separator=' ')
+            st.write("Scraped!")
+            response_complete.append(clean_text)
+        except json.JSONDecodeError:
+            st.write("Error decoding JSON")
+        i += 1
+    full_response = ' '.join(response_complete)
+    limited_text = limit_tokens(full_response, 12000)
+    return limited_text
+    # st.write(full_response)    
+    # Join all the scraped text into a single string
+    # return full_response
 
 
 def websearch(web_query: str, deep) -> float:
@@ -143,8 +186,12 @@ def websearch(web_query: str, deep) -> float:
         urls = []
         for item in response_data['data']:
             urls.append(item['url'])
-        response_data = scrapeninja(urls, 1)
-        st.write("Proccessed deeply")
+            # st.write(item['url'])
+        response_data = scrapeninja(urls, 3)
+        st.write("Processed deeply")
+        with st.expander("Links used"):
+            for item in urls:
+                st.write(item)
         return response_data
 
     else:
@@ -155,6 +202,8 @@ def websearch(web_query: str, deep) -> float:
 @st.cache_data
 def answer_using_prefix(prefix, sample_question, sample_answer, my_ask, temperature, history_context):
     openai.api_key = os.environ['OPENAI_API_KEY']
+    if history_context == None:
+        history_context = ""
     messages = [{'role': 'system', 'content': prefix},
             {'role': 'user', 'content': sample_question},
             {'role': 'assistant', 'content': sample_answer},
@@ -328,7 +377,7 @@ if check_password():
     with st.expander('About GPT and Med Ed - Important Disclaimer'):
         st.write("Author: David Liebovitz, MD, Northwestern University")
         st.info(disclaimer)
-        st.session_state.model = st.radio("Select model (Costs: $, $$, and $$$$)", ("gpt-3.5-turbo", "gpt-3.5-turbo-16k", "gpt-4"), index=0)
+        st.session_state.model = st.radio("Select model (Costs: $, $$, and $$$$)", ("gpt-3.5-turbo", "gpt-3.5-turbo-16k", "gpt-4"), index=1)
         st.session_state.temp = st.slider("Select temperature (Higher values more creative but tangential and more error prone)", 0.0, 1.0, 0.3, 0.01)
         st.write("Last updated 8/12/23")
 
@@ -607,16 +656,30 @@ if check_password():
     
     with tab5:
 
-        st.info("This is just skimming the internet for medical answers. It is clearly NOT a replacement for a medical reference or an in depth tool. More development to come.")
+        st.warning("This is just skimming the internet for medical answers. It is clearly NOT reliable nor is it a replacement for a medical reference or an in depth tool. More development to come.")
         search_temp = st.session_state.temp
+        deep = st.checkbox("Deep search (even more experimental)", value=False)
         my_ask_for_websearch = st.text_area("Skim the web to answer your question:", placeholder="e.g., how can I prevent kidney stones, what is the weather in Chicago tomorrow, etc.", label_visibility='visible', height=100)
-        # deep = st.checkbox("Deep search (slower)", value=False)
-        deep = False
+        domain = ""
+        if deep == True:            
+            set_domain = st.selectbox("Select a domain to emphasize:", ("UpToDate not complete!", "CDC", "PubMed", "Any", ))
+            if set_domain == "UpToDate not complete!":
+                domain = "UpToDate.com"
+            if set_domain == "CDC":
+                domain = "cdc.gov"
+            if set_domain == "PubMed":
+                domain = "pubmed.ncbi.nlm.nih.gov"
+            if set_domain == "Google Scholar":
+                domain = "scholar.google.com"
+            if set_domain == "Any":
+                domain = "reputable sites"
+        domain = "Limit results to: " + domain + " "
         if st.button("Enter your question for a fun (NOT authoritative) draft websearch tool"):
             st.info("Review all content carefully before considering any use!")
-            raw_output = websearch(my_ask_for_websearch, deep)
+            raw_output = websearch(domain + my_ask_for_websearch, deep)
             if not deep:
                 raw_output = json.dumps(raw_output)
+            raw_output = limit_tokens(raw_output, 12000)
             skim_output_text = answer_using_prefix(interpret_search_results_prefix, "", '', my_ask_for_websearch, search_temp, history_context=raw_output)
 
             
