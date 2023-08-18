@@ -10,6 +10,7 @@ import itertools
 from prompts import *
 from functions import *
 import langchain
+from urllib.parse import urlparse, urlunparse
 from bs4 import BeautifulSoup
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
@@ -121,23 +122,51 @@ def scrapeninja(url_list, max):
     # st.write(url_list)
     response_complete = []
     i = 0
+    method = "POST"
     while i < max and i < len(url_list):
         url = url_list[i]
-        # st.write(f' here is a {url}')
+        url_parts = urlparse(url)
         st.write("Scraping...")
-        payload = { "url": url }
+        if 'uptodate.com' in url_parts.netloc:
+            method = "GET"
+            url_parts = url_parts._replace(path=url_parts.path + '/print')
+            url = urlunparse(url_parts)
+        # st.write(f' here is a {url}')
+
+            payload =  {
+            "url": url,
+            "method": method,
+            "retryNum": 1,
+            "geo": "us",
+            "js": True,
+            "blockImages": True,
+            "blockMedia": True,
+            "steps": []
+            }
+        else:
+            payload =  {
+            "url": url,
+            "method": method,
+            "retryNum": 1,
+            "blockImages": True,
+            "blockMedia": True,
+
+            }
+            
         key = st.secrets["X-RapidAPI-Key"]
         headers = {
             "content-type": "application/json",
             "X-RapidAPI-Key": key,
             "X-RapidAPI-Host": "scrapeninja.p.rapidapi.com",
         }
-        response = requests.post(url, json=payload, headers=headers)
+        response = requests.request(method, url, json=payload, headers=headers)
+        # response = requests.post(url, json=payload, headers=headers)
         st.write(f'Status code: {response.status_code}')
         try:
             # st.write(f'Response text: {response.text}')  # Print out the raw response text
             soup = BeautifulSoup(response.text, 'html.parser')
             clean_text = soup.get_text(separator=' ')
+            st.write(clean_text)
             st.write("Scraped!")
             response_complete.append(clean_text)
         except json.JSONDecodeError:
@@ -182,21 +211,18 @@ def websearch(web_query: str, deep) -> float:
     # display_search_results(response_data)
     # st.session_state.done = True
     # st.write(response_data)
+    urls = []
+    for item in response_data['data']:
+        urls.append(item['url'])    
     if deep:
-        urls = []
-        for item in response_data['data']:
-            urls.append(item['url'])
             # st.write(item['url'])
         response_data = scrapeninja(urls, 3)
         st.write("Processed deeply")
-        with st.expander("Links used"):
-            for item in urls:
-                st.write(item)
-        return response_data
+        return response_data, urls
 
     else:
         st.write("Proccessed shallowly")
-        return response_data
+        return response_data, urls
 
 
 @st.cache_data
@@ -383,7 +409,7 @@ if check_password():
 
 
 
-    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Learn", "Draft Communication", "Patient Education", "Differential Diagnosis", "Skim Internet", "PDF Chat",])
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Learn", "Draft Communication", "Patient Education", "Differential Diagnosis", "Sift the Web", "PDF Chat",])
    
     with tab1:
     
@@ -659,27 +685,32 @@ if check_password():
         st.warning("This is just skimming the internet for medical answers. It is clearly NOT reliable nor is it a replacement for a medical reference or an in depth tool. More development to come.")
         search_temp = st.session_state.temp
         deep = st.checkbox("Deep search (even more experimental)", value=False)
-        my_ask_for_websearch = st.text_area("Skim the web to answer your question:", placeholder="e.g., how can I prevent kidney stones, what is the weather in Chicago tomorrow, etc.", label_visibility='visible', height=100)
-        domain = ""
+        
         if deep == True:            
-            set_domain = st.selectbox("Select a domain to emphasize:", ("UpToDate not complete!", "CDC", "PubMed", "Any", ))
-            if set_domain == "UpToDate not complete!":
-                domain = "UpToDate.com"
+            set_domain = st.selectbox("Select a domain to use:", ( "CDC.gov", "You specify a domain", "Any", ))
+            if set_domain == "UpToDate (very incomplete access!)":
+                domain = "site: UpToDate.com, "
             if set_domain == "CDC":
-                domain = "cdc.gov"
+                domain = "site: cdc.gov, "
             if set_domain == "PubMed":
-                domain = "pubmed.ncbi.nlm.nih.gov"
+                domain = "site: pubmed.ncbi.nlm.nih.gov, "
             if set_domain == "Google Scholar":
-                domain = "scholar.google.com"
+                domain = "site: scholar.google.com, "
             if set_domain == "Any":
-                domain = "reputable sites"
-        domain = "Limit results to: " + domain + " "
+                domain = "only use reputable sites "
+            if set_domain == "You specify a domain":
+                domain = "site: " + st.text_input("Enter a domain to emphasize:", placeholder="e.g., cdc.gov, pubmed.ncbi.nlm.nih.gov, etc.", label_visibility='visible') + ", "
+        
+        my_ask_for_websearch = st.text_area("Skim the web to answer your question:", placeholder="e.g., how can I prevent kidney stones, what is the weather in Chicago tomorrow, etc.", label_visibility='visible', height=100)
+        my_ask_for_websearch = domain + my_ask_for_websearch.replace("\n", " ")
+
+        
         if st.button("Enter your question for a fun (NOT authoritative) draft websearch tool"):
             st.info("Review all content carefully before considering any use!")
-            raw_output = websearch(domain + my_ask_for_websearch, deep)
+            raw_output, urls = websearch(my_ask_for_websearch, deep)
             if not deep:
                 raw_output = json.dumps(raw_output)
-            raw_output = limit_tokens(raw_output, 12000)
+            raw_output = limit_tokens(raw_output, 10000)
             skim_output_text = answer_using_prefix(interpret_search_results_prefix, "", '', my_ask_for_websearch, search_temp, history_context=raw_output)
 
             
@@ -687,10 +718,13 @@ if check_password():
             
             # ENTITY_MEMORY_CONVERSATION_TEMPLATE
             # Display the conversation history using an expander, and allow the user to download it
-            with st.expander("Skimming Internet Draft", expanded=False):
+            with st.expander("Links Identified"):
+                for item in urls:
+                    st.write(item)
+            with st.expander("Sifting Web Summary", expanded=False):
                 st.info(f'Topic: {my_ask_for_websearch}',icon="🧐")
-                st.success(f'Draft Internet Assembled Response: **REVIEW CAREFULLY FOR ERRORS** \n\n {skim_output_text}', icon="🤖")      
-                skim_download_str = f"{disclaimer}\n\nDraft Web Assembled Materials: {my_ask_for_websearch}:\n\n{skim_output_text}"
+                st.success(f'Your Sifted Response: **REVIEW CAREFULLY FOR ERRORS** \n\n {skim_output_text}', icon="🤖")      
+                skim_download_str = f"{disclaimer}\n\nSifted Summary: {my_ask_for_websearch}:\n\n{skim_output_text}"
                 if skim_download_str:
                         st.download_button('Download', skim_download_str, key = 'skim_questions')
         
