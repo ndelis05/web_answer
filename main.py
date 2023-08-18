@@ -245,6 +245,7 @@ def answer_using_prefix(prefix, sample_question, sample_answer, my_ask, temperat
     model = st.session_state.model,
     messages = messages,
     temperature = temperature,
+    max_tokens = 500,
     stream = True,   
     )
     
