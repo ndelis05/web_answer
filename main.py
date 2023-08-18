@@ -690,14 +690,14 @@ if check_password():
             set_domain = st.selectbox("Select a domain to use:", ( "CDC.gov", "You specify a domain", "Any", ))
             if set_domain == "UpToDate (very incomplete access!)":
                 domain = "site: UpToDate.com, "
-            if set_domain == "CDC":
+            if set_domain == "CDC.gov":
                 domain = "site: cdc.gov, "
             if set_domain == "PubMed":
-                domain = "site: pubmed.ncbi.nlm.nih.gov, "
+                domain = "site: pubmed.ncbi.nlm.nih.gov "
             if set_domain == "Google Scholar":
-                domain = "site: scholar.google.com, "
+                domain = "site: scholar.google.com "
             if set_domain == "Any":
-                domain = "only use reputable sites "
+                domain = "only use reputable sites, "
             if set_domain == "You specify a domain":
                 domain = "site: " + st.text_input("Enter a domain to emphasize:", placeholder="e.g., cdc.gov, pubmed.ncbi.nlm.nih.gov, etc.", label_visibility='visible') + ", "
         
