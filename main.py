@@ -87,9 +87,10 @@ def scrapeninja(url_list, max):
             st.write("Scraping...")
             st.write("Done scraping")
             payload = { "url": "https://news.ycombinator.com/" }
+            key = st.secrets["X-RapidAPI-Key"]
             headers = {
                 "content-type": "application/json",
-                "X-RapidAPI-Key": "6359cf0695msh0a6053d191f2fa4p16493djsnb5e33798ab5c",
+                "X-RapidAPI-Key": key,
                 "X-RapidAPI-Host": "scrapeninja.p.rapidapi.com"
             }
             response = requests.post(url, json=payload, headers=headers)
