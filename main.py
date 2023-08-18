@@ -626,8 +626,8 @@ if check_password():
             # Display the conversation history using an expander, and allow the user to download it
             with st.expander("Skimming Internet Draft", expanded=False):
                 st.info(f'Topic: {my_ask_for_websearch}',icon="🧐")
-                st.success(f'Draft Patient Education Materials: **REVIEW CAREFULLY FOR ERRORS** \n\n {skim_output_text}', icon="🤖")      
-                skim_download_str = f"{disclaimer}\n\nDraft Patient Education Materials: {my_ask_for_websearch}:\n\n{skim_output_text}"
+                st.success(f'Draft Internet Assembled Response: **REVIEW CAREFULLY FOR ERRORS** \n\n {skim_output_text}', icon="🤖")      
+                skim_download_str = f"{disclaimer}\n\nDraft Web Assembled Materials: {my_ask_for_websearch}:\n\n{skim_output_text}"
                 if skim_download_str:
                         st.download_button('Download', skim_download_str, key = 'skim_questions')
         
