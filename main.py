@@ -166,7 +166,7 @@ def scrapeninja(url_list, max):
             # st.write(f'Response text: {response.text}')  # Print out the raw response text
             soup = BeautifulSoup(response.text, 'html.parser')
             clean_text = soup.get_text(separator=' ')
-            st.write(clean_text)
+            # st.write(clean_text)
             st.write("Scraped!")
             response_complete.append(clean_text)
         except json.JSONDecodeError:
@@ -685,7 +685,7 @@ if check_password():
         st.warning("This is just skimming the internet for medical answers. It is clearly NOT reliable nor is it a replacement for a medical reference or an in depth tool. More development to come.")
         search_temp = st.session_state.temp
         deep = st.checkbox("Deep search (even more experimental)", value=False)
-        
+        domain = "Only use reputable sites "
         if deep == True:            
             set_domain = st.selectbox("Select a domain to use:", ( "CDC.gov", "You specify a domain", "Any", ))
             if set_domain == "UpToDate (very incomplete access!)":
