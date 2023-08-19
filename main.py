@@ -123,6 +123,12 @@ def scrapeninja(url_list, max):
     response_complete = []
     i = 0
     method = "POST"
+    key = st.secrets["X-RapidAPI-Key"]
+    headers = {
+        "content-type": "application/json",
+        "X-RapidAPI-Key": key,
+        "X-RapidAPI-Host": "scrapeninja.p.rapidapi.com",
+    }
     while i < max and i < len(url_list):
         url = url_list[i]
         url_parts = urlparse(url)
@@ -131,31 +137,22 @@ def scrapeninja(url_list, max):
             method = "POST"
             url_parts = url_parts._replace(path=url_parts.path + '/print')
             url = urlunparse(url_parts)
-            # st.write(f' here is a {url}')
-
-            payload =  {
-                "url": url,
-                "method": "POST",
-                "retryNum": 1,
-                "geo": "us",
-                "js": True,
-                "blockImages": False,
-                "blockMedia": False,
-                "steps": [],
-                "extractor": "// define function which accepts body and cheerio as args\nfunction extract(input, cheerio) {\n    // return object with extracted values              \n    let $ = cheerio.load(input);\n  \n    let items = [];\n    $('.titleline').map(function() {\n          \tlet infoTr = $(this).closest('tr').next();\n      \t\tlet commentsLink = infoTr.find('a:contains(comments)');\n            items.push([\n                $(this).text(),\n              \t$('a', this).attr('href'),\n              \tinfoTr.find('.hnuser').text(),\n              \tparseInt(infoTr.find('.score').text()),\n              \tinfoTr.find('.age').attr('title'),\n              \tparseInt(commentsLink.text()),\n              \t'https://news.ycombinator.com/' + commentsLink.attr('href'),\n              \tnew Date()\n            ]);\n        });\n  \n  return { items };\n}"
-            }
-            
-        key = st.secrets["X-RapidAPI-Key"]
-        headers = {
-            "content-type": "application/json",
-            "X-RapidAPI-Key": key,
-            "X-RapidAPI-Host": "scrapeninja.p.rapidapi.com",
+            st.write(f' here is a {url}')
+        payload =  {
+            "url": url,
+            "method": "POST",
+            "retryNum": 1,
+            "geo": "us",
+            "js": True,
+            "blockImages": False,
+            "blockMedia": False,
+            "steps": [],
+            "extractor": "// define function which accepts body and cheerio as args\nfunction extract(input, cheerio) {\n    // return object with extracted values              \n    let $ = cheerio.load(input);\n  \n    let items = [];\n    $('.titleline').map(function() {\n          \tlet infoTr = $(this).closest('tr').next();\n      \t\tlet commentsLink = infoTr.find('a:contains(comments)');\n            items.push([\n                $(this).text(),\n              \t$('a', this).attr('href'),\n              \tinfoTr.find('.hnuser').text(),\n              \tparseInt(infoTr.find('.score').text()),\n              \tinfoTr.find('.age').attr('title'),\n              \tparseInt(commentsLink.text()),\n              \t'https://news.ycombinator.com/' + commentsLink.attr('href'),\n              \tnew Date()\n            ]);\n        });\n  \n  return { items };\n}"
         }
+        
         response = requests.request(method, url, json=payload, headers=headers)
         # response = requests.post(url, json=payload, headers=headers)
-        if response.status_code == 200:
-            pass
-        else:
+        if response.status_code != 200:
             st.write(f'The site failed to release all content: {response.status_code}')
             # st.write(f'Response text: {response.text}')
             # st.write(f'Response headers: {response.headers}')
@@ -171,6 +168,7 @@ def scrapeninja(url_list, max):
         i += 1
     full_response = ' '.join(response_complete)
     limited_text = limit_tokens(full_response, 12000)
+    st.write(f'Here is the lmited text: {limited_text}')
     return limited_text
     # st.write(full_response)    
     # Join all the scraped text into a single string
@@ -685,7 +683,7 @@ if check_password():
         deep = st.checkbox("Deep search (even more experimental)", value=False)
         domain = "Only use reputable sites "
                  
-        set_domain = st.selectbox("Select a domain to use:", ( "UpToDate.com", "Medscape.com", "CDC.gov", "You specify a domain", "Any", ))
+        set_domain = st.selectbox("Select a domain to emphasize:", ( "Medscape.com", "CDC.gov", "You specify a domain", "Any", ))
         if set_domain == "UpToDate.com":
             domain = "site: UpToDate.com, "
         if set_domain == "CDC.gov":
