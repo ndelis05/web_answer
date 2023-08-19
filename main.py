@@ -128,29 +128,21 @@ def scrapeninja(url_list, max):
         url_parts = urlparse(url)
         # st.write("Scraping...")
         if 'uptodate.com' in url_parts.netloc:
-            method = "GET"
+            method = "POST"
             url_parts = url_parts._replace(path=url_parts.path + '/print')
             url = urlunparse(url_parts)
-        # st.write(f' here is a {url}')
+            # st.write(f' here is a {url}')
 
             payload =  {
-            "url": url,
-            "method": method,
-            "retryNum": 1,
-            "geo": "us",
-            "js": True,
-            "blockImages": True,
-            "blockMedia": True,
-            "steps": []
-            }
-        else:
-            payload =  {
-            "url": url,
-            "method": method,
-            "retryNum": 1,
-            "blockImages": True,
-            "blockMedia": True,
-
+                "url": url,
+                "method": "POST",
+                "retryNum": 1,
+                "geo": "us",
+                "js": True,
+                "blockImages": False,
+                "blockMedia": False,
+                "steps": [],
+                "extractor": "// define function which accepts body and cheerio as args\nfunction extract(input, cheerio) {\n    // return object with extracted values              \n    let $ = cheerio.load(input);\n  \n    let items = [];\n    $('.titleline').map(function() {\n          \tlet infoTr = $(this).closest('tr').next();\n      \t\tlet commentsLink = infoTr.find('a:contains(comments)');\n            items.push([\n                $(this).text(),\n              \t$('a', this).attr('href'),\n              \tinfoTr.find('.hnuser').text(),\n              \tparseInt(infoTr.find('.score').text()),\n              \tinfoTr.find('.age').attr('title'),\n              \tparseInt(commentsLink.text()),\n              \t'https://news.ycombinator.com/' + commentsLink.attr('href'),\n              \tnew Date()\n            ]);\n        });\n  \n  return { items };\n}"
             }
             
         key = st.secrets["X-RapidAPI-Key"]
@@ -688,26 +680,26 @@ if check_password():
     
     with tab5:
 
-        st.warning("This is just skimming the internet for medical answers. It is clearly NOT reliable nor is it a replacement for a medical reference or an in depth tool. More development to come.")
+        st.warning("This is just skimming the internet for medical answers even with the `deep` option. It is NOT reliable nor is it a replacement for a full medical reference. More development to come.")
         search_temp = st.session_state.temp
         deep = st.checkbox("Deep search (even more experimental)", value=False)
         domain = "Only use reputable sites "
-        if deep == True:            
-            set_domain = st.selectbox("Select a domain to use:", ( "Medscape.com", "CDC.gov", "You specify a domain", "Any", ))
-            if set_domain == "UpToDate (very incomplete access!)":
-                domain = "site: UpToDate.com, "
-            if set_domain == "CDC.gov":
-                domain = "site: cdc.gov, "
-            if set_domain == "Medscape.com":
-                domain = "site: medscape.com, "
-            if set_domain == "PubMed":
-                domain = "site: pubmed.ncbi.nlm.nih.gov "
-            if set_domain == "Google Scholar":
-                domain = "site: scholar.google.com "
-            if set_domain == "Any":
-                domain = "only use reputable sites, "
-            if set_domain == "You specify a domain":
-                domain = "site: " + st.text_input("Enter a domain to emphasize:", placeholder="e.g., cdc.gov, pubmed.ncbi.nlm.nih.gov, etc.", label_visibility='visible') + ", "
+                 
+        set_domain = st.selectbox("Select a domain to use:", ( "UpToDate.com", "Medscape.com", "CDC.gov", "You specify a domain", "Any", ))
+        if set_domain == "UpToDate (very incomplete access!)":
+            domain = "site: UpToDate.com, "
+        if set_domain == "CDC.gov":
+            domain = "site: cdc.gov, "
+        if set_domain == "Medscape.com":
+            domain = "site: medscape.com, "
+        if set_domain == "PubMed":
+            domain = "site: pubmed.ncbi.nlm.nih.gov "
+        if set_domain == "Google Scholar":
+            domain = "site: scholar.google.com "
+        if set_domain == "Any":
+            domain = "only use reputable sites, "
+        if set_domain == "You specify a domain":
+            domain = "site: " + st.text_input("Enter a domain to emphasize:", placeholder="e.g., cdc.gov, pubmed.ncbi.nlm.nih.gov, etc.", label_visibility='visible') + ", "
         
         my_ask_for_websearch = st.text_area("Skim the web to answer your question:", placeholder="e.g., how can I prevent kidney stones, what is the weather in Chicago tomorrow, etc.", label_visibility='visible', height=100)
         my_ask_for_websearch = domain + my_ask_for_websearch.replace("\n", " ")
