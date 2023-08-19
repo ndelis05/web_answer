@@ -168,7 +168,7 @@ def scrapeninja(url_list, max):
         i += 1
     full_response = ' '.join(response_complete)
     limited_text = limit_tokens(full_response, 12000)
-    st.write(f'Here is the lmited text: {limited_text}')
+    # st.write(f'Here is the lmited text: {limited_text}')
     return limited_text
     # st.write(full_response)    
     # Join all the scraped text into a single string
