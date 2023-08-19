@@ -686,7 +686,7 @@ if check_password():
         domain = "Only use reputable sites "
                  
         set_domain = st.selectbox("Select a domain to use:", ( "UpToDate.com", "Medscape.com", "CDC.gov", "You specify a domain", "Any", ))
-        if set_domain == "UpToDate (very incomplete access!)":
+        if set_domain == "UpToDate.com":
             domain = "site: UpToDate.com, "
         if set_domain == "CDC.gov":
             domain = "site: cdc.gov, "
