@@ -40,8 +40,10 @@ def check_password():
         return True
 
 if check_password():
-  
+    st.info("Enter your questions at the bottom of the page. You can enter multiple questions at once. Have fun practicing!")
     system_context = st.radio("Select an AI patient who comes to the ED with:", ("abdominal pain", "chest pain", "bloody diarrhea", "random symptoms", "You choose!"), horizontal = True, index=0)
+    
+
         
     if system_context == "abdominal pain":
         template = abd_pain_pt_template
@@ -60,6 +62,7 @@ if check_password():
         # Create a defaultdict that returns an empty string for missing keys
         template = chosen_symptoms_pt_template.replace('{symptoms}', symptoms)
 
+    st.write("_________________________________________________________")
 
     # Set up memory
     msgs = StreamlitChatMessageHistory(key="langchain_messages")
@@ -94,6 +97,6 @@ if check_password():
         response = llm_chain.run(prompt)
         st.chat_message("assistant").write(response)
 
-    clear_memory = st.button("Start Over")
+    clear_memory = st.button("Start Over (click twice)")
     if clear_memory:
         st.session_state.langchain_messages = []

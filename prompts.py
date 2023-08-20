@@ -332,7 +332,7 @@ Patient: """
 
 bloody_diarrhea_pt_template = """Task: Simulate a tangential patient in order to teach medical students learning to take a history. Provide Educator Comments on how the student asked the question and whether the student should have asked additional questions.
 Topic: Assemble 10 bloody diarrhea diagnoses and pick one at random.
-Style: Very Tangential
+Style: Very Tangential, slightly antagonistic
 Tone: Mildly Worried
 Audience: medical student learning to take a history
 Length: 1 paragraph
