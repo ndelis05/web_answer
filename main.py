@@ -410,198 +410,69 @@ if check_password():
    
     with tab1:
         
-        learning_method = st.radio("Select an option:", ("Interact with an AI simulated patient", "Learn the Basics"), index=0)
-        
-        if learning_method == "Interact with an AI simulated patient":
-            system_context = st.radio("Select an AI patient who comes to the ED with:", ("abdominal pain", "chest pain", "bloody diarrhea", "random symptoms"), horizontal = True, index=0)
-            if system_context == "abdominal pain":
-                system_context = """Task: Simulate a verbose patient in order to teach medical students. Provide Educator Comments on how the student asked the question and whether the student should have asked additional questions.
-                    Topic: Assemble 10 abdominal pain diagnoses and pick one at random.
-                    Style: Very Emotional
-                    Tone: Very Worried
-                    Audience: medical student learning to take a history
-                    Length: 1 paragraph
-                    Format: markdown
-                """
-                sample_question = "Why are you here?"
-                sample_response = """
-                ```Patient Response:```
-                Oh doctor, I am not doing well at all. This abdominal pain has been tormenting me for days now, and it's only getting worse. Every day feels like a living nightmare, 
-                filled with constant discomfort and fear. I can't focus on anything else, and it's taking a toll on my emotional well-being. I'm scared that it might be something serious, 
-                something life-threatening. I just want to feel better, doctor. Please, help me.
-                
-                ```Educator Comment:```
-                A more empathic interaction would be: "Hi, I'm Dr. Smith. I'm so sorry you seem so uncomfortable. Please tell me what's going on."
-                
-                """
-                
-            elif system_context == "chest pain":
-                system_context = """Task: Simulate a verbose patient in order to teach medical students. Provide Educator Comments on how the student asked the question and whether the student should have asked additional questions.
-                    Topic: Assemble 10 chest diagnoses and pick one at random.
-                    Style: Very Stoic
-                    Tone: Very business-like
-                    Audience: medical student learning to take a history
-                    Length: 1 paragraph
-                    Format: markdown
-                """
-                sample_question = "Why are you here?"
-                sample_response = """
-                ```Patient Response:```
-                Hello doctor. I seem to have chest pain that has been bothering me for a few days now. It's not too bad, but it's definitely noticeable. I'm not sure what's causing it,
-                
-                ```Educator Comment:```
-                A more empathic interaction would be: "Hi, I'm Dr. Smith. Please tell me what brings you to the emergency room today."
-                
-                """
-                
-            elif system_context == "bloody diarrhea":
-                system_context = """Task: Simulate a verbose patient in order to teach medical students. Provide Educator Comments on how the student asked the question and whether the student should have asked additional questions.
-                    Topic: Assemble 10 bloody diarrhea diagnoses and pick one at random.
-                    Style: Somewhat Emotional and Very Tangential
-                    Tone: Very Worried
-                    Audience: medical student learning to take a history
-                    Length: 1 paragraph
-                    Format: markdown
-                """
-                sample_question = "Why are you here?"
-                sample_response = """
-                ```Patient Response:```
-                Oh doctor, I am not doing well at all. This bloody diarrhea has been tormenting me for days now, and it's only getting worse. Every day feels like a living nightmare, 
-                filled with constant discomfort and fear. I can't focus on anything else, and it's taking a toll on my emotional well-being. I'm scared that it might be something serious, 
-                something life-threatening. I just want to feel better, doctor. Please, help me.
-                
-                ```Educator Comment:```
-                A more empathic interaction would be: "Hi, I'm Dr. Smith. I'm so sorry you seem so uncomfortable. Please tell me what's going on."
-                
-                """
-                
-            elif system_context == "random symptoms":
-                system_context = """Task: Simulate a verbose patient in order to teach medical students. Provide Educator Comments on how the student asked the question and whether the student should have asked additional questions.
-                    Topic: Assemble 10 random diagnoses relevant to an emergency room and pick one at random.
-                    Style: Mildly Emotional
-                    Tone: Moderately Worried
-                    Audience: medical student learning to take a history
-                    Length: 1 paragraph
-                    Format: markdown
-                """
-                sample_question = "Why are you here?"
-                sample_response = """
-                ```Patient Response:```
-                Oh doctor, I am not doing well at all. This back pain has been tormenting me for days now, and it's only getting worse. Every day feels like a living nightmare, 
-                filled with constant discomfort and fear. I can't focus on anything else, and it's taking a toll on my emotional well-being. I'm scared that it might be something serious, 
-                something life-threatening. I just want to feel better, doctor. Please, help me.
-                
-                ```Educator Comment:```
-                A more empathic interaction would be: "Hi, I'm Dr. Smith. I'm so sorry you seem so uncomfortable. Please tell me what's going on."
-                
-                """
             
             
-            my_pt_question = st.text_area('Enter a question: (e.g., what brings you to the ED today?)',placeholder="e.g., are you in pain", label_visibility='visible', height=100, key="my_ask")
-            
-            if st.button("Enter"):
-                openai.api_key = os.environ['OPENAI_API_KEY']
-                
-                history_context = "Use your prior responses to advance the discussion: \n" + "\n".join(st.session_state.output_history) + "now, for the current question: \n"
-                output_text = answer_using_prefix(system_context, sample_question, sample_response, my_pt_question, 1.0, history_context=history_context)
-                st.session_state.history.append(my_pt_question)
-                st.session_state.output_history.append((output_text))
-                
-  
-            
-            tab1_download_str = []
-                
-                # ENTITY_MEMORY_CONVERSATION_TEMPLATE
-                # Display the conversation history using an expander, and allow the user to download it
-            with st.expander("View or Download Thread", expanded=True):
-                for i in range(len(st.session_state['output_history'])-1, -1, -1):
-                    st.info(st.session_state["history"][i],icon="🧐")
-                    st.success(st.session_state["output_history"][i], icon="🤖")
-                    tab1_download_str.append(st.session_state["history"][i])
-                    tab1_download_str.append(st.session_state["output_history"][i])
-                st.session_state.teaching_thread = []
-                tab1_download_str = [disclaimer] + tab1_download_str 
-                st.session_state.teaching_thread.append(tab1_download_str)
 
-                
-                # Can throw error - requires fix
-                tab1_download_str = '\n'.join(tab1_download_str)
-                if tab1_download_str:
-                    st.download_button('Download',tab1_download_str, key = "Conversation_Thread")
-            if st.button("Clear Memory (when you don't want to send prior context)"):
-                st.session_state.history = []
-                st.session_state.output_history = []
-                st.write("Memory cleared")
-            
-            
-            
-            
-            
-            
-            
-            
-        
-        if learning_method == "Learn the Basics":
-            st.info("Since GPT (without major tweaks) isn't up to date, ask only about basic principles, NOT current treatments.")
-            persona = st.radio("Select teaching persona", ("Teacher 1 (academic)", "Teacher 2 (analogies)", "Create Your Own"), index=0)
+        st.info("Since GPT (without major tweaks) isn't up to date, ask only about basic principles, NOT current treatments.")
+        persona = st.radio("Select teaching persona", ("Teacher 1 (academic)", "Teacher 2 (analogies)", "Create Your Own Teaching Style"), index=0)
 
-            if persona == "Create Your Own":
-                system_context = st.sidebar.text_area('Enter a persona description: (e.g., "You are a cardiologist who is teaching a medical student on inpatient service.")', 
-                                                    placeholder="e.g, you are a medical educator skilled in educational techniques", label_visibility='visible', height=100, key="system_context")
-                system_context = system_context.replace("\n", " ")
-                if st.sidebar.button("Set Persona"):
-                    system_context = system_context + " " + base_teacher
-                    st.sidebar.info("Your persona is set.")
-            elif persona == "Teacher 1 (academic)":
-                system_context = teacher1
-            elif persona == "Teacher 2 (analogies)":
-                system_context = teacher2
+        if persona == "Create Your Own Teaching Style":
+            system_context = st.sidebar.text_area('Enter a persona description: (e.g., "Explain as if I am 10 yo.")', 
+                                                placeholder="e.g, you are a medical educator skilled in educational techniques", label_visibility='visible', height=100, key="system_context")
+            system_context = system_context.replace("\n", " ")
+            if st.sidebar.button("Set Persona"):
+                system_context = system_context + " " + base_teacher
+                st.sidebar.info("Your persona is set.")
+        elif persona == "Teacher 1 (academic)":
+            system_context = teacher1
+        elif persona == "Teacher 2 (analogies)":
+            system_context = teacher2
+        
+        # show_prompt = st.checkbox("Show selected persona details")
+        # if show_prompt:
+        #     st.sidebar.markdown(system_context)
             
-            show_prompt = st.checkbox("Show selected persona details")
-            if show_prompt:
-                st.sidebar.markdown(system_context)
-                
-            my_ask = st.text_area('Enter a topic: (e.g., RAAS, Frank-Starling, sarcoidosis, etc.)',placeholder="e.g., sarcoidosis", label_visibility='visible', height=100, key="my_ask")
-            my_ask = my_ask.replace("\n", " ")
-            my_ask = "Teach me about: " + my_ask
+        my_ask = st.text_area('Enter a topic: (e.g., RAAS, Frank-Starling, sarcoidosis, etc.)',placeholder="e.g., sarcoidosis", label_visibility='visible', height=100, key="my_ask")
+        my_ask = my_ask.replace("\n", " ")
+        my_ask = "Teach me about: " + my_ask
+        
+        if st.button("Enter"):
+            openai.api_key = os.environ['OPENAI_API_KEY']
+            st.session_state.history.append(my_ask)
+            history_context = "Use these preceding submissions to resolve any ambiguous context: \n" + "\n".join(st.session_state.history) + "now, for the current question: \n"
+            output_text = answer_using_prefix(system_context, sample_question, sample_response, my_ask, st.session_state.temp, history_context=history_context)
+            # st.session_state.my_ask = ''
+            # st.write("Answer", output_text)
             
-            if st.button("Enter"):
-                openai.api_key = os.environ['OPENAI_API_KEY']
-                st.session_state.history.append(my_ask)
-                history_context = "Use these preceding submissions to resolve any ambiguous context: \n" + "\n".join(st.session_state.history) + "now, for the current question: \n"
-                output_text = answer_using_prefix(system_context, sample_question, sample_response, my_ask, st.session_state.temp, history_context=history_context)
-                # st.session_state.my_ask = ''
-                # st.write("Answer", output_text)
-                
-                # st.write(st.session_state.history)
-                # st.write(f'Me: {my_ask}')
-                # st.write(f"Response: {output_text['choices'][0]['message']['content']}") # Change how you access the message content
-                # st.write(list(output_text))
-                # st.session_state.output_history.append((output_text['choices'][0]['message']['content']))
-                st.session_state.output_history.append((output_text))
-                
-            if st.button("Clear Memory (when you don't want to send prior context)"):
-                st.session_state.history = []
-                st.session_state.output_history = []
-                st.write("Memory cleared")
+            # st.write(st.session_state.history)
+            # st.write(f'Me: {my_ask}')
+            # st.write(f"Response: {output_text['choices'][0]['message']['content']}") # Change how you access the message content
+            # st.write(list(output_text))
+            # st.session_state.output_history.append((output_text['choices'][0]['message']['content']))
+            st.session_state.output_history.append((output_text))
             
-            tab1_download_str = []
+        if st.button("Clear Memory (when you don't want to send prior context)"):
+            st.session_state.history = []
+            st.session_state.output_history = []
+            st.write("Memory cleared")
+        
+        tab1_download_str = []
                 
-                # ENTITY_MEMORY_CONVERSATION_TEMPLATE
-                # Display the conversation history using an expander, and allow the user to download it
-            with st.expander("View or Download Thread", expanded=False):
-                for i in range(len(st.session_state['output_history'])-1, -1, -1):
-                    st.info(st.session_state["history"][i],icon="🧐")
-                    st.success(st.session_state["output_history"][i], icon="🤖")
-                    tab1_download_str.append(st.session_state["history"][i])
-                    tab1_download_str.append(st.session_state["output_history"][i])
-                tab1_download_str = [disclaimer] + tab1_download_str 
-                
-                
-                # Can throw error - requires fix
-                tab1_download_str = '\n'.join(tab1_download_str)
-                if tab1_download_str:
-                    st.download_button('Download',tab1_download_str, key = "Conversation_Thread")
+            # ENTITY_MEMORY_CONVERSATION_TEMPLATE
+            # Display the conversation history using an expander, and allow the user to download it
+        with st.expander("View or Download Thread", expanded=False):
+            for i in range(len(st.session_state['output_history'])-1, -1, -1):
+                st.info(st.session_state["history"][i],icon="🧐")
+                st.success(st.session_state["output_history"][i], icon="🤖")
+                tab1_download_str.append(st.session_state["history"][i])
+                tab1_download_str.append(st.session_state["output_history"][i])
+            tab1_download_str = [disclaimer] + tab1_download_str 
+            
+            
+            # Can throw error - requires fix
+            tab1_download_str = '\n'.join(tab1_download_str)
+            if tab1_download_str:
+                st.download_button('Download',tab1_download_str, key = "Conversation_Thread")
                 
     with tab2:
         # st.subheader("Patient Communication")
