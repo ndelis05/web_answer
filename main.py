@@ -378,7 +378,8 @@ if 'history' not in st.session_state:
 if 'output_history' not in st.session_state:
     st.session_state.output_history = []
             
-
+if 'sample_report' not in st.session_state:
+    st.session_state.sample_report = ""
             
 if 'openai_api_key' not in st.session_state:
     st.session_state.openai_api_key = ""
@@ -475,10 +476,11 @@ if check_password():
                 st.download_button('Download',tab1_download_str, key = "Conversation_Thread")
                 
     with tab2:
+        st.info("GPT4 captures clinical nuances much better; however, try the default first before clicking 'About GPT...' above to switch to GPT4.")
         # st.subheader("Patient Communication")
         col1, col2 = st.columns(2)
         with col2:
-            health_literacy_level = st.radio("Output optimized for:", ("Low Health Literacy", "High Health Literacy"))
+            health_literacy_level = st.radio("Output optimized for:", ("General Public Medical Knowledge", "Advanced Medical Knowledge"))
    
 
         with col1:
@@ -487,16 +489,18 @@ if check_password():
         if task == "Generate discharge instructions":
             answer = ''
             start_time = time.time()
-            surg_procedure = st.text_area("Please enter the procedure performed and any special concerns.", placeholder="e.g., right total hip arthroplasty", label_visibility='visible',)
+            reason_for_hospital_stay = st.text_area("Please enter the reason for the hospital stay.", placeholder="e.g., fall and hip fracture", label_visibility='visible',)
+            surg_procedure = st.text_area("Please enter any procedure(s) performed and any special concerns.", placeholder="e.g., right total hip arthroplasty", label_visibility='visible',)
+            other_concerns = st.text_area("Please enter any other concerns.", placeholder="e.g., followup incidental lung nodule", label_visibility='visible',)
             dc_meds = st.text_area("Please enter the discharge medications.", placeholder="e.g., lisinopril 10 mg daily for HTN", label_visibility='visible',)
-            dc_instructions_context = f'Generate discharge instructions for a patient as if it is authored by a physician for her patient with {health_literacy_level} with this {surg_procedure} on {dc_meds}'
+            dc_instructions_needs = f'Generate discharge instructions for a patient as if it is authored by a physician for her patient with {health_literacy_level} discharged following {reason_for_hospital_stay} with this {surg_procedure}, {other_concerns} on {dc_meds}'
             if st.button("Generate Discharge Instructions"):
                 try:
                     dc_text = answer_using_prefix(
                         dc_instructions_prompt, 
                         procedure_example, 
                         dc_instructions_example, 
-                        surg_procedure, 
+                        dc_instructions_needs, 
                         st.session_state.temp, 
                         history_context="",
                         )
@@ -525,21 +529,37 @@ if check_password():
                     
 
         if task == "Annotate a patient result":
-            sample_report1 = st.sidebar.radio("Try a sample report:", ("Text box for your own content", "Sample 1 (lung CT)", "Sample 2 (ECG)", ))
+            sample_report1 = st.sidebar.radio("Try a sample report:", ("Text box for your own content", "Sample 1 (lung CT)", "Sample 2 (ECG)", "Generate a sample report"))
             if sample_report1 == "Sample 1 (lung CT)":
-                submitted_result = report1
+                st.session_state.sample_report = report1
                 with col1:
                     st.write(report1)
             elif sample_report1 == "Sample 2 (ECG)":
-                submitted_result = report2
+                st.session_state.sample_report = report2
                 with col1:
                     st.write(report2)
             elif sample_report1 == "Text box for your own content":           
                 with col1:                
-                    submitted_result = st.text_area("Paste your result content here without PHI.", height=600)
+                    st.session_state.sample_report = st.text_area("Paste your result content here without PHI.", height=600)
+            
+            elif sample_report1 == "Generate a sample report":
+                with st.sidebar:
+                    type_of_report = st.text_area("Enter the patient report type to generate", placeholder= 'e.g., abd pelvic CT with pancratic lesion', height=100)
+                    submitted_result = ""
+                    if st.sidebar.button("Generate Sample Report"):
+                        with col1:
+                            st.session_state.sample_report = answer_using_prefix(
+                                report_prompt, 
+                                user_report_request, 
+                                generated_report_example, 
+                                type_of_report, 
+                                st.session_state.temp, 
+                                history_context="",
+                                )
+                        
             
             
-            report_prompt = f'Generate a brief reassuring summary as if it is authored by a physician for her patient with {health_literacy_level} with this {submitted_result}. When appropriate emphasize that the findings are not urgent and you are happy to answer any questions at the next visit. '
+            report_prompt = f'Generate a brief reassuring summary as if it is authored by a physician for her patient with {health_literacy_level} with this {st.session_state.sample_report}. When appropriate emphasize that the findings are not urgent and you are happy to answer any questions at the next visit. '
 
             
             if st.button("Generate Annotation"):
@@ -555,6 +575,9 @@ if check_password():
                             )                    
 
                         st.session_state.annotate_history.append((annotate_text))
+                    with col1:
+                        if sample_report1 == "Generate a sample report":
+                            st.write("Your Report:", st.session_state.sample_report)
                 except:
                     with col2:
                         st.write("API busy. Try again - better error handling coming. :) ")
@@ -649,21 +672,23 @@ if check_password():
 
     with tab3:
 
-        pt_ed_health_literacy = st.radio("Pick a desired health literacy level:", ("Basic", "Intermediate", "Advanced"))
+        pt_ed_health_literacy = st.radio("Pick a desired health literacy level:", ("General Public Medical Knowlege", "Advanced Medical Knowledge"))
         
         
         
-        if pt_ed_health_literacy == "Basic":
+        if pt_ed_health_literacy == "General Public Medical Knowlege":
             pt_ed_content_sample = pt_ed_basic_example
 
         if pt_ed_health_literacy == "Intermediate":
             pt_ed_content_sample = pt_ed_intermediate_example
-        if pt_ed_health_literacy == "Advanced":
+        if pt_ed_health_literacy == "Advanced Medical Knowledge":
             pt_ed_content_sample = pt_ed_advanced_example
         
         sample_topic = "dietary guidance for a patient with diabetes, kidney disease, hypertension, obesity, and CAD"
         patient_ed_temp = st.session_state.temp
         my_ask_for_pt_ed = st.text_area("Generate patient education materials:", placeholder="e.g., dietary guidance needed for obesity", label_visibility='visible', height=100)
+        my_ask_for_pt_ed = "Generate patient education materials for: " + my_ask_for_pt_ed.replace("\n", " ")
+        my_ask_for_pt_ed = my_ask_for_pt_ed + "with health literacy level: " + pt_ed_health_literacy
         if st.button("Click to Generate **Draft** Custom Patient Education Materials"):
             st.info("Review all content carefully before considering any use!")
             pt_ed_output_text = answer_using_prefix(pt_ed_system_content, sample_topic, pt_ed_content_sample, my_ask_for_pt_ed, patient_ed_temp, history_context="")

@@ -47,7 +47,7 @@ annotate_prompt = """You are an expert physician annotating results for patients
 abnormal findings in reports for your medically complex patients. You always provide accurate information and reassure patients when immediate next steps are not needed.
 You are always brief and do not restate the findings from the report. You know that many tests often contain false positive findings and that many findings are not clinically significant. 
 You do not want to cause any unnecessary anxiety. You avoid all medical jargon in keeping with the health literacy level requested. When findings are not urgent, you offer to answer any questions with the patient at the next regular visit.
-Do not restate findings from the report. Do not use the word "concerning" or words that might invoke anxiety.
+When findings do warrant acute attention, e.g, new pneumonia needing a prescription, you indicate you will try to contact the patient over the phone, too, and if you don't reach them, they should call the office. Do not restate findings from the report. Do not use the word "concerning" or words that might invoke anxiety.
 
 Format your response as if you are speaking to a patient:
 
@@ -72,8 +72,8 @@ Kind regards,
 Your Doctor"""
 
 
-dc_instructions_prompt = """You are an expert surgeon who generates discharge instructions for her patients 
-taking into account health literacy level and the sugical procedure specified, which you receive as input. 
+dc_instructions_prompt = """You are an expert physician and surgeon who generates discharge instructions for her patients 
+taking into account health literacy level and any sugical procedure specified, which you receive as input. 
 You are sensitive to patient safety issues. You are brief and to the point. You do not use medical jargon.
 You never add any medications beyond those given to you in the prompt.
 """
@@ -397,3 +397,19 @@ A more empathic interaction would be: "Hi, I'm Dr. Smith and happy to see you. P
 {history}
 Med Student: {human_input}
 Patient: """
+
+report_prompt = "You are an experienced physician in all medical disciplines. You can generate sample patient reports (ONLY impression sections) for all modalities of testing patients undergo."
+
+user_report_request = "abdominal and pelvic CT scan with abnormal pancrease findings"
+
+generated_report_example = """Impression:
+
+Abdominal and pelvic CT scan reveals a well-defined, unilocular cystic lesion in the pancreas, measuring approximately 2.0 cm in diameter. The cyst is located in the body of the pancreas and exhibits no signs of calcification or internal septations. No evidence of pancreatic duct dilatation or surrounding inflammation.
+
+The liver, spleen, adrenal glands, and kidneys appear normal with no focal lesions. No intra-abdominal or pelvic lymphadenopathy is noted. No free fluid or air is seen within the abdominal or pelvic cavities.
+
+Impression: Unilocular pancreatic cyst. Given the size and characteristics of the cyst, it is likely a benign serous cystadenoma, but malignancy cannot be completely ruled out based on imaging alone. Further evaluation with endoscopic ultrasound and possible aspiration for cytology may be considered.
+
+Please correlate with clinical findings and patient history. Follow-up imaging or further diagnostic evaluation is recommended to monitor the cyst and to rule out any potential malignancy."""
+
+
