@@ -226,12 +226,11 @@ if check_password2():
             st.session_state.last_response = response
             st.chat_message("assistant").write(response)
 
-    clear_memory = st.sidebar.button("Start Over (click twice)")
+    clear_memory = st.sidebar.button("Start Over")
     if clear_memory:
         # st.session_state.langchain_messages = []
         clear_session_state_except_password_correct()
-        # if "last_response" not in st.session_state:
-        #     st.session_state["last_response"] = "Patient Response: I can't believe I'm in the Emergency Room feeling sick!"
+        st.session_state["last_response"] = "Patient Response: I can't believe I'm in the Emergency Room feeling sick!"
     # Audio response section 
     # Define the URL and headers
     audio_url = "https://play.ht/api/v2/tts"
