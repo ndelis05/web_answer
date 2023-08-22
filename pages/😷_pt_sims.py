@@ -7,6 +7,9 @@ import streamlit as st
 from collections import defaultdict
 from prompts import *
 import tempfile
+import requests
+import json
+import base64
 
 from audio_recorder_streamlit import audio_recorder
 
@@ -15,6 +18,28 @@ import openai
 st.set_page_config(page_title="AI Patients", page_icon="📖")
 st.title("📖 Chat with AI Patients")
 
+import json
+
+def extract_url(output):
+    # Split the output into lines
+    lines = output.split('\n')
+    
+    # Initialize the patient_voice variable
+    patient_voice = None
+
+    # Iterate over the lines
+    for line in lines:
+        # Check if the line starts with 'data:'
+        if line.startswith('data:'):
+            # Remove 'data:' from the line and parse the JSON
+            data = json.loads(line[5:].strip())
+            # Check if the 'url' key is in the data
+            if 'url' in data:
+                # Assign the URL to the patient_voice variable
+                patient_voice = data['url']
+    
+    # Return the patient_voice variable
+    return patient_voice
 
 
 def check_password():
@@ -46,6 +71,46 @@ def check_password():
         # Password correct.
         return True
 
+def extract_patient_response(text):
+    # Look for the phrase 'Patient Response:' in the text
+    start = text.find('Patient Response:')
+    
+    # If 'Patient Response:' is not found, return None
+    if start == -1:
+        return None
+
+    # Remove everything before 'Patient Response:' and strip leading/trailing whitespace
+    patient_response = text[start:].strip()
+
+    # Look for the phrase 'Educator Comment:' in the patient_response
+    end = patient_response.find('Educator Comment:')
+
+    # If 'Educator Comment:' is found, remove it and everything after it
+    if end != -1:
+        patient_response = patient_response[:end].strip()
+
+    # Remove 'Patient Response:' from the patient_response and strip leading/trailing whitespace
+    patient_response = patient_response[len('Patient Response:'):].strip()
+
+    # Return the patient_response
+    return patient_response
+
+
+def autoplay_audio(url: str):
+    # Download the audio file from the URL
+    response = requests.get(url)
+    data = response.content
+    b64 = base64.b64encode(data).decode()
+    md = f"""
+        <audio controls autoplay="true">
+        <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
+        </audio>
+        """
+    st.markdown(
+        md,
+        unsafe_allow_html=True,
+    )
+
 def transcribe_audio(audio_file_path):
     with open(audio_file_path, 'rb') as audio_file:
         transcription = openai.Audio.transcribe("whisper-1", audio_file)
@@ -53,6 +118,9 @@ def transcribe_audio(audio_file_path):
 
 if "audio_input" not in st.session_state:
     st.session_state["audio_input"] = ""
+    
+if "last_response" not in st.session_state:
+    st.session_state["last_response"] = "Patient Response: I can't believe I'm in the Emergency Room feeling sick!"
 
 if check_password():
     st.info("Enter your questions at the bottom of the page. You can enter multiple questions at once. Have fun practicing!")
@@ -76,6 +144,8 @@ if check_password():
         symptoms = st.text_input("Enter a list of symptoms separated by commas")
         # Create a defaultdict that returns an empty string for missing keys
         template = chosen_symptoms_pt_template.replace('{symptoms}', symptoms)
+        
+
 
     st.write("_________________________________________________________")
 
@@ -116,6 +186,7 @@ if check_password():
             st.chat_message("user").write(prompt)
             # Note: new messages are saved to history automatically by Langchain during run
             response = llm_chain.run(prompt)
+            st.session_state.last_response = response
             st.chat_message("assistant").write(response)
             
     else:
@@ -142,8 +213,38 @@ if check_password():
             st.chat_message("user").write(prompt)
             # Note: new messages are saved to history automatically by Langchain during run
             response = llm_chain.run(prompt)
+            st.session_state.last_response = response
             st.chat_message("assistant").write(response)
 
     clear_memory = st.button("Start Over (click twice)")
     if clear_memory:
         st.session_state.langchain_messages = []
+        
+    # Audio response section
+
+    # Define the URL and headers
+    audio_url = "https://play.ht/api/v2/tts"
+    headers = {
+        "AUTHORIZATION": f"Bearer {st.secrets['HT_API_KEY']}",
+        "X-USER-ID": st.secrets["X-USER-ID"],
+        "accept": "text/event-stream",
+        "content-type": "application/json",
+    }
+    
+    # st.write(st.session_state.last_response)
+    patient_section = extract_patient_response(st.session_state.last_response)
+    # st.write(patient_section)
+    
+    # Define the data
+    data = {
+        "text": patient_section,
+        "voice": "larry",
+    }
+
+    # Send the POST request
+    response_from_audio = requests.post(audio_url, headers=headers, data=json.dumps(data))
+
+    # Print the response
+    link_to_audio = extract_url(response_from_audio.text)
+    # st.write(link_to_audio)
+    autoplay_audio(link_to_audio)
