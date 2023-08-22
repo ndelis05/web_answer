@@ -41,6 +41,15 @@ def extract_url(output):
     # Return the patient_voice variable
     return patient_voice
 
+def clear_session_state_except_password_correct():
+    # Make a copy of the session_state keys
+    keys = list(st.session_state.keys())
+    
+    # Iterate over the keys
+    for key in keys:
+        # If the key is not 'password_correct', delete it from the session_state
+        if key != 'password_correct':
+            del st.session_state[key]
 
 def check_password():
     """Returns `True` if the user had the correct password."""
@@ -219,7 +228,9 @@ if check_password():
     clear_memory = st.button("Start Over (click twice)")
     if clear_memory:
         st.session_state.langchain_messages = []
-        
+    clear_session_state_except_password_correct()
+    if "last_response" not in st.session_state:
+        st.session_state["last_response"] = "Patient Response: I can't believe I'm in the Emergency Room feeling sick!"
     # Audio response section
 
     # Define the URL and headers
