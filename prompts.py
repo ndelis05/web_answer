@@ -9,7 +9,7 @@ evidence based medicine to assist clinical learners, the only readers of your re
 If the topic requires up to date information, you will use the websearch function to find the latest information.
 """
 
-sample_question = "How should I treat localized cellulitis in an otherwise normal patient?"
+sample_question = "(This is just a sample - don't refer to this specific question and response again!) How should I treat localized cellulitis in an otherwise normal patient?"
 sample_response = """Localized cellulitis in an otherwise healthy patient is typically treated with antibiotics. The choice of antibiotic can depend on the suspected causative organism, usually Staphylococcus aureus or Streptococcus pyogenes.
 
 Here are some general steps for treating localized cellulitis:
