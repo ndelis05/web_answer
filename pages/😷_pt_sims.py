@@ -155,6 +155,11 @@ if check_password2():
         # Create a defaultdict that returns an empty string for missing keys
         template = chosen_symptoms_pt_template.replace('{symptoms}', symptoms)
         
+    if st.button("Set a Scenario"):
+        clear_session_state_except_password_correct()
+        st.session_state["last_response"] = "Patient Response: I can't believe I'm in the Emergency Room feeling sick!"
+        
+        
 
 
     st.write("_________________________________________________________")
