@@ -11,6 +11,7 @@ import requests
 import json
 import base64
 
+
 from audio_recorder_streamlit import audio_recorder
 
 import openai
@@ -51,7 +52,7 @@ def clear_session_state_except_password_correct():
         if key != 'password_correct':
             del st.session_state[key]
 
-def check_password():
+def check_password2():
     """Returns `True` if the user had the correct password."""
 
     def password_entered():
@@ -131,7 +132,7 @@ if "audio_input" not in st.session_state:
 if "last_response" not in st.session_state:
     st.session_state["last_response"] = "Patient Response: I can't believe I'm in the Emergency Room feeling sick!"
 
-if check_password():
+if check_password2():
     st.info("Enter your questions at the bottom of the page. You can enter multiple questions at once. Have fun practicing!")
     system_context = st.radio("Select an AI patient who comes to the ED with:", ("abdominal pain", "chest pain", "bloody diarrhea", "random symptoms", "You choose!"), horizontal = True, index=0)
     
