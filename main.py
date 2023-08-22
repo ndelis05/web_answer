@@ -22,6 +22,15 @@ from langchain.chains import QAGenerationChain
 from langchain.vectorstores import FAISS
 import pdfplumber
 
+def clear_session_state_except_password_correct():
+    # Make a copy of the session_state keys
+    keys = list(st.session_state.keys())
+    
+    # Iterate over the keys
+    for key in keys:
+        # If the key is not 'password_correct', delete it from the session_state
+        if key != 'password_correct':
+            del st.session_state[key]
 
 
 
@@ -455,6 +464,7 @@ if check_password():
         if st.button("Clear Memory (when you don't want to send prior context)"):
             st.session_state.history = []
             st.session_state.output_history = []
+            clear_session_state_except_password_correct()
             st.write("Memory cleared")
         
         tab1_download_str = []
