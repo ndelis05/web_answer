@@ -229,11 +229,10 @@ if check_password2():
     clear_memory = st.button("Start Over (click twice)")
     if clear_memory:
         st.session_state.langchain_messages = []
-    clear_session_state_except_password_correct()
-    if "last_response" not in st.session_state:
-        st.session_state["last_response"] = "Patient Response: I can't believe I'm in the Emergency Room feeling sick!"
-    # Audio response section
-
+        clear_session_state_except_password_correct()
+        if "last_response" not in st.session_state:
+            st.session_state["last_response"] = "Patient Response: I can't believe I'm in the Emergency Room feeling sick!"
+    # Audio response section 
     # Define the URL and headers
     audio_url = "https://play.ht/api/v2/tts"
     headers = {
@@ -260,3 +259,4 @@ if check_password2():
     link_to_audio = extract_url(response_from_audio.text)
     # st.write(link_to_audio)
     autoplay_audio(link_to_audio)
+    
