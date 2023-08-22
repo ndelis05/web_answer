@@ -6,9 +6,16 @@ from langchain.prompts import PromptTemplate
 import streamlit as st
 from collections import defaultdict
 from prompts import *
+import tempfile
+
+from audio_recorder_streamlit import audio_recorder
+
+import openai
 
 st.set_page_config(page_title="AI Patients", page_icon="📖")
 st.title("📖 Chat with AI Patients")
+
+
 
 def check_password():
     """Returns `True` if the user had the correct password."""
@@ -38,6 +45,14 @@ def check_password():
     else:
         # Password correct.
         return True
+
+def transcribe_audio(audio_file_path):
+    with open(audio_file_path, 'rb') as audio_file:
+        transcription = openai.Audio.transcribe("whisper-1", audio_file)
+    return transcription['text']
+
+if "audio_input" not in st.session_state:
+    st.session_state["audio_input"] = ""
 
 if check_password():
     st.info("Enter your questions at the bottom of the page. You can enter multiple questions at once. Have fun practicing!")
@@ -81,6 +96,10 @@ if check_password():
         st.info("Enter an OpenAI API Key to continue")
         st.stop()
 
+    input_source = st.radio("Input source", ("Text", "Audio"), index=0)
+    
+
+
 
 
     prompt = PromptTemplate(input_variables=["history", "human_input"], template=template)
@@ -91,11 +110,39 @@ if check_password():
         st.chat_message(msg.type).write(msg.content)
 
     # If user inputs a new prompt, generate and draw a new response
-    if prompt := st.chat_input():
-        st.chat_message("user").write(prompt)
-        # Note: new messages are saved to history automatically by Langchain during run
-        response = llm_chain.run(prompt)
-        st.chat_message("assistant").write(response)
+    if input_source == "Text":
+    
+        if prompt := st.chat_input():
+            st.chat_message("user").write(prompt)
+            # Note: new messages are saved to history automatically by Langchain during run
+            response = llm_chain.run(prompt)
+            st.chat_message("assistant").write(response)
+            
+    else:
+        with st.sidebar:
+            audio_bytes = audio_recorder(
+            text="Click, pause, and ask a question:",
+            recording_color="#e8b62c",
+            neutral_color="#6aa36f",
+            icon_name="user",
+            icon_size="3x",
+            )
+        if audio_bytes:
+            # Save audio bytes to a temporary file
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as fp:
+                fp.write(audio_bytes)
+                audio_file_path = fp.name
+
+            # Display the audio file
+            # st.session_state.audio_input = st.audio(audio_bytes, format="audio/wav")
+
+            # Transcribe the audio file
+        # if st.sidebar.button("Send Audio"):
+            prompt = transcribe_audio(audio_file_path)
+            st.chat_message("user").write(prompt)
+            # Note: new messages are saved to history automatically by Langchain during run
+            response = llm_chain.run(prompt)
+            st.chat_message("assistant").write(response)
 
     clear_memory = st.button("Start Over (click twice)")
     if clear_memory:

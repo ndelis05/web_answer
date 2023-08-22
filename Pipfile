@@ -18,6 +18,7 @@ scikit-learn = "*"
 faiss-cpu = "*"
 pdfplumber = "*"
 beautifulsoup4 = "*"
+audio-recorder-streamlit = "*"
 
 [dev-packages]
 
