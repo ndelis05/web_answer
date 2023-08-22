@@ -96,7 +96,7 @@ if check_password():
         st.info("Enter an OpenAI API Key to continue")
         st.stop()
 
-    input_source = st.radio("Input source", ("Text", "Audio"), index=0)
+    input_source = st.radio("Input source", ("Text", "Microphone"), index=0)
     
 
 
