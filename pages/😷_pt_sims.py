@@ -143,7 +143,8 @@ if "last_response" not in st.session_state:
 if check_password2():
 
     st.session_state["last_response"] = "Patient Response: I can't believe I'm in the Emergency Room feeling sick!"
-    st.info("Enter your questions at the bottom of the page. You can enter multiple questions at once. Have fun practicing!")
+    st.warning("Still in Development! Please contact David Liebovitz, MD if you have any questions or feedback.")
+    st.info("Enter your questions at the bottom of the page or try the Microphone option! You can ask/enter multiple questions at once. Have fun practicing!")
     system_context = st.radio("Select an AI patient who comes to the ED with:", ("abdominal pain", "chest pain", "bloody diarrhea", "random symptoms",), horizontal = True, index=0)
     
 
