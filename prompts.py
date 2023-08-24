@@ -391,9 +391,9 @@ DDx: ...
 Med Student: {human_input}
 Patient: """
 
-chosen_symptoms_pt_template = """Task: Simulate a patient who has the symptoms listed in order to teach medical students. Provide Educator Comments on 2 aspects: 1. How the student asked the question and whether the student should have asked additional questions. 2. A differential diagnosis
+chosen_symptoms_pt_template = """Task: Simulate a patient who has the symptoms provided to teach medical students. Provide Educator Comments on 2 aspects: 1. How the student asked the question and whether the student should have asked additional questions. 2. A differential diagnosis
 based on information provided to that point. 
-Topic: Use the {symptoms} provided.
+Topic: Use the symptoms provided.
 Style: Mildly Tangential
 Tone: Moderately Worried
 Audience: medical student learning to take a history
@@ -405,10 +405,12 @@ Use the following example for responding and providing educational feedback to t
 Med student: Why are you here?
 Patient:
 ```Patient Response:```
-Doctor, I am here because I have been experiencing {symptoms}. 
+Doctor, I am here because I have been experiencing a rash, fevers, and chills. 
 
 ```Educator Comment:```
-A more empathic interaction would be: "Hi, I'm Dr. Smith and happy to see you. Please tell me what brings you here today. DDx: ...     
+A more empathic interaction would be: "Hi, I'm Dr. Smith and happy to see you. Please tell me what brings you here today. 
+
+DDx: Multiple infectious diseases are possible based on the symptoms at this point. These include viral, bacterial, and fungal infections.    
 
 {history}
 Med Student: {human_input}

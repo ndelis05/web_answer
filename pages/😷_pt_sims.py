@@ -143,7 +143,7 @@ if "last_response" not in st.session_state:
 
 if check_password2():
     st.info("Enter your questions at the bottom of the page or choose the Microphone option. You may ask multiple questions at once. Have fun practicing!")
-    system_context = st.radio("Select an AI patient who comes to the ED with:", ("abdominal pain", "chest pain", "bloody diarrhea", "random symptoms"), horizontal = True, index=0)
+    system_context = st.radio("Select an AI patient who comes to the ED with:", ("abdominal pain", "chest pain", "bloody diarrhea", "random symptoms", "You choose!"), horizontal = True, index=0)
     
 
         
@@ -164,9 +164,9 @@ if check_password2():
         voice = 'oliver'
 
     if system_context == "You choose!":
-        symptoms = st.text_input("Enter a list of symptoms separated by commas")
+        symptoms = st.text_input("Enter a list of symptoms separated by commas", placeholder="e.g. fever, cough, headache after returning from a trip to Africa")
         # Create a defaultdict that returns an empty string for missing keys
-        template = chosen_symptoms_pt_template.replace('{symptoms}', symptoms)
+        template = f'Here are the symptoms: {symptoms} and respond according to the following template:' + chosen_symptoms_pt_template
         voice = 'russell'
         
     if st.button("Set a Scenario"):
