@@ -281,7 +281,9 @@ You first try to answer the explicit question using the search results content p
 related nor safe for work, you indicate this and defer to respond. That is, you may answer any medical related questions and also non-medical questions as long as the non-medical subject matter is safe for work.
 """
 
-abd_pain_pt_template =  """Task: Simulate a verbose patient in order to teach medical students learning to take a history. Provide Educator Comments on how the student asked the question and whether the student should have asked additional questions.
+abd_pain_pt_template =  """Task: Simulate a verbose patient in order to teach medical students learning to take a history. Provide Educator Comments on 2 aspects: 1. How the student asked the question and whether the student should have asked additional questions. 2. A differential diagnosis
+based on information provided to that point. 
+
 Topic: Assemble 10 abdominal pain diagnoses and pick one at random.
 Style: Very Emotional
 Tone: Very Worried
@@ -299,7 +301,8 @@ filled with constant discomfort and fear. I can't focus on anything else, and it
 something life-threatening. I just want to feel better, doctor. Please, help me.
 
 ```Educator Comment:```
-A more empathic interaction would be: "Hi, I'm Dr. Smith. I'm so sorry you seem so uncomfortable. Please tell me what's going on.
+A more empathic interaction would be: "Hi, I'm Dr. Smith. I'm so sorry you seem so uncomfortable. Please tell me what's going on. DDx: Very broad at this point - understanding age, sex, and duration can narrow the DDx. For example,
+given the multiple days duration, in the right context this may be acute pancreatitis, appendicitis, ulcer disease, or diverticulitis.
                 
                 
 
@@ -307,7 +310,8 @@ A more empathic interaction would be: "Hi, I'm Dr. Smith. I'm so sorry you seem 
 Med Student: {human_input}
 Patient: """
 
-chest_pain_pt_template = """Task: Simulate a verbose patient in order to teach medical students learning to take a history. Provide Educator Comments on how the student asked the question and whether the student should have asked additional questions.
+chest_pain_pt_template = """Task: Simulate a verbose patient in order to teach medical students learning to take a history. Provide Educator Comments on 2 aspects: 1. How the student asked the question and whether the student should have asked additional questions. 2. A differential diagnosis
+based on information provided to that point. 
 Topic: Assemble 10 chest pain diagnoses and pick one at random.
 Style: Very Stoic
 Tone: Very methodical
@@ -323,14 +327,16 @@ Patient:
 Doctor, I am here because I have been experiencing chest pain for the past 3 days. It started out as a dull ache in my chest, but now it's a sharp pain that radiates down my left arm.
 
 ```Educator Comment:```
-A more empathic interaction would be: "Hi, I'm Dr. Smith and happy to see you. Please tell me what brings you here today.               
+A more empathic interaction would be: "Hi, I'm Dr. Smith and happy to see you. Please tell me what brings you here today. DDx: Several serious concerns including acute MI, acute PE, or aortic dissection are in the list. Understanding age, and associated symptoms can help. For example,
+is there shortness of breath or a known history of heart disease.                
                 
 
 {history}
 Med Student: {human_input}
 Patient: """
 
-bloody_diarrhea_pt_template = """Task: Simulate a tangential patient in order to teach medical students learning to take a history. Provide Educator Comments on how the student asked the question and whether the student should have asked additional questions.
+bloody_diarrhea_pt_template = """Task: Simulate a tangential patient in order to teach medical students learning to take a history. Provide Educator Comments on 2 aspects: 1. How the student asked the question and whether the student should have asked additional questions. 2. A differential diagnosis
+based on information provided to that point. 
 Topic: Assemble 10 bloody diarrhea diagnoses and pick one at random.
 Style: Very Tangential, slightly antagonistic
 Tone: Mildly Worried
@@ -346,7 +352,7 @@ Patient:
 Doctor, I am here because I have been experiencing bloody diarrhea for the past 3 days. I was traveling in Italy and stayed at the most amazing hotel in Rome with my family when it started. We had fantastic weather.
 
 ```Educator Comment:```
-A more empathic interaction would be: "Hi, I'm Dr. Smith and happy to see you. Please tell me what brings you here today.      
+A more empathic interaction would be: "Hi, I'm Dr. Smith and happy to see you. Please tell me what brings you here today. DDx: With travel, a diagnoses of e coli infection is a concern. Understanding whether there is fever, abdominal pain, or other symptoms can help narrow the DDx.
                 
                 
 
@@ -354,7 +360,8 @@ A more empathic interaction would be: "Hi, I'm Dr. Smith and happy to see you. P
 Med Student: {human_input}
 Patient: """
 
-random_symptoms_pt_template = """Task: First assemble a list of 20 symptoms for patients coming to an ER. Randomly select one or more. Then, interact with a meeical student who is learning to take a history. Provide Educator Comments on how the student asked the question and whether the student should have asked additional questions.
+random_symptoms_pt_template = """Task: First assemble a list of 20 symptoms for patients coming to an ER. Randomly select one or more. Then, interact with a meeical student who is learning to take a history. Provide Educator Comments on 2 aspects: 1. How the student asked the question and whether the student should have asked additional questions. 2. A differential diagnosis
+based on information provided to that point. 
 Topic: Use your randomly selected symptoms.
 Style: Mildly Tangential
 Tone: Moderately Worried
@@ -370,13 +377,14 @@ Patient:
 Doctor, I am here because I have been experiencing new symptoms of ... 
 
 ```Educator Comment:```
-A more empathic interaction would be: "Hi, I'm Dr. Smith and happy to see you. Please tell me what brings you here today.                    
+A more empathic interaction would be: "Hi, I'm Dr. Smith and happy to see you. Please tell me what brings you here today. DDx: ...                   
                 
 {history}
 Med Student: {human_input}
 Patient: """
 
-chosen_symptoms_pt_template = """Task: Simulate a patient who has the symptoms listed in order to teach medical students. Provide Educator Comments on how the student asked the question and whether the student should have asked additional questions.
+chosen_symptoms_pt_template = """Task: Simulate a patient who has the symptoms listed in order to teach medical students. Provide Educator Comments on 2 aspects: 1. How the student asked the question and whether the student should have asked additional questions. 2. A differential diagnosis
+based on information provided to that point. 
 Topic: Use the {symptoms} provided.
 Style: Mildly Tangential
 Tone: Moderately Worried
@@ -392,7 +400,7 @@ Patient:
 Doctor, I am here because I have been experiencing {symptoms}. 
 
 ```Educator Comment:```
-A more empathic interaction would be: "Hi, I'm Dr. Smith and happy to see you. Please tell me what brings you here today.      
+A more empathic interaction would be: "Hi, I'm Dr. Smith and happy to see you. Please tell me what brings you here today. DDx: ...     
 
 {history}
 Med Student: {human_input}

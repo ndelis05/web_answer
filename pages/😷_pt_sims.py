@@ -3,6 +3,7 @@ from langchain.llms import OpenAI
 from langchain.memory import ConversationBufferMemory
 from langchain.memory.chat_message_histories import StreamlitChatMessageHistory
 from langchain.prompts import PromptTemplate
+from audio_recorder_streamlit import audio_recorder
 import streamlit as st
 from collections import defaultdict
 from prompts import *
@@ -10,42 +11,45 @@ import tempfile
 import requests
 import json
 import base64
-
-
-from audio_recorder_streamlit import audio_recorder
-
 import openai
+
+
 
 st.set_page_config(page_title="AI Patients", page_icon="📖")
 st.title("📖 Chat with AI Patients")
 
 
 
-def extract_url(response):
-    # Split the response into lines
-    lines = response.split('\n')
+def extract_url(output):
+    # Split the output into lines
+    lines = output.split('\n')
     
-    # Initialize the url variable
-    url = None
+    # Initialize the patient_voice variable
+    patient_voice = None
 
     # Iterate over the lines
     for line in lines:
         # Check if the line starts with 'data:'
         if line.startswith('data:'):
-            # Remove 'data:' from the line and attempt to parse the JSON
+            # Remove 'data:' from the line
+            line = line[5:].strip()
             try:
-                data = json.loads(line[5:].strip())
+                # Parse the JSON
+                data = json.loads(line)
                 # Check if the 'url' key is in the data
                 if 'url' in data:
-                    # Assign the URL to the url variable
-                    url = data['url']
+                    # Assign the URL to the patient_voice variable
+                    patient_voice = data['url']
+                    # Break the loop as we've found the URL
+                    break
             except json.JSONDecodeError:
-                # Handle the error (for example, you can print an error message and continue)
-                st.write(f"Error decoding JSON from line: {line}")
+                # Handle malformed JSON data
+                print(f"Error parsing JSON data: {line}")
                 continue
     
-    # Return the url variable
-    return url
+    # Return the patient_voice variable
+    return patient_voice
+
 
 def clear_session_state_except_password_correct():
     # Make a copy of the session_state keys
@@ -134,42 +138,36 @@ def transcribe_audio(audio_file_path):
 if "audio_input" not in st.session_state:
     st.session_state["audio_input"] = ""
     
-if "last_input" not in st.session_state:
-    st.session_state["last_input"] = ""
-    
 if "last_response" not in st.session_state:
     st.session_state["last_response"] = "Patient Response: I can't believe I'm in the Emergency Room feeling sick!"
 
 if check_password2():
-
-    st.session_state["last_response"] = "Patient Response: I can't believe I'm in the Emergency Room feeling sick!"
-    st.warning("Still in Development! Please contact David Liebovitz, MD if you have any questions or feedback.")
-    st.info("Enter your questions at the bottom of the page or try the Microphone option! You can ask/enter multiple questions at once. Have fun practicing!")
-    system_context = st.radio("Select an AI patient who comes to the ED with:", ("abdominal pain", "chest pain", "bloody diarrhea", "random symptoms",), horizontal = True, index=0)
+    st.info("Enter your questions at the bottom of the page. You can enter multiple questions at once. Have fun practicing!")
+    system_context = st.radio("Select an AI patient who comes to the ED with:", ("abdominal pain", "chest pain", "bloody diarrhea", "random symptoms", "You choose!"), horizontal = True, index=0)
     
 
         
     if system_context == "abdominal pain":
         template = abd_pain_pt_template
-        voice = "larry"
+        voice = 'evelyn'
 
     if system_context == "chest pain":
         template = chest_pain_pt_template
-        voice = "evelyn"
+        voice = 'larry'
 
     if system_context == "bloody diarrhea":
         template = bloody_diarrhea_pt_template
-        voice = "russell"
+        voice = 'david'
         
     if system_context == "random symptoms":
         template = random_symptoms_pt_template
-        voice = "oliver"
+        voice = 'oliver'
 
     if system_context == "You choose!":
         symptoms = st.text_input("Enter a list of symptoms separated by commas")
         # Create a defaultdict that returns an empty string for missing keys
         template = chosen_symptoms_pt_template.replace('{symptoms}', symptoms)
-        voice = "Barry"
+        voice = 'russell'
         
     if st.button("Set a Scenario"):
         clear_session_state_except_password_correct()
@@ -229,7 +227,7 @@ if check_password2():
             icon_name="user",
             icon_size="3x",
             )
-        if audio_bytes is not None and len(audio_bytes) > 100:
+        if audio_bytes:
             # Save audio bytes to a temporary file
             with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as fp:
                 fp.write(audio_bytes)
@@ -247,34 +245,38 @@ if check_password2():
             st.session_state.last_response = response
             st.chat_message("assistant").write(response)
 
-
-            # Audio response section 
-            # Define the URL and headers
-            audio_url = "https://play.ht/api/v2/tts"
-            headers = {
-                "AUTHORIZATION": f"Bearer {st.secrets['HT_API_KEY']}",
-                "X-USER-ID": st.secrets["X-USER-ID"],
-                "accept": "text/event-stream",
-                "content-type": "application/json",
-            }
-            
-            # st.write(st.session_state.last_response)
-            if len(st.session_state.last_response) > 10:
-                patient_section = extract_patient_response(st.session_state.last_response)
-                # st.write(patient_section)
-                
-                # Define the data
-                data = {
-                    "text": patient_section,
-                    "voice": voice,
-                }
-
-                # Send the POST request
-                response_from_audio = requests.post(audio_url, headers=headers, data=json.dumps(data))
-
-                # Print the response
-                link_to_audio = extract_url(response_from_audio.text)
-                # st.write(link_to_audio)
-                autoplay_audio(link_to_audio)
+    clear_memory = st.sidebar.button("Start Over")
+    if clear_memory:
+        # st.session_state.langchain_messages = []
+        clear_session_state_except_password_correct()
+        st.session_state["last_response"] = "Patient Response: I can't believe I'm in the Emergency Room feeling sick!"
+    # Audio response section 
+    # Define the URL and headers
+    audio_url = "https://play.ht/api/v2/tts"
+    headers = {
+        "AUTHORIZATION": f"Bearer {st.secrets['HT_API_KEY']}",
+        "X-USER-ID": st.secrets["X-USER-ID"],
+        "accept": "text/event-stream",
+        "content-type": "application/json",
+    }
     
+    # st.write(st.session_state.last_response)
+    # st.sidebar.write(response)
+    patient_section = extract_patient_response(st.session_state.last_response)
+    # st.write(patient_section)
+    
+    # Define the data
+    data = {
+        "text": patient_section,
+        "voice": voice,
+    }
+
+    # Send the POST request
+    response_from_audio = requests.post(audio_url, headers=headers, data=json.dumps(data))
+    st.sidebar.write(response_from_audio.text)
+
+    # Print the response
+    link_to_audio = extract_url(response_from_audio.text)
+    # st.write(link_to_audio)
+    autoplay_audio(link_to_audio)
     
