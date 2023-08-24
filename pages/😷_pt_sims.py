@@ -44,7 +44,7 @@ def extract_url(output):
                     break
             except json.JSONDecodeError:
                 # Handle malformed JSON data
-                print(f"Error parsing JSON data: {line}")
+                st.sidebar.write(f"Error parsing JSON data: {line}. Try again in a moment")
                 continue
     
     # Return the patient_voice variable
@@ -273,7 +273,7 @@ if check_password2():
 
     # Send the POST request
     response_from_audio = requests.post(audio_url, headers=headers, data=json.dumps(data))
-    st.sidebar.write(response_from_audio.text)
+    # st.sidebar.write(response_from_audio.text)
 
     # Print the response
     link_to_audio = extract_url(response_from_audio.text)
