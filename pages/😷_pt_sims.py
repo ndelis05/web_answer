@@ -252,9 +252,9 @@ if check_password2():
         clear_session_state_except_password_correct()
         st.session_state["last_response"] = "Patient Response: I can't believe I'm in the Emergency Room feeling sick!"
         
-    if create_hpi := st.sidebar.button("Create HP - will reset the chat history"):
+    if create_hpi := st.sidebar.button("Create HP - wait until you've obtained enough history to create an HPI"):
         with st.sidebar:
-            hpi = llm_chain.run(prompt + " Now Generate ONLY a chief complaint (symptom + duration) and HPI (all other history obtained) section of a progress note using the chat history. For content, use the Patient Response section and the human questions. Do not use the educator's comments for this. Return ONLY a chief complaint and HPI section of a note.")
+            hpi = llm_chain.run(prompt + " Now,  generate ONLY a chief complaint (symptom + duration) and HPI (all other history obtained) section of a progress note using the chat history. For content, use the Patient Response section and the human questions. Do not use the educator's comments for this. Return ONLY a chief complaint and HPI section of a note.")
             st.write(hpi)
             clear_session_state_except_password_correct()
     # Audio response section 
