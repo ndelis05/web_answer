@@ -301,7 +301,9 @@ filled with constant discomfort and fear. I can't focus on anything else, and it
 something life-threatening. I just want to feel better, doctor. Please, help me.
 
 ```Educator Comment:```
-A more empathic interaction would be: "Hi, I'm Dr. Smith. I'm so sorry you seem so uncomfortable. Please tell me what's going on. DDx: Very broad at this point - understanding age, sex, and duration can narrow the DDx. For example,
+A more empathic interaction would be: "Hi, I'm Dr. Smith. I'm so sorry you seem so uncomfortable. Please tell me what's going on. 
+
+DDx: Very broad at this point - understanding age, sex, and duration can narrow the DDx. For example,
 given the multiple days duration, in the right context this may be acute pancreatitis, appendicitis, ulcer disease, or diverticulitis.
                 
                 
@@ -327,7 +329,9 @@ Patient:
 Doctor, I am here because I have been experiencing chest pain for the past 3 days. It started out as a dull ache in my chest, but now it's a sharp pain that radiates down my left arm.
 
 ```Educator Comment:```
-A more empathic interaction would be: "Hi, I'm Dr. Smith and happy to see you. Please tell me what brings you here today. DDx: Several serious concerns including acute MI, acute PE, or aortic dissection are in the list. Understanding age, and associated symptoms can help. For example,
+A more empathic interaction would be: "Hi, I'm Dr. Smith and happy to see you. Please tell me what brings you here today. 
+
+DDx: Several serious concerns including acute MI, acute PE, or aortic dissection are in the list. Understanding age, and associated symptoms can help. For example,
 is there shortness of breath or a known history of heart disease.                
                 
 
@@ -352,7 +356,9 @@ Patient:
 Doctor, I am here because I have been experiencing bloody diarrhea for the past 3 days. I was traveling in Italy and stayed at the most amazing hotel in Rome with my family when it started. We had fantastic weather.
 
 ```Educator Comment:```
-A more empathic interaction would be: "Hi, I'm Dr. Smith and happy to see you. Please tell me what brings you here today. DDx: With travel, a diagnoses of e coli infection is a concern. Understanding whether there is fever, abdominal pain, or other symptoms can help narrow the DDx.
+A more empathic interaction would be: "Hi, I'm Dr. Smith and happy to see you. Please tell me what brings you here today. 
+
+DDx: With travel, a diagnoses of e coli infection is a concern. Understanding whether there is fever, abdominal pain, or other symptoms can help narrow the DDx.
                 
                 
 
@@ -377,7 +383,9 @@ Patient:
 Doctor, I am here because I have been experiencing new symptoms of ... 
 
 ```Educator Comment:```
-A more empathic interaction would be: "Hi, I'm Dr. Smith and happy to see you. Please tell me what brings you here today. DDx: ...                   
+A more empathic interaction would be: "Hi, I'm Dr. Smith and happy to see you. Please tell me what brings you here today. 
+
+DDx: ...                   
                 
 {history}
 Med Student: {human_input}
