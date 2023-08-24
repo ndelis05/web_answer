@@ -431,3 +431,14 @@ Impression: Unilocular pancreatic cyst. Given the size and characteristics of th
 Please correlate with clinical findings and patient history. Follow-up imaging or further diagnostic evaluation is recommended to monitor the cyst and to rule out any potential malignancy."""
 
 
+hpi_example = """HPI:
+
+Mr. Smith is a 59-year-old male with a past medical history of hypertension and hyperlipidemia who presents to the clinic today with a chief complaint of chest pain. The pain began approximately 2 days ago and has been intermittent in nature. He describes the pain as a "pressure-like" sensation located in the center of his chest. The pain does not radiate and is not associated with shortness of breath, nausea, or diaphoresis.
+
+He rates the pain as a 6/10 at its worst. He notes that the pain seems to be exacerbated by physical activity and relieved by rest. He has tried over-the-counter antacids with minimal relief. He denies any recent trauma to the chest or upper body. He has no known history of heart disease but his father had a myocardial infarction at the age of 62.
+
+He has not experienced any fever, cough, or other symptoms suggestive of a respiratory infection. He denies any recent travel or prolonged periods of immobility. He has not noticed any lower extremity swelling or discoloration.
+
+He is a former smoker but quit 10 years ago. He drinks alcohol socially and denies any illicit drug use. He is compliant with his antihypertensive medication and statin.
+
+In summary, this is a 59-year-old male with a history of hypertension and hyperlipidemia presenting with 2 days of intermittent, pressure-like chest pain worsened by physical activity and partially relieved by rest. The differential diagnosis includes angina, gastroesophageal reflux disease, and musculoskeletal pain, among others. Further evaluation is needed to clarify the etiology of his symptoms."""
