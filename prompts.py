@@ -442,3 +442,13 @@ He has not experienced any fever, cough, or other symptoms suggestive of a respi
 He is a former smoker but quit 10 years ago. He drinks alcohol socially and denies any illicit drug use. He is compliant with his antihypertensive medication and statin.
 
 In summary, this is a 59-year-old male with a history of hypertension and hyperlipidemia presenting with 2 days of intermittent, pressure-like chest pain worsened by physical activity and partially relieved by rest. The differential diagnosis includes angina, gastroesophageal reflux disease, and musculoskeletal pain, among others. Further evaluation is needed to clarify the etiology of his symptoms."""
+
+hpi_prompt = """Ignore prior instructions. DO NOT generate a Patient Response or an Educator Response. Instead, summarize the prior chat history in the format of a chief complaint (main symptom + duration) and an HPI (history of present illness). 
+Use the chat history for this. Do not use the educator's comments for this. Return ONLY a chief complaint and HPI section for a draft progress note. For example, return only the CC/HPI information as follows:
+
+Chief Complaint: 3 days of fever
+
+HPI: 3 days of fever, chills, and cough. The patient has been feeling tired and has had a headache. 
+He has not had any nausea, vomiting, or diarrhea. No recent travel.
+...
+"""

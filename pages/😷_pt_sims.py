@@ -252,11 +252,11 @@ if check_password2():
         clear_session_state_except_password_correct()
         st.session_state["last_response"] = "Patient Response: I can't believe I'm in the Emergency Room feeling sick!"
         
-    if create_hpi := st.sidebar.button("Create HPI (Wait until you have enough history.)"):
-        with st.sidebar:
-            hpi = llm_chain.run(prompt + " Now,  generate ONLY a chief complaint (symptom + duration) and HPI (all other history obtained) section of a progress note using the chat history. For content, use the Patient Response section and the human questions. Do not use the educator's comments for this. Return ONLY a chief complaint and HPI section of a note.")
-            st.write(hpi)
-            clear_session_state_except_password_correct()
+    if create_hpi := st.sidebar.button("Create HPI (Wait until you have enough history.)"):        
+        hpi = llm_chain.run(hpi_prompt)
+        st.sidebar.write(hpi)
+            # clear_session_state_except_password_correct()
+            # st.session_state["last_response"] = "Patient Response: I can't believe I'm in the Emergency Room feeling sick!"
     # Audio response section 
     # Define the URL and headers
     audio_url = "https://play.ht/api/v2/tts"
@@ -269,21 +269,22 @@ if check_password2():
     
     # st.write(st.session_state.last_response)
     # st.sidebar.write(response)
-    patient_section = extract_patient_response(st.session_state.last_response)
+    if st.session_state.last_response:
+        patient_section = extract_patient_response(st.session_state.last_response)
     # st.write(patient_section)
-    
-    # Define the data
-    data = {
-        "text": patient_section,
-        "voice": voice,
-    }
+        
+        # Define the data
+        data = {
+            "text": patient_section,
+            "voice": voice,
+        }
 
-    # Send the POST request
-    response_from_audio = requests.post(audio_url, headers=headers, data=json.dumps(data))
-    # st.sidebar.write(response_from_audio.text)
+        # Send the POST request
+        response_from_audio = requests.post(audio_url, headers=headers, data=json.dumps(data))
+        # st.sidebar.write(response_from_audio.text)
 
-    # Print the response
-    link_to_audio = extract_url(response_from_audio.text)
-    # st.write(link_to_audio)
-    autoplay_audio(link_to_audio)
+        # Print the response
+        link_to_audio = extract_url(response_from_audio.text)
+        # st.write(link_to_audio)
+        autoplay_audio(link_to_audio)
     
