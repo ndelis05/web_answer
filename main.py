@@ -420,10 +420,22 @@ if check_password():
         st.session_state.temp = st.slider("Select temperature (Higher values more creative but tangential and more error prone)", 0.0, 1.0, 0.3, 0.01)
         st.write("Last updated 8/12/23")
 
-    with st.sidebar.expander("Select GPT Model"):
-        st.session_state.model = st.selectbox("Select model (GPT4 is much more expensive and sometimes, not always, better than others.)", ("openai/gpt-3.5-turbo", "openai/gpt-3.5-turbo-16k", "openai/gpt-4", "anthropic/claude-instant-v1", "google/palm-2-chat-bison", "meta-llama/llama-2-70b-chat", ), index=1)
+    with st.sidebar.expander("Select a GPT Language Model", expanded=True):
+        st.session_state.model = st.selectbox("Model Options", ("openai/gpt-3.5-turbo", "openai/gpt-3.5-turbo-16k", "openai/gpt-4", "anthropic/claude-instant-v1", "google/palm-2-chat-bison", "meta-llama/llama-2-70b-chat", ), index=1)
         if st.session_state.model == "google/palm-2-chat-bison":
-            st.warning("The Google model doesn't stream the output, so open the dropdown with saved responses in the main window to see your new response!")
+            st.warning("The Google model doesn't stream the output, so open the dropdown with saved responses in the main window to see your new response! (Will add Med-Palm2 when it's available.)")
+            st.markdown("[Information on Google's Palm 2 Model](https://ai.google/discover/palm2/)")
+        if st.session_state.model == "openai/gpt-4":
+            st.warning("GPT-4 is much more expensive and sometimes, not always, better than others.")
+            st.markdown("[Information on OpenAI's GPT-4](https://platform.openai.com/docs/models/gpt-4)")
+        if st.session_state.model == "anthropic/claude-instant-v1":
+            st.markdown("[Information on Anthropic's Claude-Instant](https://www.anthropic.com/index/releasing-claude-instant-1-2)")
+        if st.session_state.model == "meta-llama/llama-2-70b-chat":
+            st.markdown("[Information on Meta's Llama2](https://ai.meta.com/llama/)")
+        if st.session_state.model == "openai/gpt-3.5-turbo":
+            st.markdown("[Information on OpenAI's GPT-3.5](https://platform.openai.com/docs/models/gpt-3-5)")
+        if st.session_state.model == "openai/gpt-3.5-turbo-16k":
+            st.markdown("[Information on OpenAI's GPT-3.5](https://platform.openai.com/docs/models/gpt-3-5)")
     
     tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Learn", "Draft Communication", "Patient Education", "Differential Diagnosis", "Sift the Web", "PDF Chat",])
    
