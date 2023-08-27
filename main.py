@@ -40,7 +40,7 @@ def fetch_api_key():
     
     try:
         # Attempt to retrieve the API key as a secret
-        api_key = st.secrets["OPENAI_API_KEY"]
+        api_key = st.secrets["OPENROUTER_API_KEY"]
         os.environ["OPENAI_API_KEY"] = api_key
     except KeyError:
         
@@ -243,6 +243,8 @@ def answer_using_prefix(prefix, sample_question, sample_answer, my_ask, temperat
     # model = 'gpt-3.5-turbo',
     model = st.session_state.model,
     messages = messages,
+    headers={ "HTTP-Referer": "https://fsm-gpt-med-ed.streamlit.app", # To identify your app
+          "X-Title": "GPT and Med Ed" },
     temperature = temperature,
     max_tokens = 500,
     stream = True,   
@@ -396,12 +398,15 @@ if 'openai_api_key' not in st.session_state:
     st.session_state.openai_api_key = ""
     
 if 'model' not in st.session_state:
-    st.session_state.model = "gpt-3.5-turbo"
+    st.session_state.model = "openai/gpt-3.5-turbo-16k"
     
 if 'temp' not in st.session_state:
     st.session_state.temp = 0.3
 
 if check_password():
+    
+    openai.api_base = "https://openrouter.ai/api/v1"
+    openai.api_key = st.secrets["OPENROUTER_API_KEY"]
 
     st.set_page_config(page_title='GPT and Med Ed', layout = 'centered', page_icon = ':stethoscope:', initial_sidebar_state = 'auto')
     st.title("GPT and Medical Education")
@@ -412,12 +417,14 @@ if check_password():
     with st.expander('About GPT and Med Ed - Important Disclaimer'):
         st.write("Author: David Liebovitz, MD, Northwestern University")
         st.info(disclaimer)
-        st.session_state.model = st.radio("Select model (Costs: $, $$, and $$$$)", ("gpt-3.5-turbo", "gpt-3.5-turbo-16k", "gpt-4"), index=1)
         st.session_state.temp = st.slider("Select temperature (Higher values more creative but tangential and more error prone)", 0.0, 1.0, 0.3, 0.01)
         st.write("Last updated 8/12/23")
 
-
-
+    with st.sidebar.expander("Select GPT Model"):
+        st.session_state.model = st.selectbox("Select model (Costs: $, $$, and $$$$)", ("openai/gpt-3.5-turbo", "openai/gpt-3.5-turbo-16k", "openai/gpt-4", "anthropic/claude-instant-v1", "google/palm-2-chat-bison", "meta-llama/llama-2-70b-chat", ), index=1)
+        if st.session_state.model == "google/palm-2-chat-bison":
+            st.warning("The Google model doesn't stream the output here, so open the View dropdown in the main window to see the response!")
+    
     tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Learn", "Draft Communication", "Patient Education", "Differential Diagnosis", "Sift the Web", "PDF Chat",])
    
     with tab1:

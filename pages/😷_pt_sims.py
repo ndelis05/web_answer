@@ -1,5 +1,6 @@
 from langchain.chains import LLMChain
 from langchain.llms import OpenAI
+from langchain.chat_models import ChatOpenAI
 from langchain.memory import ConversationBufferMemory
 from langchain.memory.chat_message_histories import StreamlitChatMessageHistory
 from langchain.prompts import PromptTemplate
@@ -132,6 +133,8 @@ def autoplay_audio(url: str):
     )
 
 def transcribe_audio(audio_file_path):
+    openai.api_base = "https://api.openai.com/v1"
+    openai.api_key = st.secrets["OPENAI_API_KEY"]
     with open(audio_file_path, 'rb') as audio_file:
         transcription = openai.Audio.transcribe("whisper-1", audio_file)
     return transcription['text']
@@ -143,7 +146,7 @@ if "last_response" not in st.session_state:
     st.session_state["last_response"] = "Patient Response: I can't believe I'm in the Emergency Room feeling sick!"
 
 if check_password2():
-    st.info("Enter your questions at the bottom of the page or choose the Microphone option. You may ask multiple questions at once. Have fun practicing!")
+    st.info("Enter your questions at the bottom of the page or choose the Microphone option. You may ask multiple questions at once. Have fun practicing! This tool uses openai's GPT3.5 turbo 16k model.")
     system_context = st.radio("Select an AI patient who comes to the ED with:", ("abdominal pain", "chest pain", "bloody diarrhea", "random symptoms", "You choose!"), horizontal = True, index=0)
     
 
@@ -203,7 +206,7 @@ if check_password2():
 
 
     prompt = PromptTemplate(input_variables=["history", "human_input"], template=template)
-    llm_chain = LLMChain(llm=OpenAI(openai_api_key=openai_api_key), prompt=prompt, memory=memory)
+    llm_chain = LLMChain(llm=ChatOpenAI(openai_api_key=openai_api_key, model = "gpt-3.5-turbo-16k"), prompt=prompt, memory=memory)
 
     # Render current messages from StreamlitChatMessageHistory
     for msg in msgs.messages:
