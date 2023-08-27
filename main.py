@@ -421,7 +421,7 @@ if check_password():
         st.write("Last updated 8/12/23")
 
     with st.sidebar.expander("Select GPT Model"):
-        st.session_state.model = st.selectbox("Select model (GPT4 much more expensive, better but slower than others!)", ("openai/gpt-3.5-turbo", "openai/gpt-3.5-turbo-16k", "openai/gpt-4", "anthropic/claude-instant-v1", "google/palm-2-chat-bison", "meta-llama/llama-2-70b-chat", ), index=1)
+        st.session_state.model = st.selectbox("Select model (GPT4 is much more expensive and a bit better but slower than others!)", ("openai/gpt-3.5-turbo", "openai/gpt-3.5-turbo-16k", "openai/gpt-4", "anthropic/claude-instant-v1", "google/palm-2-chat-bison", "meta-llama/llama-2-70b-chat", ), index=1)
         if st.session_state.model == "google/palm-2-chat-bison":
             st.warning("The Google model doesn't stream the output here, so open the View dropdown in the main window to see the response!")
     
