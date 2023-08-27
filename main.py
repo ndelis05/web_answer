@@ -527,7 +527,7 @@ if check_password():
             patient_message_prompt = f'Generate a message sent by a patient with {health_literacy_level} asking her physician for advice. The patient message should include the (random) patient name and is a {patient_message_type}. '
             with st.sidebar:
                 submitted_result = ""
-                if st.sidebar.button("Generate a Patient Message"):
+                if st.sidebar.button("Step 1: Generate a Patient Message"):
                     with col1:
                         st.session_state.sample_patient_message = answer_using_prefix(
                             sim_patient_context, 
@@ -540,7 +540,7 @@ if check_password():
                         if st.session_state.model == "google/palm-2-chat-bison":
                             st.write("Patient Message:", st.session_state.sample_patient_message)
                         
-            if st.button("Generate Response for Patient Message"):
+            if st.button("Step 2: Generate Response for Patient Message"):
                 try:
                     with col2:
                         pt_message_response = answer_using_prefix(
