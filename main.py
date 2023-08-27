@@ -527,22 +527,27 @@ if check_password():
             task = st.radio("What do you want to do?", ("Generate discharge instructions", "Annotate a patient result", "Respond to a patient message"))
 
         if task == "Respond to a patient message":
-            patient_message_type = st.sidebar.radio("Select a message type:", ("Patient message about symptoms", "Patient message about medications", "Patient message about medical problems", "Patient message about lifestyle advice"))
+            patient_message_type = st.sidebar.radio("Select a message type:", ("Patient message about symptoms", "Patient message about medications", "Patient message about medical problems", "Patient message about lifestyle advice", "Make your own and go to Step 2!"))
             patient_message_prompt = f'Generate a message sent by a patient with {health_literacy_level} asking her physician for advice. The patient message should include the (random) patient name and is a {patient_message_type}. '
-            with st.sidebar:
-                submitted_result = ""
-                if st.sidebar.button("Step 1: Generate a Patient Message"):
+            if patient_message_type != "Make your own and go to Step 2!":
+                with st.sidebar:
+                    # submitted_result = ""
+                    if st.sidebar.button("Step 1: Generate a Patient Message"):
+                        with col1:
+                            st.session_state.sample_patient_message = answer_using_prefix(
+                                sim_patient_context, 
+                                prompt_for_generating_patient_question, 
+                                sample_patient_question, 
+                                patient_message_prompt, 
+                                st.session_state.temp, 
+                                history_context="",
+                                )
+                            if st.session_state.model == "google/palm-2-chat-bison":
+                                st.write("Patient Message:", st.session_state.sample_patient_message)
+            else:
+                with st.sidebar:
                     with col1:
-                        st.session_state.sample_patient_message = answer_using_prefix(
-                            sim_patient_context, 
-                            prompt_for_generating_patient_question, 
-                            sample_patient_question, 
-                            patient_message_prompt, 
-                            st.session_state.temp, 
-                            history_context="",
-                            )
-                        if st.session_state.model == "google/palm-2-chat-bison":
-                            st.write("Patient Message:", st.session_state.sample_patient_message)
+                        st.session_state.sample_patient_message = st.text_area("Enter a patient message.", placeholder="e.g., I have a headache and I am worried about a brain tumor.", label_visibility='visible',)
                         
             if st.button("Step 2: Generate Response for Patient Message"):
                 try:
