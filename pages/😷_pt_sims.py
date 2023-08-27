@@ -218,6 +218,8 @@ if check_password2():
         if prompt := st.chat_input():
             st.chat_message("user").write(prompt)
             # Note: new messages are saved to history automatically by Langchain during run
+            openai.api_base = "https://api.openai.com/v1"
+            openai.api_key = st.secrets["OPENAI_API_KEY"]
             response = llm_chain.run(prompt)
             st.session_state.last_response = response
             st.chat_message("assistant").write(response)
