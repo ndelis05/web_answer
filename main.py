@@ -229,7 +229,7 @@ def websearch(web_query: str, deep) -> float:
         return response_data, urls
 
 
-@st.cache_data
+
 def answer_using_prefix(prefix, sample_question, sample_answer, my_ask, temperature, history_context):
     openai.api_key = os.environ['OPENAI_API_KEY']
     if history_context == None:
@@ -286,7 +286,7 @@ def load_docs(files):
     return all_text
 
 
-@st.cache_data
+
 def create_retriever(_embeddings, splits, retriever_type):
     # openai_api_key = st.secrets.OPENAI_API_KEY
     # if retriever_type == "SIMILARITY SEARCH":
@@ -309,7 +309,7 @@ def create_retriever(_embeddings, splits, retriever_type):
 
     return retriever
 
-@st.cache_data
+
 def split_texts(text, chunk_size, overlap, split_method):
 
     # Split texts
@@ -353,7 +353,7 @@ def generate_eval(text, N, chunk):
     eval_set_full = list(itertools.chain.from_iterable(eval_set))
     return eval_set_full
 
-@st.cache_data
+
 def fn_qa_run(_qa, user_question):
     response = _qa.run(user_question)
     start_time = time.time()
@@ -374,6 +374,8 @@ def fn_qa_run(_qa, user_question):
 if 'teaching_thread' not in st.session_state:
     st.session_state.teaching_thread = []
 
+if "pdf_retriever" not in st.session_state:
+    st.session_state.pdf_retriever = []
 
 if 'dc_history' not in st.session_state:
     st.session_state.dc_history = []
@@ -797,6 +799,7 @@ if check_password():
 
 
         if uploaded_files is not None:
+            # st.write("Yes, we have the file.")
             # Check if Uploaded_files is not in session_state or if uploaded_files are different from last_uploaded_files
             # if 'last_uploaded_files' not in st.session_state or st.session_state.last_uploaded_files != uploaded_files:
             st.session_state.last_uploaded_files = uploaded_files
@@ -804,7 +807,7 @@ if check_password():
                 del st.session_state['eval_set']
 
             # Load and process the uploaded PDF or TXT files.
-            loaded_text = load_docs(uploaded_files)
+            loaded_text = load_docs(st.session_state.last_uploaded_files)
             # st.write("Documents uploaded and 'read.'")
 
             # Split the document into chunks
@@ -819,8 +822,10 @@ if check_password():
                 # Embed using OpenAI embeddings or HuggingFace embeddings
 
             embeddings = OpenAIEmbeddings()
+            
 
-            retriever = create_retriever(embeddings, splits, retriever_type)
+
+            st.session_state.pdf_retriever = create_retriever(embeddings, splits, retriever_type)
 
 
             # Initialize the RetrievalQA chain with streaming output
@@ -831,7 +836,7 @@ if check_password():
                 streaming=False, callback_manager=callback_manager, verbose=True, temperature=0.3)
             
             
-            _qa = RetrievalQA.from_chain_type(llm=chat_openai, retriever=retriever, chain_type="stuff", verbose=False)
+            _qa = RetrievalQA.from_chain_type(llm=chat_openai, retriever=st.session_state.pdf_retriever, chain_type="stuff", verbose=False)
 
             
         
@@ -863,13 +868,11 @@ if check_password():
                 # Question and answering
     
             pdf_chat_option = st.radio("Select an Option", ("Summary", "Custom Question"))
-            if pdf_chat_option == "Key facts":
-                user_question = "Focus on medical content in the context. Include assertions or observations from the full context."
             if pdf_chat_option == "Summary":
                 user_question = "Summary: Using context provided, generate a concise and comprehensive summary. Key Points: Generate a list of Key Points by using a conclusion section if present and the full context otherwise."
             if pdf_chat_option == "Custom Question":
                 user_question = st.text_input("Please enter your own question about the PDF(s):")
-                user_question = "Use only the reference document for knowledge. Question: " + user_question
+                user_question = "Using context provided, answer the user question: " + user_question
             
             if st.button("Generate a Response"):
                 index_context = f'Use only the reference document for knowledge. Question: {user_question}'
