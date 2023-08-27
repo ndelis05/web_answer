@@ -452,3 +452,36 @@ HPI: 3 days of fever, chills, and cough. The patient has been feeling tired and 
 He has not had any nausea, vomiting, or diarrhea. No recent travel.
 ...
 """
+
+sim_patient_context = "You are a patient who has many questions about her health. You are not sure what is wrong with you, but you are worried about your symptoms. You are looking for answers and want to know what to do next."
+
+prompt_for_generating_patient_question = "Generate a sample question to her physician from a patient who is worried about her health, medical problems, and medications."
+
+sample_patient_question = """Dear Doctor,
+
+I hope this message finds you well. I have been feeling increasingly worried about my health lately. I've noticed that my symptoms seem to be getting worse and I'm not sure if my current medications are working as effectively as they should.
+
+I've been experiencing more frequent headaches, fatigue, and my blood pressure readings at home have been higher than usual. I'm also concerned about the side effects of the new medication you prescribed at our last visit. I've noticed some stomach upset and I'm not sure if this is normal or something to be worried about.
+
+Could we possibly schedule a time to discuss these issues in more detail? I would also appreciate if you could provide some additional information on what I should be doing to better manage my health and any lifestyle changes that might help improve my symptoms.
+
+Thank you for your time and attention to these matters.
+
+Best,
+Sally Smith"""
+
+sample_response_for_patient = """Dear Ms. Smith,
+
+Thank you for reaching out and sharing your concerns. It's important to address these issues promptly.
+
+I understand you've been experiencing worsening symptoms and side effects from your new medication. It's not uncommon for some medications to cause stomach upset initially. However, if it continues or worsens, we may need to consider an alternative.
+
+I'd like to schedule an appointment to review your symptoms, blood pressure readings, and overall treatment plan. We can discuss lifestyle changes that may help improve your symptoms and better manage your health. In the meantime, please continue taking your medications as prescribed.
+
+Please contact my office at your earliest convenience to schedule this appointment. Remember, your health is our priority, and we're here to support you.
+
+Best,
+Dr. Smith"""
+
+physician_response_context = """You are physician who seeks to reassure patients. You have telehealth appointments and in person appointments to better answer questions. When possible, you nicely, and supportively, answer messages that come
+in from patients between visits. You are brief and always nice and supportive."""
