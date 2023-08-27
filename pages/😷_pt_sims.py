@@ -257,7 +257,9 @@ if check_password2():
         clear_session_state_except_password_correct()
         st.session_state["last_response"] = "Patient Response: I can't believe I'm in the Emergency Room feeling sick!"
         
-    if create_hpi := st.sidebar.button("Create HPI (Wait until you have enough history.)"):        
+    if create_hpi := st.sidebar.button("Create HPI (Wait until you have enough history.)"):    
+        openai.api_base = "https://api.openai.com/v1"
+        openai.api_key = st.secrets["OPENAI_API_KEY"]    
         hpi = llm_chain.run(hpi_prompt)
         st.sidebar.write(hpi)
             # clear_session_state_except_password_correct()
