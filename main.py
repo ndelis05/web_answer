@@ -429,7 +429,7 @@ if check_password():
     with st.sidebar.expander("Select a GPT Language Model", expanded=True):
         st.session_state.model = st.selectbox("Model Options", ("openai/gpt-3.5-turbo", "openai/gpt-3.5-turbo-16k", "openai/gpt-4", "anthropic/claude-instant-v1", "google/palm-2-chat-bison", "meta-llama/llama-2-70b-chat", ), index=1)
         if st.session_state.model == "google/palm-2-chat-bison":
-            st.warning("The Google model doesn't stream the output, so open the dropdown with saved responses in the main window to see your new response! (Will add Med-Palm2 when it's available.)")
+            st.warning("The Google model doesn't stream the output, but it's fast. (Will add Med-Palm2 when it's available.)")
             st.markdown("[Information on Google's Palm 2 Model](https://ai.google/discover/palm2/)")
         if st.session_state.model == "openai/gpt-4":
             st.warning("GPT-4 is much more expensive and sometimes, not always, better than others.")
@@ -486,6 +486,10 @@ if check_password():
             # st.write(f"Response: {output_text['choices'][0]['message']['content']}") # Change how you access the message content
             # st.write(list(output_text))
             # st.session_state.output_history.append((output_text['choices'][0]['message']['content']))
+            
+            if st.session_state.model == "google/palm-2-chat-bison":
+                st.write("Answer:", output_text)
+            
             st.session_state.output_history.append((output_text))
             
         if st.button("Clear Memory (when you don't want to send prior context)"):
@@ -581,6 +585,8 @@ if check_password():
                         st.session_state.temp, 
                         history_context="",
                         )
+                    if st.session_state.model == "google/palm-2-chat-bison":
+                        st.write("DC Instructions:", dc_text)
                     st.session_state.dc_history.append((dc_text))  
                 except:
                     st.write("Error - please try again")
@@ -633,6 +639,8 @@ if check_password():
                                 st.session_state.temp, 
                                 history_context="",
                                 )
+                            if st.session_state.model == "google/palm-2-chat-bison":
+                                st.write("Answer:", st.session_state.sample_report)
                         
             
             
@@ -649,7 +657,10 @@ if check_password():
                             report_prompt, 
                             st.session_state.temp, 
                             history_context="",
-                            )                    
+                            )   
+                        
+                        if st.session_state.model == "google/palm-2-chat-bison":
+                            st.write("Answer:", annotate_text)                 
 
                         st.session_state.annotate_history.append((annotate_text))
                     with col1:
@@ -739,6 +750,8 @@ if check_password():
 
             if st.button("Generate Alternative Diagnoses"):
                 alt_dx_output_text = answer_using_prefix(alt_dx_prefix, alt_dx_sample_question, alt_dx_sample_answer, alt_dx_prompt, temperature=0.0, history_context='')
+                if st.session_state.model == "google/palm-2-chat-bison":
+                    st.write("Alternative Diagnoses:", alt_dx_output_text)
                 alt_dx_download_str = []
                 with st.expander("Alternative Diagnoses Draft", expanded=False):
                     st.info(f'Topic: {alt_dx_prompt}',icon="🧐")
@@ -769,6 +782,8 @@ if check_password():
         if st.button("Click to Generate **Draft** Custom Patient Education Materials"):
             st.info("Review all content carefully before considering any use!")
             pt_ed_output_text = answer_using_prefix(pt_ed_system_content, sample_topic, pt_ed_content_sample, my_ask_for_pt_ed, patient_ed_temp, history_context="")
+            if st.session_state.model == "google/palm-2-chat-bison":
+                st.write("Patient Education:", pt_ed_output_text)
 
             
             pt_ed_download_str = []
@@ -818,6 +833,8 @@ if check_password():
                 raw_output = json.dumps(raw_output)
             raw_output = limit_tokens(raw_output, 8000)
             skim_output_text = answer_using_prefix(interpret_search_results_prefix, "", '', my_ask_for_websearch, search_temp, history_context=raw_output)
+            if st.session_state.model == "google/palm-2-chat-bison":
+                st.write("Answer:", skim_output_text)
 
             
             skim_download_str = []
