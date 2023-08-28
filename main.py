@@ -129,6 +129,8 @@ def limit_tokens(text, max_tokens=10000):
 
 def scrapeninja(url_list, max):
     # st.write(url_list)
+    if max > 5:
+        max = 5
     response_complete = []
     i = 0
     method = "POST"
@@ -184,7 +186,7 @@ def scrapeninja(url_list, max):
     # return full_response
 
 
-def websearch(web_query: str, deep) -> float:
+def websearch(web_query: str, deep, max) -> float:
     """
     Obtains real-time search results from across the internet. 
     Supports all Google Advanced Search operators such (e.g. inurl:, site:, intitle:, etc).
@@ -220,7 +222,7 @@ def websearch(web_query: str, deep) -> float:
         urls.append(item['url'])    
     if deep:
             # st.write(item['url'])
-        response_data = scrapeninja(urls, 2)
+        response_data = scrapeninja(urls, max)
         st.info("Web results reviewed.")
         return response_data, urls
 
@@ -809,7 +811,9 @@ if check_password():
         st.warning("This is just skimming the internet for medical answers even with the `deep` option. It is NOT reliable nor is it a replacement for a full medical reference. More development to come.")
         search_temp = st.session_state.temp
         deep = st.checkbox("Deep search (even more experimental)", value=False)
-        domain = "Only use reputable sites "
+        if deep:
+            max = st.slider("Max number of sites to analyze deeply", 1, 5, 1)
+        domain = "Analyze only reputable sites."
                  
         set_domain = st.selectbox("Select a domain to emphasize:", ( "Medscape.com", "CDC.gov", "You specify a domain", "Any", ))
         if set_domain == "UpToDate.com":
@@ -833,7 +837,7 @@ if check_password():
         
         if st.button("Enter your question for a fun (NOT authoritative) draft websearch tool"):
             st.info("Review all content carefully before considering any use!")
-            raw_output, urls = websearch(my_ask_for_websearch, deep)
+            raw_output, urls = websearch(my_ask_for_websearch, deep, max)
             if not deep:
                 raw_output = json.dumps(raw_output)
             raw_output = limit_tokens(raw_output, 8000)
