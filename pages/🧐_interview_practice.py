@@ -172,7 +172,7 @@ if check_password2():
     st.write("_________________________________________________________")
 
     # Set up memory
-    msgs_interview = StreamlitChatMessageHistory(key="langchain_messages")
+    msgs_interview = StreamlitChatMessageHistory(key="langchain_messages_interview")
     memory = ConversationBufferMemory(chat_memory=msgs_interview)
     if len(msgs_interview.messages) == 0:
         msgs_interview.add_ai_message("Hi, I'm Dr. Smith! Nice to meet you!")

@@ -31,7 +31,7 @@ def extract_url(text):
         url = match.group(1)
         return url
     else:
-        st.write("Error generating audio... Try again in a moment")
+        # st.write("Error generating audio... Try again in a moment")
         return None
 
 def extract_url_old(output):
@@ -306,5 +306,6 @@ if check_password2():
         # Print the response
         link_to_audio = extract_url(response_from_audio.text)
         # st.write(link_to_audio)
-        autoplay_audio(link_to_audio)
+        if link_to_audio:
+            autoplay_audio(link_to_audio)
     
