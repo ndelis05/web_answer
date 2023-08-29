@@ -19,7 +19,7 @@ import re
 
 
 st.set_page_config(page_title="Interview Practice!", page_icon="🧐")
-st.title("📖 Chat with Interviewers")
+st.title("📖 Practice for Residency/Fellowship Interviews")
 
 def extract_url(text):
     # Use regular expressions to find the URL pattern
