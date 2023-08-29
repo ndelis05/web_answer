@@ -19,7 +19,7 @@ import re
 
 
 st.set_page_config(page_title="Interview Practice!", page_icon="🧐")
-st.title("📖 Practice for Residency/Fellowship Interviews")
+st.title("🧐 Interview Practice")
 
 def extract_url(text):
     # Use regular expressions to find the URL pattern
@@ -129,7 +129,7 @@ if "last_response" not in st.session_state:
     st.session_state["last_response"] = "Patient Response: I can't believe I'm in the Emergency Room feeling sick!"
 
 if check_password2():
-    st.info("Enter your questions at the bottom of the page or choose the Microphone option. You may ask multiple questions at once. Have fun practicing! This tool uses openai's GPT3.5 turbo 16k model.")
+    st.info("Have fun. Enter responses at the bottom of the page or choose the Microphone option. This tool uses openai's GPT3.5 turbo 16k model.")
     system_context = st.radio("Select an interviewer type :", ("Tough", "Nice",), horizontal = True, index=0)
     specialty = st.text_input("Enter your specialty", placeholder="e.g. Emergency Medicine")
     position = st.text_input("Enter your position", placeholder="e.g. resident")
