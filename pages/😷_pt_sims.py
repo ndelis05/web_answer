@@ -14,15 +14,27 @@ import json
 import base64
 import openai
 import os
+import re
 
 
 
 st.set_page_config(page_title="AI Patients", page_icon="📖")
 st.title("📖 Chat with AI Patients")
 
+def extract_url(text):
+    # Use regular expressions to find the URL pattern
+    pattern = r"url\":\"(.*?)\""
+    match = re.search(pattern, text)
+    
+    if match:
+        # Extract the URL from the matched pattern
+        url = match.group(1)
+        return url
+    else:
+        st.write("Error generating audio... Try again in a moment")
+        return None
 
-
-def extract_url(output):
+def extract_url_old(output):
     # Split the output into lines
     lines = output.split('\n')
     
@@ -289,7 +301,8 @@ if check_password2():
         # Send the POST request
         response_from_audio = requests.post(audio_url, headers=headers, data=json.dumps(data))
         # st.sidebar.write(response_from_audio.text)
-
+        # st.write(f'Audio full: {response_from_audio.text}')
+        # st.write(f'Audio url: {response_from_audio.json()}')
         # Print the response
         link_to_audio = extract_url(response_from_audio.text)
         # st.write(link_to_audio)
