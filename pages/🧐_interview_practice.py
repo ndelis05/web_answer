@@ -126,7 +126,7 @@ if "audio_input" not in st.session_state:
     st.session_state["audio_input"] = ""
     
 if "last_response" not in st.session_state:
-    st.session_state["last_response"] = "Patient Response: I can't believe I'm in the Emergency Room feeling sick!"
+    st.session_state["last_response"] = "Hi, I'm Dr. Smith! Nice to meet you!"
 
 if check_password2():
     st.info("Have fun. Enter responses at the bottom of the page or choose the Microphone option. This tool uses openai's GPT3.5 turbo 16k model.")
