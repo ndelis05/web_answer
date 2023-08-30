@@ -151,6 +151,9 @@ def transcribe_audio(audio_file_path):
         transcription = openai.Audio.transcribe("whisper-1", audio_file)
     return transcription['text']
 
+if "audio_off" not in st.session_state:
+    st.session_state["audio_off"] = False
+
 if "audio_input" not in st.session_state:
     st.session_state["audio_input"] = ""
     
@@ -212,6 +215,7 @@ if check_password2():
         st.stop()
 
     input_source = st.radio("Input source", ("Text", "Microphone"), index=0)
+    st.session_state.audio_off = st.checkbox("Turn off voice generation", value=False) 
     
 
 
@@ -278,34 +282,37 @@ if check_password2():
             # st.session_state["last_response"] = "Patient Response: I can't believe I'm in the Emergency Room feeling sick!"
     # Audio response section 
     # Define the URL and headers
-    audio_url = "https://play.ht/api/v2/tts"
-    headers = {
-        "AUTHORIZATION": f"Bearer {st.secrets['HT_API_KEY']}",
-        "X-USER-ID": st.secrets["X-USER-ID"],
-        "accept": "text/event-stream",
-        "content-type": "application/json",
-    }
     
-    # st.write(st.session_state.last_response)
-    # st.sidebar.write(response)
-    if st.session_state.last_response:
-        patient_section = extract_patient_response(st.session_state.last_response)
-    # st.write(patient_section)
-        
-        # Define the data
-        data = {
-            "text": patient_section,
-            "voice": voice,
+    if st.session_state.audio_off == False:
+    
+        audio_url = "https://play.ht/api/v2/tts"
+        headers = {
+            "AUTHORIZATION": f"Bearer {st.secrets['HT_API_KEY']}",
+            "X-USER-ID": st.secrets["X-USER-ID"],
+            "accept": "text/event-stream",
+            "content-type": "application/json",
         }
+        
+        # st.write(st.session_state.last_response)
+        # st.sidebar.write(response)
+        if st.session_state.last_response:
+            patient_section = extract_patient_response(st.session_state.last_response)
+        # st.write(patient_section)
+            
+            # Define the data
+            data = {
+                "text": patient_section,
+                "voice": voice,
+            }
 
-        # Send the POST request
-        response_from_audio = requests.post(audio_url, headers=headers, data=json.dumps(data))
-        # st.sidebar.write(response_from_audio.text)
-        # st.write(f'Audio full: {response_from_audio.text}')
-        # st.write(f'Audio url: {response_from_audio.json()}')
-        # Print the response
-        link_to_audio = extract_url(response_from_audio.text)
-        # st.write(link_to_audio)
-        if link_to_audio:
-            autoplay_audio(link_to_audio)
+            # Send the POST request
+            response_from_audio = requests.post(audio_url, headers=headers, data=json.dumps(data))
+            # st.sidebar.write(response_from_audio.text)
+            # st.write(f'Audio full: {response_from_audio.text}')
+            # st.write(f'Audio url: {response_from_audio.json()}')
+            # Print the response
+            link_to_audio = extract_url(response_from_audio.text)
+            # st.write(link_to_audio)
+            if link_to_audio:
+                autoplay_audio(link_to_audio)
     
