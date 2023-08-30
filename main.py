@@ -581,14 +581,25 @@ if check_password():
                     # submitted_result = ""
                     if st.sidebar.button("Step 1: Generate a Patient Message"):
                         with col1:
-                            st.session_state.sample_patient_message = answer_using_prefix(
-                                sim_patient_context, 
-                                prompt_for_generating_patient_question, 
-                                sample_patient_question, 
-                                patient_message_prompt, 
-                                st.session_state.temp, 
-                                history_context="",
-                                )
+                            if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-16k" or st.session_state.model == "openai/gpt-4":
+                                st.session_state.sample_patient_message = answer_using_prefix_openai(
+                                    sim_patient_context, 
+                                    prompt_for_generating_patient_question, 
+                                    sample_patient_question, 
+                                    patient_message_prompt, 
+                                    st.session_state.temp, 
+                                    history_context="",
+                                    )
+                            else:
+
+                                st.session_state.sample_patient_message = answer_using_prefix(
+                                    sim_patient_context, 
+                                    prompt_for_generating_patient_question, 
+                                    sample_patient_question, 
+                                    patient_message_prompt, 
+                                    st.session_state.temp, 
+                                    history_context="",
+                                    )
                             if st.session_state.model == "google/palm-2-chat-bison":
                                 st.write("Patient Message:", st.session_state.sample_patient_message)
             else:
@@ -599,14 +610,24 @@ if check_password():
             if st.button("Step 2: Generate Response for Patient Message"):
                 try:
                     with col2:
-                        pt_message_response = answer_using_prefix(
-                            physician_response_context, 
-                            sample_patient_question, 
-                            sample_response_for_patient,
-                            st.session_state.sample_patient_message, 
-                            st.session_state.temp, 
-                            history_context="",
-                            )                    
+                        if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-16k" or st.session_state.model == "openai/gpt-4":
+                            pt_message_response = answer_using_prefix_openai(
+                                physician_response_context, 
+                                sample_patient_question, 
+                                sample_response_for_patient,
+                                st.session_state.sample_patient_message, 
+                                st.session_state.temp, 
+                                history_context="",
+                                )   
+                        else:
+                            pt_message_response = answer_using_prefix(
+                                physician_response_context, 
+                                sample_patient_question, 
+                                sample_response_for_patient,
+                                st.session_state.sample_patient_message, 
+                                st.session_state.temp, 
+                                history_context="",
+                                )                    
                         if st.session_state.model == "google/palm-2-chat-bison":
                             st.write("Draft Response:", pt_message_response)
 
@@ -629,14 +650,25 @@ if check_password():
             dc_instructions_needs = f'Generate discharge instructions for a patient as if it is authored by a physician for her patient with {health_literacy_level} discharged following {reason_for_hospital_stay} with this {surg_procedure}, {other_concerns} on {dc_meds}'
             if st.button("Generate Discharge Instructions"):
                 try:
-                    dc_text = answer_using_prefix(
-                        dc_instructions_prompt, 
-                        procedure_example, 
-                        dc_instructions_example, 
-                        dc_instructions_needs, 
-                        st.session_state.temp, 
-                        history_context="",
-                        )
+                    if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-16k" or st.session_state.model == "openai/gpt-4":
+                        dc_text = answer_using_prefix_openai(
+                            dc_instructions_prompt, 
+                            procedure_example, 
+                            dc_instructions_example, 
+                            dc_instructions_needs, 
+                            st.session_state.temp, 
+                            history_context="",
+                            )
+                    
+                    else:
+                        dc_text = answer_using_prefix(
+                            dc_instructions_prompt, 
+                            procedure_example, 
+                            dc_instructions_example, 
+                            dc_instructions_needs, 
+                            st.session_state.temp, 
+                            history_context="",
+                            )
                     if st.session_state.model == "google/palm-2-chat-bison":
                         st.write("DC Instructions:", dc_text)
                     st.session_state.dc_history.append((dc_text))  
@@ -683,14 +715,24 @@ if check_password():
                     submitted_result = ""
                     if st.sidebar.button("Generate Sample Report"):
                         with col1:
-                            st.session_state.sample_report = answer_using_prefix(
-                                report_prompt, 
-                                user_report_request, 
-                                generated_report_example, 
-                                type_of_report, 
-                                st.session_state.temp, 
-                                history_context="",
-                                )
+                            if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-16k" or st.session_state.model == "openai/gpt-4":
+                                st.session_state.sample_report = answer_using_prefix_openai(
+                                    report_prompt, 
+                                    user_report_request, 
+                                    generated_report_example, 
+                                    type_of_report, 
+                                    st.session_state.temp, 
+                                    history_context="",
+                                    )
+                            else:
+                                st.session_state.sample_report = answer_using_prefix(
+                                    report_prompt, 
+                                    user_report_request, 
+                                    generated_report_example, 
+                                    type_of_report, 
+                                    st.session_state.temp, 
+                                    history_context="",
+                                    )
                             if st.session_state.model == "google/palm-2-chat-bison":
                                 st.write("Answer:", st.session_state.sample_report)
                         
@@ -702,14 +744,25 @@ if check_password():
             if st.button("Generate Annotation"):
                 try:
                     with col2:
-                        annotate_text = answer_using_prefix(
-                            annotate_prompt, 
-                            report1, 
-                            annotation_example,
-                            report_prompt, 
-                            st.session_state.temp, 
-                            history_context="",
-                            )   
+                        if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-16k" or st.session_state.model == "openai/gpt-4":
+                            annotate_text = answer_using_prefix_openai(
+                                annotate_prompt, 
+                                report1, 
+                                annotation_example,
+                                report_prompt, 
+                                st.session_state.temp, 
+                                history_context="",
+                                )   
+                            
+                        else:
+                            annotate_text = answer_using_prefix(
+                                annotate_prompt, 
+                                report1, 
+                                annotation_example,
+                                report_prompt, 
+                                st.session_state.temp, 
+                                history_context="",
+                                )   
                         
                         if st.session_state.model == "google/palm-2-chat-bison":
                             st.write("Answer:", annotate_text)                 
@@ -781,7 +834,11 @@ if check_password():
             
             if st.button("Generate Differential Diagnosis"):
                 # Your differential diagnosis generation code goes here
-                ddx_output_text = answer_using_prefix(ddx_prefix, ddx_sample_question, ddx_sample_answer, ddx_prompt, temperature=0.3, history_context='')
+                if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-16k" or st.session_state.model == "openai/gpt-4":
+                    ddx_output_text = answer_using_prefix_openai(ddx_prefix, ddx_sample_question, ddx_sample_answer, ddx_prompt, temperature=0.3, history_context='')
+                    
+                else:
+                    ddx_output_text = answer_using_prefix(ddx_prefix, ddx_sample_question, ddx_sample_answer, ddx_prompt, temperature=0.3, history_context='')
                 # st.write("Differential Diagnosis will appear here...")
                 
                 ddx_download_str = []
@@ -801,7 +858,11 @@ if check_password():
             alt_dx_prompt = st.text_input("Enter your presumed diagnosis.")
 
             if st.button("Generate Alternative Diagnoses"):
-                alt_dx_output_text = answer_using_prefix(alt_dx_prefix, alt_dx_sample_question, alt_dx_sample_answer, alt_dx_prompt, temperature=0.0, history_context='')
+                if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-16k" or st.session_state.model == "openai/gpt-4":
+                    alt_dx_output_text = answer_using_prefix_openai(alt_dx_prefix, alt_dx_sample_question, alt_dx_sample_answer, alt_dx_prompt, temperature=0.0, history_context='')
+                    
+                else:
+                    alt_dx_output_text = answer_using_prefix(alt_dx_prefix, alt_dx_sample_question, alt_dx_sample_answer, alt_dx_prompt, temperature=0.0, history_context='')
                 if st.session_state.model == "google/palm-2-chat-bison":
                     st.write("Alternative Diagnoses:", alt_dx_output_text)
                 alt_dx_download_str = []
@@ -833,7 +894,11 @@ if check_password():
         my_ask_for_pt_ed = my_ask_for_pt_ed + "with health literacy level: " + pt_ed_health_literacy
         if st.button("Click to Generate **Draft** Custom Patient Education Materials"):
             st.info("Review all content carefully before considering any use!")
-            pt_ed_output_text = answer_using_prefix(pt_ed_system_content, sample_topic, pt_ed_content_sample, my_ask_for_pt_ed, patient_ed_temp, history_context="")
+            if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-16k" or st.session_state.model == "openai/gpt-4":
+                pt_ed_output_text = answer_using_prefix_openai(pt_ed_system_content, sample_topic, pt_ed_content_sample, my_ask_for_pt_ed, patient_ed_temp, history_context="")
+                
+            else:
+                pt_ed_output_text = answer_using_prefix(pt_ed_system_content, sample_topic, pt_ed_content_sample, my_ask_for_pt_ed, patient_ed_temp, history_context="")
             if st.session_state.model == "google/palm-2-chat-bison":
                 st.write("Patient Education:", pt_ed_output_text)
 
@@ -886,7 +951,11 @@ if check_password():
             if not deep:
                 raw_output = json.dumps(raw_output)
             raw_output = limit_tokens(raw_output, 8000)
-            skim_output_text = answer_using_prefix(interpret_search_results_prefix, "", '', my_ask_for_websearch, search_temp, history_context=raw_output)
+            if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-16k" or st.session_state.model == "openai/gpt-4":
+                skim_output_text = answer_using_prefix_openai(interpret_search_results_prefix, "", '', my_ask_for_websearch, search_temp, history_context=raw_output)
+                
+            else:
+                skim_output_text = answer_using_prefix(interpret_search_results_prefix, "", '', my_ask_for_websearch, search_temp, history_context=raw_output)
             if st.session_state.model == "google/palm-2-chat-bison":
                 st.write("Answer:", skim_output_text)
 
