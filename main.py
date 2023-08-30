@@ -231,6 +231,47 @@ def websearch(web_query: str, deep, max) -> float:
         return response_data, urls
 
 
+def answer_using_prefix_openai(prefix, sample_question, sample_answer, my_ask, temperature, history_context):
+    openai.api_base = "https://api.openai.com/v1/"
+    openai.api_key = st.secrets['OPENAI_API_KEY']
+    if st.session_state.model == "openai/gpt-3.5-turbo":
+        model = "gpt-3.5-turbo"
+    if st.session_state.model == "openai/gpt-3.5-turbo-16k":
+        model = "gpt-3.5-turbo-16k"
+    if st.session_state.model == "openai/gpt-4":
+        model = "gpt-4"
+    if history_context == None:
+        history_context = ""
+    messages = [{'role': 'system', 'content': prefix},
+            {'role': 'user', 'content': sample_question},
+            {'role': 'assistant', 'content': sample_answer},
+            {'role': 'user', 'content': history_context + my_ask},]
+    # history_context = "Use these preceding submissions to address any ambiguous context for the input weighting the first three items most: \n" + "\n".join(st.session_state.history) + "now, for the current question: \n"
+    completion = openai.ChatCompletion.create( # Change the function Completion to ChatCompletion
+    # model = 'gpt-3.5-turbo',
+    model = model,
+    messages = messages,
+    temperature = temperature,
+    max_tokens = 500,
+    stream = True,   
+    )
+        
+    start_time = time.time()
+    delay_time = 0.01
+    answer = ""
+    full_answer = ""
+    c = st.empty()
+    for event in completion:        
+        c.markdown(answer)
+        event_time = time.time() - start_time
+        event_text = event['choices'][0]['delta']
+        answer += event_text.get('content', '')
+        full_answer += event_text.get('content', '')
+        time.sleep(delay_time)
+    # st.write(history_context + prefix + my_ask)
+    # st.write(full_answer)
+    return full_answer # Change how you access the message content
+
 
 def answer_using_prefix(prefix, sample_question, sample_answer, my_ask, temperature, history_context):
     openai.api_key = os.environ['OPENAI_API_KEY']
@@ -244,9 +285,10 @@ def answer_using_prefix(prefix, sample_question, sample_answer, my_ask, temperat
     completion = openai.ChatCompletion.create( # Change the function Completion to ChatCompletion
     # model = 'gpt-3.5-turbo',
     model = st.session_state.model,
+    route = "fallback",
     messages = messages,
     headers={ "HTTP-Referer": "https://fsm-gpt-med-ed.streamlit.app", # To identify your app
-          "X-Title": "GPT and Med Ed" },
+          "X-Title": "GPT and Med Ed"},
     temperature = temperature,
     max_tokens = 500,
     stream = True,   
@@ -479,7 +521,10 @@ if check_password():
             openai.api_key = os.environ['OPENAI_API_KEY']
             st.session_state.history.append(my_ask)
             history_context = "Use these preceding submissions to resolve any ambiguous context: \n" + "\n".join(st.session_state.history) + "now, for the current question: \n"
-            output_text = answer_using_prefix(system_context, sample_question, sample_response, my_ask, st.session_state.temp, history_context=history_context)
+            if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-16k" or st.session_state.model == "openai/gpt-4":
+                output_text = answer_using_prefix_openai(system_context, sample_question, sample_response, my_ask, st.session_state.temp, history_context=history_context)
+            else:
+                output_text = answer_using_prefix(system_context, sample_question, sample_response, my_ask, st.session_state.temp, history_context=history_context)
             # st.session_state.my_ask = ''
             # st.write("Answer", output_text)
             
