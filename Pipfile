@@ -19,8 +19,8 @@ faiss-cpu = "*"
 pdfplumber = "*"
 beautifulsoup4 = "*"
 audio-recorder-streamlit = "*"
+nltk = "*"
 
 [dev-packages]
 
 [requires]
-

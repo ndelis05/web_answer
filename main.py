@@ -21,6 +21,15 @@ from langchain.callbacks.manager import CallbackManager
 from langchain.chains import QAGenerationChain
 from langchain.vectorstores import FAISS
 import pdfplumber
+import nltk
+from nltk.tokenize import word_tokenize
+
+def truncate_text(text, max_tokens):
+    tokens = word_tokenize(text)
+    truncated_tokens = tokens[:max_tokens]
+    truncated_text = ' '.join(truncated_tokens)
+    return truncated_text
+
 
 def clear_session_state_except_password_correct():
     # Make a copy of the session_state keys
@@ -197,7 +206,7 @@ def websearch(web_query: str, deep, max) -> float:
     :rtype: json
     
     """
-    st.info(f'Here is the websearch input: **{web_query}**')
+    # st.info(f'Here is the websearch input: **{web_query}**')
     url = "https://real-time-web-search.p.rapidapi.com/search"
     querystring = {"q":web_query,"limit":"10"}
     headers = {
@@ -223,11 +232,11 @@ def websearch(web_query: str, deep, max) -> float:
     if deep:
             # st.write(item['url'])
         response_data = scrapeninja(urls, max)
-        st.info("Web results reviewed.")
+        # st.info("Web results reviewed.")
         return response_data, urls
 
     else:
-        st.info("Web snippets reviewed.")
+        # st.info("Web snippets reviewed.")
         return response_data, urls
 
 
@@ -948,14 +957,32 @@ if check_password():
         if st.button("Enter your question for a fun (NOT authoritative) draft websearch tool"):
             st.info("Review all content carefully before considering any use!")
             raw_output, urls = websearch(my_ask_for_websearch, deep, max)
+            
             if not deep:
-                raw_output = json.dumps(raw_output)
-            raw_output = limit_tokens(raw_output, 8000)
+                # raw_output = json.dumps(raw_output)
+                new_text = ""
+                i = 0
+                for item in raw_output["data"]:
+                    snippet = item["snippet"]
+                    domain = item["domain"]
+                    new_text += f"Snippet: {snippet} from domain: {domain}\n\n"
+                raw_output = new_text
+                with st.expander("Content Reviewed", expanded=False):
+                    st.write(raw_output)
+                    # st.write(urls)
+            else:
+                raw_output = truncate_text(raw_output, 1000)
+                with st.expander("Content reviewed", expanded=False):
+                # raw_output = limit_tokens(raw_output, 8000)
+                    st.write(f'Truncated at 1000 tokens: \n\n  {raw_output}')
+            my_ask_for_websearch = f'User: {my_ask_for_websearch} \n\n Content: {raw_output}'
             if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-16k" or st.session_state.model == "openai/gpt-4":
-                skim_output_text = answer_using_prefix_openai(interpret_search_results_prefix, "", '', my_ask_for_websearch, search_temp, history_context=raw_output)
+                st.write("Your answer from sifting the web:")
+                skim_output_text = answer_using_prefix_openai(interpret_search_results_prefix, "", '', my_ask_for_websearch, search_temp, history_context="")
                 
             else:
-                skim_output_text = answer_using_prefix(interpret_search_results_prefix, "", '', my_ask_for_websearch, search_temp, history_context=raw_output)
+                st.write("Your answer from sifting the web:")
+                skim_output_text = answer_using_prefix(interpret_search_results_prefix, "", '', my_ask_for_websearch, search_temp, history_context="")
             if st.session_state.model == "google/palm-2-chat-bison":
                 st.write("Answer:", skim_output_text)
 

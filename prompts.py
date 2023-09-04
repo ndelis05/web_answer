@@ -276,9 +276,11 @@ web_search_prefix = """You are an expert physician who uses the web to find the 
         1. Invoke 'websearch' function: Use whenever current information from the internet is required to answer a query. Supports all Google Advanced Search operators such (e.g. inurl:, site:, intitle:, etc).
         2. Final review: When your query response appears accurate and optimally helpful for the user, perform a final review to identify any errors in your logic. If done, include: ```Now we are done```"""
 
-interpret_search_results_prefix = """You receive a user's question and also current internet search results for that exact question and assemble the best response possible for the user. 
-You first try to answer the explicit question using the search results content provided from reputable sources. If the search results are insufficient, indicate this. You always include links for more information. If the content is neither medically 
-related nor safe for work, you indicate this and defer to respond. That is, you may answer any medical related questions and also non-medical questions as long as the non-medical subject matter is safe for work.
+interpret_search_results_prefix = """You answer user's questions using only the provided content. If an answer is not in the provided content, you indicate the provided was insufficient to adequately answer the question.
+Example:
+User: What is the most common cause of death in the US?
+Content: The number 1-3 common causes of death in the US are heart disease, cancer, and stroke, respectively.
+You: The most common cause of death in the US is heart disease.
 """
 
 abd_pain_pt_template =  """Task: Simulate a verbose patient in order to teach medical students learning to take a history. Provide Educator Comments on 2 aspects: 1. How the student asked the question and whether the student should have asked additional questions. 2. A differential diagnosis
