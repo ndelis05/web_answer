@@ -24,11 +24,18 @@ import pdfplumber
 import nltk
 from nltk.tokenize import word_tokenize
 
-def truncate_text(text, max_tokens):
+def truncate_text_nltk(text, max_tokens):
     tokens = word_tokenize(text)
     truncated_tokens = tokens[:max_tokens]
     truncated_text = ' '.join(truncated_tokens)
     return truncated_text
+
+def truncate_text(text, max_characters):
+    if len(text) <= max_characters:
+        return text
+    else:
+        truncated_text = text[:max_characters]
+        return truncated_text
 
 
 def clear_session_state_except_password_correct():
@@ -971,7 +978,7 @@ if check_password():
                     st.write(raw_output)
                     # st.write(urls)
             else:
-                raw_output = truncate_text(raw_output, 1000)
+                raw_output = truncate_text(raw_output, 5000)
                 with st.expander("Content reviewed", expanded=False):
                 # raw_output = limit_tokens(raw_output, 8000)
                     st.write(f'Truncated at 1000 tokens: \n\n  {raw_output}')
