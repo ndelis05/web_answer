@@ -106,7 +106,7 @@ def check_password():
         return True
 
 def scrapeninja_old(url_list, max):
-    st.write(url_list)
+    # st.write(url_list)
     response_complete = []
     i = 0
     while max > i:
@@ -223,12 +223,12 @@ def websearch(web_query: str, deep, max) -> float:
 
     response = requests.get(url, headers=headers, params=querystring)
     response_data = response.json()
-    def display_search_results(json_data):
-        data = json_data['data']
-        for item in data:
-            st.sidebar.markdown(f"### [{item['title']}]({item['url']})")
-            st.sidebar.write(item['snippet'])
-            st.sidebar.write("---")
+    # def display_search_results(json_data):
+    #     data = json_data['data']
+    #     for item in data:
+    #         st.sidebar.markdown(f"### [{item['title']}]({item['url']})")
+    #         st.sidebar.write(item['snippet'])
+    #         st.sidebar.write("---")
     # st.info('Searching the web using: **{web_query}**')
     # display_search_results(response_data)
     # st.session_state.done = True
@@ -952,21 +952,21 @@ if check_password():
         if set_domain == "Medscape.com":
             domain = "site: medscape.com, "
         if set_domain == "PubMed":
-            domain = "site: pubmed.ncbi.nlm.nih.gov "
+            domain = "site: pubmed.ncbi.nlm.nih.gov, "
         if set_domain == "Google Scholar":
-            domain = "site: scholar.google.com "
+            domain = "site: scholar.google.com, "
         if set_domain == "Any":
             domain = "only use reputable sites, "
         if set_domain == "You specify a domain":
             domain = "site: " + st.text_input("Enter a domain to emphasize:", placeholder="e.g., cdc.gov, pubmed.ncbi.nlm.nih.gov, etc.", label_visibility='visible') + ", "
         
         my_ask_for_websearch = st.text_area("Skim the web to answer your question:", placeholder="e.g., how can I prevent kidney stones, what is the weather in Chicago tomorrow, etc.", label_visibility='visible', height=100)
-        my_ask_for_websearch = my_ask_for_websearch.replace("\n", " ")
+        my_ask_for_websearch_part1 = domain + my_ask_for_websearch.replace("\n", " ")
 
         
         if st.button("Enter your question for a fun (NOT authoritative) draft websearch tool"):
             st.info("Review all content carefully before considering any use!")
-            raw_output, urls = websearch(my_ask_for_websearch, deep, max)
+            raw_output, urls = websearch(my_ask_for_websearch_part1, deep, max)
             
             if not deep:
                 # raw_output = json.dumps(raw_output)
