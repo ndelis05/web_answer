@@ -1083,7 +1083,7 @@ if check_password():
                 index_context = f'Use only the reference document for knowledge. Question: {user_question}'
                 pdf_answer = fn_qa_run(_qa, index_context)
                 st.session_state.pdf_user_question.append(user_question)  
-                st.session_state.pdf_user_answer.append(answer)  
+                st.session_state.pdf_user_answer.append(pdf_answer)  
                 # st.write("Answer:", answer)
                 pdf_chat_download_str = []
                 with st.expander("PDF Questions", expanded=False):                     
