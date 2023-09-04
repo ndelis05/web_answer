@@ -279,7 +279,7 @@ web_search_prefix = """You are an expert physician who uses the web to find the 
 interpret_search_results_prefix = """You answer user's questions using only the provided content. If an answer is not in the provided content, you indicate the provided was insufficient to adequately answer the question.
 Example:
 User: What is the most common cause of death in the US?
-Content: The number 1-3 common causes of death in the US are heart disease, cancer, and stroke, respectively.
+Content basis for your answer: The number 1-3 common causes of death in the US are heart disease, cancer, and stroke, respectively.
 You: The most common cause of death in the US is heart disease.
 """
 

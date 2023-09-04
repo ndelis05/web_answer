@@ -487,7 +487,7 @@ if check_password():
         st.write("Last updated 8/12/23")
 
     with st.sidebar.expander("Select a GPT Language Model", expanded=True):
-        st.session_state.model = st.selectbox("Model Options", ("openai/gpt-3.5-turbo", "openai/gpt-3.5-turbo-16k", "openai/gpt-4", "anthropic/claude-instant-v1", "google/palm-2-chat-bison", "meta-llama/llama-2-70b-chat", ), index=1)
+        st.session_state.model = st.selectbox("Model Options", ("openai/gpt-3.5-turbo", "openai/gpt-3.5-turbo-16k", "openai/gpt-4", "anthropic/claude-instant-v1", "google/palm-2-chat-bison", "meta-llama/llama-2-70b-chat", "gryphe/mythomax-L2-13b", "nousresearch/nous-hermes-llama2-13b"), index=1)
         if st.session_state.model == "google/palm-2-chat-bison":
             st.warning("The Google model doesn't stream the output, but it's fast. (Will add Med-Palm2 when it's available.)")
             st.markdown("[Information on Google's Palm 2 Model](https://ai.google/discover/palm2/)")
@@ -502,7 +502,10 @@ if check_password():
             st.markdown("[Information on OpenAI's GPT-3.5](https://platform.openai.com/docs/models/gpt-3-5)")
         if st.session_state.model == "openai/gpt-3.5-turbo-16k":
             st.markdown("[Information on OpenAI's GPT-3.5](https://platform.openai.com/docs/models/gpt-3-5)")
-    
+        if st.session_state.model == "gryphe/mythomax-L2-13b":
+            st.markdown("[Information on Gryphe's Mythomax](https://huggingface.co/Gryphe/MythoMax-L2-13b)")
+        if st.session_state.model == "nousresearch/nous-hermes-llama2-13b":
+            st.markdown("[Information on Nous's Hermes](https://huggingface.co/NousResearch/Nous-Hermes-Llama2-13b)")
     tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Learn", "Draft Communication", "Patient Education", "Differential Diagnosis", "Sift the Web", "PDF Chat",])
    
     with tab1:
@@ -958,7 +961,7 @@ if check_password():
             domain = "site: " + st.text_input("Enter a domain to emphasize:", placeholder="e.g., cdc.gov, pubmed.ncbi.nlm.nih.gov, etc.", label_visibility='visible') + ", "
         
         my_ask_for_websearch = st.text_area("Skim the web to answer your question:", placeholder="e.g., how can I prevent kidney stones, what is the weather in Chicago tomorrow, etc.", label_visibility='visible', height=100)
-        my_ask_for_websearch = domain + my_ask_for_websearch.replace("\n", " ")
+        my_ask_for_websearch = my_ask_for_websearch.replace("\n", " ")
 
         
         if st.button("Enter your question for a fun (NOT authoritative) draft websearch tool"):
@@ -982,7 +985,7 @@ if check_password():
                 with st.expander("Content reviewed", expanded=False):
                 # raw_output = limit_tokens(raw_output, 8000)
                     st.write(f'Truncated at 1000 tokens: \n\n  {raw_output}')
-            my_ask_for_websearch = f'User: {my_ask_for_websearch} \n\n Content: {raw_output}'
+            my_ask_for_websearch = f'User: {my_ask_for_websearch} \n\n Content basis for your answer: {raw_output}'
             if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-16k" or st.session_state.model == "openai/gpt-4":
                 st.write("Your answer from sifting the web:")
                 skim_output_text = answer_using_prefix_openai(interpret_search_results_prefix, "", '', my_ask_for_websearch, search_temp, history_context="")
