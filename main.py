@@ -1026,6 +1026,8 @@ if check_password():
         st.header("Chat with your PDFs!")
         st.info("""Embeddings, i.e., reading your file(s) and converting words to numbers, are created using an OpenAI [embedding model](https://platform.openai.com/docs/guides/embeddings/what-are-embeddings) and indexed for searching. Then,
                 your selected model (e.g., gpt-3.5-turbo-16k) is used to answer your questions.""")
+        st.warning("""Some PDFs are images and not formatted text. If the summary feature doesn't work, you may first need to convert your PDF
+                   using Adobe Acrobat. Choose: `Scan and OCR`,`Enhance scanned file` \n   Save your updates, upload and voilà, you can chat with your PDF!""")
         uploaded_files = []
         # os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
 
