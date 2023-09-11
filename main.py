@@ -271,6 +271,9 @@ def answer_using_prefix_openai(prefix, sample_question, sample_answer, my_ask, t
         model = "gpt-4"
     if history_context == None:
         history_context = ""
+    stream = True
+    if st.session_state.model == "anthropic/claude-instant-v1":
+        stream = False
     messages = [{'role': 'system', 'content': prefix},
             {'role': 'user', 'content': sample_question},
             {'role': 'assistant', 'content': sample_answer},
@@ -281,8 +284,8 @@ def answer_using_prefix_openai(prefix, sample_question, sample_answer, my_ask, t
     model = model,
     messages = messages,
     temperature = temperature,
-    max_tokens = 500,
-    stream = True,   
+    max_tokens = 750,
+    stream = stream,   
     )
         
     start_time = time.time()
@@ -494,7 +497,7 @@ if check_password():
         st.write("Last updated 8/12/23")
 
     with st.sidebar.expander("Select a GPT Language Model", expanded=True):
-        st.session_state.model = st.selectbox("Model Options", ("openai/gpt-3.5-turbo", "openai/gpt-3.5-turbo-16k", "openai/gpt-4", "anthropic/claude-instant-v1", "google/palm-2-chat-bison", "meta-llama/llama-2-70b-chat", "gryphe/mythomax-L2-13b", "nousresearch/nous-hermes-llama2-13b"), index=1)
+        st.session_state.model = st.selectbox("Model Options", ("openai/gpt-3.5-turbo", "openai/gpt-3.5-turbo-16k", "openai/gpt-4", "anthropic/claude-instant-v1", "google/palm-2-chat-bison", "meta-llama/codellama-34b-instruct", "meta-llama/llama-2-70b-chat", "gryphe/mythomax-L2-13b", "nousresearch/nous-hermes-llama2-13b"), index=1)
         if st.session_state.model == "google/palm-2-chat-bison":
             st.warning("The Google model doesn't stream the output, but it's fast. (Will add Med-Palm2 when it's available.)")
             st.markdown("[Information on Google's Palm 2 Model](https://ai.google/discover/palm2/)")
@@ -511,8 +514,8 @@ if check_password():
             st.markdown("[Information on OpenAI's GPT-3.5](https://platform.openai.com/docs/models/gpt-3-5)")
         if st.session_state.model == "gryphe/mythomax-L2-13b":
             st.markdown("[Information on Gryphe's Mythomax](https://huggingface.co/Gryphe/MythoMax-L2-13b)")
-        if st.session_state.model == "nousresearch/nous-hermes-llama2-13b":
-            st.markdown("[Information on Nous's Hermes](https://huggingface.co/NousResearch/Nous-Hermes-Llama2-13b)")
+        if st.session_state.model == "meta-llama/codellama-34b-instruct":
+            st.markdown("[Information on Meta's CodeLlama](https://huggingface.co/codellama/CodeLlama-34b-Instruct-hf)")
     tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Learn", "Draft Communication", "Patient Education", "Differential Diagnosis", "Sift the Web", "PDF Chat",])
    
     with tab1:
