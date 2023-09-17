@@ -34,6 +34,21 @@ def play_audio_eleven(text, voice="Rachel"):
 
     return filename
 
+def play_audio_eleven_all(text, voice="Rachel"):
+    set_api_key(st.secrets["ELEVEN_API_KEY"])    
+
+    audio = generate(text=text, voice=voice, stream = False)
+    
+    
+
+    play(audio, notebook=False, use_ffmpeg=False)
+    
+    filename = "pt_latest.mp3"
+    with open(filename, "wb") as f:
+        f.write(audio)  # write the bytes directly to the file
+
+    return filename
+
 
 def extract_url(text):
     # Use regular expressions to find the URL pattern
@@ -321,8 +336,8 @@ if check_password2():
             patient_section = extract_patient_response(st.session_state.last_response)
             
             # Trying elevenlabs
-            link_to_audio = play_audio_eleven(patient_section)
+            link_to_audio = play_audio_eleven_all(patient_section)
             
-            if link_to_audio:
-                # stopping autoplay to try elevenlabs
-                autoplay_local_audio(link_to_audio)
+            # if link_to_audio:
+            #     # stopping autoplay to try elevenlabs
+            #     autoplay_local_audio(link_to_audio)

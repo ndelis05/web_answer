@@ -21,6 +21,8 @@ beautifulsoup4 = "*"
 audio-recorder-streamlit = "*"
 nltk = "*"
 elevenlabs = "*"
+sounddevice = "*"
+soundfile = "*"
 
 [dev-packages]
 
