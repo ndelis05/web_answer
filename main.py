@@ -418,6 +418,17 @@ def generate_eval(text, N, chunk):
     return eval_set_full
 
 
+
+@st.cache_data
+def prepare_rag(text):
+    splits = split_texts(text, chunk_size=1000, overlap=100, split_method="recursive")
+    st.session_state.retriever = create_retriever(splits)
+    llm = set_llm_chat(model=st.session_state.model, temperature=st.session_state.temp)
+    rag = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=st.session_state.retriever)
+    return rag
+    
+    
+
 def fn_qa_run(_qa, user_question):
     response = _qa.run(user_question)
     start_time = time.time()
@@ -947,9 +958,9 @@ if check_password():
     
     with tab5:
 
-        st.warning("This is just skimming the internet for medical answers even with the `deep` option. It is NOT reliable nor is it a replacement for a full medical reference. More development to come.")
+        st.warning("This is just skimming the internet for medical answers even with the `deep` option. It is NOT reliable nor is it a replacement for a full medical reference. Errors arise when websites restrict automated data retrieval.")
         search_temp = st.session_state.temp
-        deep = st.checkbox("Deep search (even more experimental)", value=False)
+        deep = st.checkbox("Deep search (Retrieves full text from a few pages instead of snippets from many pages)", value=False)
         if deep:
             max = st.slider("Max number of sites to analyze deeply", 1, 5, 1)
         domain = "Analyze only reputable sites."
@@ -990,21 +1001,31 @@ if check_password():
                 with st.expander("Content Reviewed", expanded=False):
                     st.write(raw_output)
                     # st.write(urls)
+                my_ask_for_websearch = f'User: {my_ask_for_websearch} \n\n Content basis for your answer: {raw_output}'
+
+            
+                if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-16k" or st.session_state.model == "openai/gpt-4":
+                    st.write("Your answer from sifting the web:")
+                    skim_output_text = answer_using_prefix_openai(interpret_search_results_prefix, "", '', my_ask_for_websearch, search_temp, history_context="")
+                    
+                else:
+                    skim_output_text = answer_using_prefix(interpret_search_results_prefix, "", '', my_ask_for_websearch, search_temp, history_context="")
+                    st.write("Your answer from sifting the web:")
+                    skim_output_text = answer_using_prefix(interpret_search_results_prefix, "", '', my_ask_for_websearch, search_temp, history_context="")
+                if st.session_state.model == "google/palm-2-chat-bison":
+                    st.write("Answer:", skim_output_text)
+                    
             else:
-                raw_output = truncate_text(raw_output, 5000)
+                # raw_output = truncate_text(raw_output, 5000)
+                with st.spinner('Searching the web and converting findings to vectors...'):
+                    rag = prepare_rag(raw_output)                
                 with st.expander("Content reviewed", expanded=False):
-                # raw_output = limit_tokens(raw_output, 8000)
-                    st.write(f'Truncated at 1000 tokens: \n\n  {raw_output}')
-            my_ask_for_websearch = f'User: {my_ask_for_websearch} \n\n Content basis for your answer: {raw_output}'
-            if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-16k" or st.session_state.model == "openai/gpt-4":
-                st.write("Your answer from sifting the web:")
-                skim_output_text = answer_using_prefix_openai(interpret_search_results_prefix, "", '', my_ask_for_websearch, search_temp, history_context="")
-                
-            else:
-                st.write("Your answer from sifting the web:")
-                skim_output_text = answer_using_prefix(interpret_search_results_prefix, "", '', my_ask_for_websearch, search_temp, history_context="")
-            if st.session_state.model == "google/palm-2-chat-bison":
-                st.write("Answer:", skim_output_text)
+                    raw_output = truncate_text(raw_output, 5000)
+                    st.write(f'Truncated at ~1000 tokens: \n\n  {raw_output}')
+                with st.spinner('Searching the vector database to assemble your answer...'):
+                    skim_output_text = rag(my_ask_for_websearch)
+                skim_output_text = skim_output_text["result"]
+                st.write(skim_output_text)
 
             
             skim_download_str = []
