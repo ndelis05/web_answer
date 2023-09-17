@@ -16,6 +16,8 @@ import openai
 import os
 import re
 from elevenlabs import clone, generate, play, set_api_key, stream
+import sounddevice
+import soundfile
 
 
 
