@@ -215,25 +215,25 @@ if check_password2():
         
     if system_context == "abdominal pain":
         template = abd_pain_pt_template
-        voice = 'evelyn'
+        voice = 'Rachel'
 
     if system_context == "chest pain":
         template = chest_pain_pt_template
-        voice = 'larry'
+        voice = 'Clyde'
 
     if system_context == "bloody diarrhea":
         template = bloody_diarrhea_pt_template
-        voice = 'david'
+        voice = 'Domi'
         
     if system_context == "random symptoms":
         template = random_symptoms_pt_template
-        voice = 'oliver'
+        voice = 'Dave'
 
     if system_context == "You choose!":
         symptoms = st.text_input("Enter a list of symptoms separated by commas", placeholder="e.g. fever, cough, headache after returning from a trip to Africa")
         # Create a defaultdict that returns an empty string for missing keys
         template = f'Here are the symptoms: {symptoms} and respond according to the following template:' + chosen_symptoms_pt_template
-        voice = 'russell'
+        voice = 'Fin'
         
     if st.button("Set a Scenario"):
         clear_session_state_except_password_correct()
@@ -336,7 +336,7 @@ if check_password2():
             patient_section = extract_patient_response(st.session_state.last_response)
             
             # Trying elevenlabs
-            link_to_audio = play_audio_eleven_all(patient_section)
+            link_to_audio = play_audio_eleven_all(patient_section, voice=voice)
             
             # if link_to_audio:
             #     # stopping autoplay to try elevenlabs

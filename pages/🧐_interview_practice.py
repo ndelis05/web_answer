@@ -47,7 +47,20 @@ def play_audio_eleven(text, voice="Rachel"):
 
     return filename
 
+def play_audio_eleven_all(text, voice="Rachel"):
+    set_api_key(st.secrets["ELEVEN_API_KEY"])    
 
+    audio = generate(text=text, voice=voice, stream = False)
+    
+    
+
+    play(audio, notebook=False, use_ffmpeg=False)
+    
+    filename = "pt_latest.mp3"
+    with open(filename, "wb") as f:
+        f.write(audio)  # write the bytes directly to the file
+
+    return filename
 
 def autoplay_local_audio(filepath: str):
     # Read the audio file from the local file system
@@ -170,11 +183,11 @@ if check_password2():
         
     if system_context == "Tough":
         template = tough_interviewer
-        voice = 'evelyn'
+        voice = 'Rachel'
 
     if system_context == "Nice":
         template = nice_interviewer
-        voice = 'larry'
+        voice = 'Dave'
 
     # if system_context == "bloody diarrhea":
     #     template = bloody_diarrhea_pt_template
@@ -303,7 +316,7 @@ if check_password2():
             # st.write(patient_section)
                 
                 # Define the data
-            path_audio = play_audio_eleven(st.session_state.last_response, voice="Rachel")
+            path_audio = play_audio_eleven_all(st.session_state.last_response, voice=voice)
             
             # data = {
             #     "text": st.session_state.last_response,
@@ -318,5 +331,5 @@ if check_password2():
             # Print the response
             # link_to_audio = extract_url(response_from_audio.text)
             # st.write(link_to_audio)
-            autoplay_local_audio(path_audio)
+            # autoplay_local_audio(path_audio)
     
