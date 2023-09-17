@@ -16,8 +16,7 @@ import openai
 import os
 import re
 from elevenlabs import clone, generate, play, set_api_key, stream
-import sounddevice
-import soundfile
+
 
 st.set_page_config(page_title="AI Patients", page_icon="📖")
 st.title("📖 Chat with AI Patients")

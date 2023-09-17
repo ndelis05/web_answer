@@ -21,8 +21,7 @@ from langchain.callbacks.manager import CallbackManager
 from langchain.chains import QAGenerationChain
 from langchain.vectorstores import FAISS
 import pdfplumber
-import sounddevice
-import soundfile
+
 
 
 def set_llm_chat(model, temperature):
