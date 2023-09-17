@@ -20,6 +20,7 @@ pdfplumber = "*"
 beautifulsoup4 = "*"
 audio-recorder-streamlit = "*"
 nltk = "*"
+elevenlabs = "*"
 
 [dev-packages]
 

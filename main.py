@@ -21,14 +21,7 @@ from langchain.callbacks.manager import CallbackManager
 from langchain.chains import QAGenerationChain
 from langchain.vectorstores import FAISS
 import pdfplumber
-# import nltk
-# from nltk.tokenize import word_tokenize
 
-# def truncate_text_nltk(text, max_tokens):
-#     tokens = word_tokenize(text)
-#     truncated_tokens = tokens[:max_tokens]
-#     truncated_text = ' '.join(truncated_tokens)
-#     return truncated_text
 
 def set_llm_chat(model, temperature):
     if model == "openai/gpt-3.5-turbo":
@@ -959,6 +952,8 @@ if check_password():
     with tab5:
 
         st.warning("This is just skimming the internet for medical answers even with the `deep` option. It is NOT reliable nor is it a replacement for a full medical reference. Errors arise when websites restrict automated data retrieval.")
+        if 'temp' not in st.session_state:
+            st.session_state.temp = 0.3
         search_temp = st.session_state.temp
         deep = st.checkbox("Deep search (Retrieves full text from a few pages instead of snippets from many pages)", value=False)
         if deep:
