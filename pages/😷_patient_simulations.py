@@ -336,8 +336,8 @@ if check_password2():
             patient_section = extract_patient_response(st.session_state.last_response)
             
             # Trying elevenlabs
-            link_to_audio = play_audio_eleven_all(patient_section, voice=voice)
+            link_to_audio = play_audio_eleven(patient_section, voice=voice)
             
-            # if link_to_audio:
+            if link_to_audio:
             #     # stopping autoplay to try elevenlabs
-            #     autoplay_local_audio(link_to_audio)
+                autoplay_local_audio(link_to_audio)

@@ -316,7 +316,7 @@ if check_password2():
             # st.write(patient_section)
                 
                 # Define the data
-            path_audio = play_audio_eleven_all(st.session_state.last_response, voice=voice)
+            path_audio = play_audio_eleven(st.session_state.last_response, voice=voice)
             
             # data = {
             #     "text": st.session_state.last_response,
@@ -330,6 +330,6 @@ if check_password2():
             # st.write(f'Audio url: {response_from_audio.json()}')
             # Print the response
             # link_to_audio = extract_url(response_from_audio.text)
-            # st.write(link_to_audio)
-            # autoplay_local_audio(path_audio)
+            # st.write(path_audio)
+            autoplay_local_audio(path_audio)
     
