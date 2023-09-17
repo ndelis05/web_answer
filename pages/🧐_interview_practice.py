@@ -15,6 +15,7 @@ import base64
 import openai
 import os
 import re
+from elevenlabs import clone, generate, play, set_api_key, stream
 
 
 
@@ -34,7 +35,34 @@ def extract_url(text):
         st.write("Error generating audio... Try again in a moment")
         return None
 
+def play_audio_eleven(text, voice="Rachel"):
+    set_api_key(st.secrets["ELEVEN_API_KEY"])    
 
+    audio = generate(text=text, voice=voice, stream = False)
+    filename = "pt_latest.mp3"
+    with open(filename, "wb") as f:
+        f.write(audio)  # write the bytes directly to the file
+
+    # st.audio(filename, format='audio/mp3', start_time=0)
+
+    return filename
+
+
+
+def autoplay_local_audio(filepath: str):
+    # Read the audio file from the local file system
+    with open(filepath, 'rb') as f:
+        data = f.read()
+    b64 = base64.b64encode(data).decode()
+    md = f"""
+        <audio controls autoplay="true">
+        <source src="data:audio/mp3;base64,{b64}" type="audio/mp3">
+        </audio>
+        """
+    st.markdown(
+        md,
+        unsafe_allow_html=True,
+    )
 
 def clear_session_state_except_password_correct():
     # Make a copy of the session_state keys
@@ -260,13 +288,13 @@ if check_password2():
     # Define the URL and headers
     
     if st.session_state.audio_off == False:
-        audio_url = "https://play.ht/api/v2/tts"
-        headers = {
-            "AUTHORIZATION": f"Bearer {st.secrets['HT_API_KEY']}",
-            "X-USER-ID": st.secrets["X-USER-ID"],
-            "accept": "text/event-stream",
-            "content-type": "application/json",
-        }
+        # audio_url = "https://play.ht/api/v2/tts"
+        # headers = {
+        #     "AUTHORIZATION": f"Bearer {st.secrets['HT_API_KEY']}",
+        #     "X-USER-ID": st.secrets["X-USER-ID"],
+        #     "accept": "text/event-stream",
+        #     "content-type": "application/json",
+        # }
         
         # st.write(st.session_state.last_response)
         # st.sidebar.write(response)
@@ -275,18 +303,20 @@ if check_password2():
             # st.write(patient_section)
                 
                 # Define the data
-            data = {
-                "text": st.session_state.last_response,
-                "voice": voice,
-            }
+            path_audio = play_audio_eleven(st.session_state.last_response, voice="Rachel")
+            
+            # data = {
+            #     "text": st.session_state.last_response,
+            #     "voice": voice,
+            # }
 
             # Send the POST request
-            response_from_audio = requests.post(audio_url, headers=headers, data=json.dumps(data))
+            # response_from_audio = requests.post(audio_url, headers=headers, data=json.dumps(data))
             # st.sidebar.write(response_from_audio.text)
             # st.write(f'Audio full: {response_from_audio.text}')
             # st.write(f'Audio url: {response_from_audio.json()}')
             # Print the response
-            link_to_audio = extract_url(response_from_audio.text)
+            # link_to_audio = extract_url(response_from_audio.text)
             # st.write(link_to_audio)
-            autoplay_audio(link_to_audio)
+            autoplay_local_audio(path_audio)
     
