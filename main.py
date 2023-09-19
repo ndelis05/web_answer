@@ -961,13 +961,15 @@ if check_password():
             max = st.slider("Max number of sites to analyze deeply", 1, 5, 1)
         domain = "Analyze only reputable sites."
                  
-        set_domain = st.selectbox("Select a domain to emphasize:", ( "Medscape.com", "CDC.gov", "You specify a domain", "Any", ))
+        set_domain = st.selectbox("Select a domain to emphasize:", ( "Medscape", "NLM Bookshelf", "CDC", "You specify a domain", "Any", ))
         if set_domain == "UpToDate.com":
             domain = "site: UpToDate.com, "
-        if set_domain == "CDC.gov":
+        if set_domain == "CDC":
             domain = "site: cdc.gov, "
-        if set_domain == "Medscape.com":
+        if set_domain == "Medscape":
             domain = "site: medscape.com, "
+        if set_domain == "NLM Bookshelf":
+            domain = "site: ncbi.nlm.nih.gov/books/, "
         if set_domain == "PubMed":
             domain = "site: pubmed.ncbi.nlm.nih.gov, "
         if set_domain == "Google Scholar":
@@ -975,7 +977,7 @@ if check_password():
         if set_domain == "Any":
             domain = "only use reputable sites, "
         if set_domain == "You specify a domain":
-            domain = "site: " + st.text_input("Enter a domain to emphasize:", placeholder="e.g., cdc.gov, pubmed.ncbi.nlm.nih.gov, etc.", label_visibility='visible') + ", "
+            domain = "site: " + st.text_input("Enter a full web domain to emphasize:", placeholder="e.g., cdc.gov, pubmed.ncbi.nlm.nih.gov, etc.", label_visibility='visible') + ", "
         
         my_ask_for_websearch = st.text_area("Skim the web to answer your question:", placeholder="e.g., how can I prevent kidney stones, what is the weather in Chicago tomorrow, etc.", label_visibility='visible', height=100)
         my_ask_for_websearch_part1 = domain + my_ask_for_websearch.replace("\n", " ")
