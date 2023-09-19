@@ -1005,12 +1005,11 @@ if check_password():
 
             
                 if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-16k" or st.session_state.model == "openai/gpt-4":
-                    st.write("Your answer from sifting the web:")
+                    st.warning("Be sure to validate! This just used web snippets to answer your question!")
                     skim_output_text = answer_using_prefix_openai(interpret_search_results_prefix, "", '', my_ask_for_websearch, search_temp, history_context="")
                     
                 else:
-                    skim_output_text = answer_using_prefix(interpret_search_results_prefix, "", '', my_ask_for_websearch, search_temp, history_context="")
-                    st.write("Your answer from sifting the web:")
+                    st.warning("Be sure to validate! This just used web snippets to answer your question!")
                     skim_output_text = answer_using_prefix(interpret_search_results_prefix, "", '', my_ask_for_websearch, search_temp, history_context="")
                 if st.session_state.model == "google/palm-2-chat-bison":
                     st.write("Answer:", skim_output_text)
@@ -1025,6 +1024,7 @@ if check_password():
                 with st.spinner('Searching the vector database to assemble your answer...'):
                     skim_output_text = rag(my_ask_for_websearch)
                 skim_output_text = skim_output_text["result"]
+                st.warning(f'Be sure to validate! This just used {max} webpage(s) to answer your question!')
                 st.write(skim_output_text)
 
             
