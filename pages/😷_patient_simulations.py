@@ -18,8 +18,11 @@ import re
 from elevenlabs import clone, generate, play, set_api_key, stream
 
 
+
 st.set_page_config(page_title="AI Patients", page_icon="📖")
 st.title("📖 Chat with AI Patients")
+st.write("This uses the GPT-3.5-16K Model to allow for lengthier conversations. It is still in beta testing. Please contact David Liebovitz, MD if you have any questions or feedback.")
+
 
 
 def play_audio_eleven(text, voice="Rachel"):
@@ -208,7 +211,7 @@ if "last_response" not in st.session_state:
     st.session_state["last_response"] = "Patient Response: I can't believe I'm in the Emergency Room feeling sick!"
 
 if check_password2():
-    st.info("Enter your questions at the bottom of the page or choose the Microphone option. You may ask multiple questions at once. Have fun practicing! This tool uses openai's GPT3.5 turbo 16k model.")
+    st.info("Enter your questions at the bottom of the page or choose the Microphone option. You may ask multiple questions at once. Have fun practicing!")
     system_context = st.radio("Select an AI patient who comes to the ED with:", ("abdominal pain", "chest pain", "bloody diarrhea", "random symptoms", "You choose!"), horizontal = True, index=0)
     
 

@@ -150,6 +150,7 @@ def limit_tokens(text, max_tokens=10000):
     limited_text = ' '.join(limited_tokens)  # join the tokens back into a string
     return limited_text
 
+@st.cache_data
 def scrapeninja(url_list, max):
     # st.write(url_list)
     if max > 5:
@@ -208,7 +209,7 @@ def scrapeninja(url_list, max):
     # Join all the scraped text into a single string
     # return full_response
 
-
+@st.cache_data
 def websearch(web_query: str, deep, max) -> float:
     """
     Obtains real-time search results from across the internet. 
@@ -374,7 +375,7 @@ def create_retriever(texts):
 
     return retriever
 
-
+@st.cache_data
 def split_texts(text, chunk_size, overlap, split_method):
 
     text_splitter = RecursiveCharacterTextSplitter(
@@ -387,7 +388,7 @@ def split_texts(text, chunk_size, overlap, split_method):
 
     return splits
 
-
+@st.cache_data
 def generate_eval(text, N, chunk):
 
     # Generate N questions from context of chunk chars
