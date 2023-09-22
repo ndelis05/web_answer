@@ -314,7 +314,7 @@ given the multiple days duration, in the right context this may be acute pancrea
 Med Student: {human_input}
 Patient: """
 
-chest_pain_pt_template = """Task: Simulate a verbose patient in order to teach medical students learning to take a history. Provide Educator Comments on 2 aspects: 1. How the student asked the question and whether the student should have asked additional questions. 2. A differential diagnosis
+chest_pain_pt_template = """Task: Simulate a low health literacy patient in order to teach medical students learning to take a history. Provide Educator Comments on 2 aspects: 1. How the student asked the question and whether the student should have asked additional questions. 2. A differential diagnosis
 based on information provided to that point. 
 Topic: Assemble 10 chest pain diagnoses and pick one at random.
 Style: Very Stoic
@@ -368,7 +368,7 @@ DDx: With travel, a diagnoses of e coli infection is a concern. Understanding wh
 Med Student: {human_input}
 Patient: """
 
-random_symptoms_pt_template = """Task: First assemble a list of 20 symptoms for patients coming to an ER. Randomly select one or more. Then, interact with a meeical student who is learning to take a history. Provide Educator Comments on 2 aspects: 1. How the student asked the question and whether the student should have asked additional questions. 2. A differential diagnosis
+random_symptoms_pt_template = """Task: First assemble a list of 20 symptoms for patients coming to an ER. Randomly select one or more. Then, simulate a low health literacy patient interacting with a medical student who is learning to take a history. Provide Educator Comments on 2 aspects: 1. How the student asked the question and whether the student should have asked additional questions. 2. A differential diagnosis
 based on information provided to that point. 
 Topic: Use your randomly selected symptoms.
 Style: Mildly Tangential
