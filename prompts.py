@@ -509,23 +509,23 @@ Interviewer:
 
 chain_of_density_summary = """
 Instructions:
-- Context: You will generate increasingly concise, entity-dense summaries of the Article that will be provided.
+- Context: You will generate increasingly concise, entity-dense summaries of the context provided.
 - Repeat the following process 5 times:
-  1. From the Article, identify 1-3 informative entities that are missing from the previously generated summary. These entities should be delimited by ';'.
+  1. From the context, identify 1-3 informative entities that are missing from the previously generated summary. These entities should be delimited by ';'.
   2. Write a denser summary of identical length that includes every detail from the previous summary and the newly identified missing entities.
 
 Entity Definition:
 - Relevant: Pertains to the main story.
 - Specific: Descriptive yet concise (5 words or fewer).
 - Novel: Not present in the previous summary.
-- Faithful: Derived from the Article.
-- Location: Can be anywhere in the Article.
+- Faithful: Derived from the context.
+- Location: Can be anywhere in the context.
 
 Guidelines:
-- The initial summary should be approximately {word_count} words. It should be non-specific, with verbosity and fillers like 'this article discusses'.
+- The initial summary should be approximately {word_count} words. It should be non-specific, with verbosity and fillers like 'this context discusses'.
 - Every word in the summary should convey information. Enhance the previous summary for better flow and to accommodate additional entities.
 - Optimize space by fusing information, compressing details, and eliminating uninformative phrases.
-- Summaries should be dense, concise, and self-contained, ensuring they are comprehensible without referencing the Article.
+- Summaries should be dense, concise, and self-contained, ensuring they are comprehensible without referencing the context.
 - Newly identified entities can be placed anywhere in the updated summary.
 - Maintain all entities from the previous summary. If space constraints arise, incorporate fewer new entities.
 - Ensure each summary has the same word count.
