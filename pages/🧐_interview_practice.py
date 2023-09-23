@@ -169,8 +169,8 @@ if "audio_off" not in st.session_state:
 if "audio_input" not in st.session_state:
     st.session_state["audio_input"] = ""
     
-if "last_response" not in st.session_state:
-    st.session_state["last_response"] = "Hi, I'm Dr. Smith! Nice to meet you!"
+if "last_response_interview" not in st.session_state:
+    st.session_state["last_response_interview"] = "Hi, I'm Dr. Smith! Nice to meet you!"
 
 if check_password2():
     st.info("Have fun. Enter responses at the bottom of the page or choose the Microphone option. This tool uses openai's GPT3.5 turbo 16k model.")
@@ -205,7 +205,7 @@ if check_password2():
         
     if st.button("Set a Scenario"):
         clear_session_state_except_password_correct()
-        st.session_state["last_response"] = "Hi, I'm Dr. Smith! Nice to meet you!"
+        st.session_state["last_response_interview"] = "Hi, I'm Dr. Smith! Nice to meet you!"
     
     
     if specialty is not None and position is not None:
@@ -254,7 +254,7 @@ if check_password2():
             openai.api_base = "https://api.openai.com/v1"
             openai.api_key = st.secrets["OPENAI_API_KEY"]
             response = llm_chain.run(prompt)
-            st.session_state.last_response = response
+            st.session_state.last_response_interview = response
             st.chat_message("assistant").write(response)
             
     else:
@@ -281,14 +281,14 @@ if check_password2():
             st.chat_message("user").write(prompt)
             # Note: new messages are saved to history automatically by Langchain during run
             response = llm_chain.run(prompt)
-            st.session_state.last_response = response
+            st.session_state.last_response_interview = response
             st.chat_message("assistant").write(response)
 
     clear_memory = st.sidebar.button("Start Over")
     if clear_memory:
         # st.session_state.langchain_messages = []
         clear_session_state_except_password_correct()
-        st.session_state["last_response"] = "Hi, I'm Dr. Smith! Nice to meet you!"
+        st.session_state["last_response_interview"] = "Hi, I'm Dr. Smith! Nice to meet you!"
         
     # if create_hpi := st.sidebar.button("Create HPI (Wait until you have enough history.)"):    
     #     openai.api_base = "https://api.openai.com/v1"
@@ -296,7 +296,7 @@ if check_password2():
     #     hpi = llm_chain.run(hpi_prompt)
     #     st.sidebar.write(hpi)
             # clear_session_state_except_password_correct()
-            # st.session_state["last_response"] = "Patient Response: I can't believe I'm in the Emergency Room feeling sick!"
+            # st.session_state["last_response_interview"] = "Patient Response: I can't believe I'm in the Emergency Room feeling sick!"
     # Audio response section 
     # Define the URL and headers
     
@@ -309,17 +309,17 @@ if check_password2():
         #     "content-type": "application/json",
         # }
         
-        # st.write(st.session_state.last_response)
+        # st.write(st.session_state.last_response_interview)
         # st.sidebar.write(response)
-        if st.session_state.last_response:
-            #     patient_section = extract_patient_response(st.session_state.last_response)
+        if st.session_state.last_response_interview:
+            #     patient_section = extract_patient_response(st.session_state.last_response_interview)
             # st.write(patient_section)
                 
                 # Define the data
-            path_audio = play_audio_eleven(st.session_state.last_response, voice=voice)
+            path_audio = play_audio_eleven(st.session_state.last_response_interview, voice=voice)
             
             # data = {
-            #     "text": st.session_state.last_response,
+            #     "text": st.session_state.last_response_interview,
             #     "voice": voice,
             # }
 
