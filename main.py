@@ -1080,7 +1080,11 @@ if check_password():
 
         pdf_chat_option = st.radio("Select an Option", ("Summary", "Custom Question"))
         if pdf_chat_option == "Summary":
-            user_question = "Summary: Using context provided, generate a concise and comprehensive summary. Key Points: Generate a list of Key Points by using a conclusion section if present and the full context otherwise."
+            word_count = st.slider("Word Count", 20, 500, 100)
+            # user_question = "Summary: Using context provided, generate a concise and comprehensive summary. Key Points: Generate a list of Key Points by using a conclusion section if present and the full context otherwise."
+            user_question = chain_of_density_summary
+            user_question = user_question.format(word_count=word_count)
+            
         if pdf_chat_option == "Custom Question":
             user_question = st.text_input("Please enter your own question about the PDF(s):")
 
