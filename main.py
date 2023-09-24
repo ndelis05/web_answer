@@ -419,7 +419,7 @@ def prepare_rag(text):
     splits = split_texts(text, chunk_size=1000, overlap=100, split_method="recursive")
     st.session_state.retriever = create_retriever(splits)
     llm = set_llm_chat(model=st.session_state.model, temperature=st.session_state.temp)
-    rag = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=st.session_state.retriever)
+    rag = RetrievalQA.from_chain_type(llm=llm, chain_type="refine", retriever=st.session_state.retriever)
     return rag
     
     
@@ -1071,7 +1071,7 @@ if check_password():
             llm = set_llm_chat(model=st.session_state.model, temperature=st.session_state.temp)
             # llm = ChatOpenAI(model_name='gpt-3.5-turbo-16k', openai_api_base = "https://api.openai.com/v1/")
 
-            qa = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=retriever)
+            qa = RetrievalQA.from_chain_type(llm=llm, chain_type="refine", retriever=retriever)
 
         else:
             st.warning("No files uploaded.")       
@@ -1081,7 +1081,7 @@ if check_password():
         pdf_chat_option = st.radio("Select an Option", ("Summary", "Custom Question"))
         if pdf_chat_option == "Summary":
             st.write("Generated with [Chain of Density](https://arxiv.org/abs/2309.04269) methodology.")
-            word_count = st.slider("~Word Count for the Summary", 20, 500, 100)
+            word_count = st.slider("~Word Count for the Summary", 20, 500, 150)
             # user_question = "Summary: Using context provided, generate a concise and comprehensive summary. Key Points: Generate a list of Key Points by using a conclusion section if present and the full context otherwise."
             user_question = chain_of_density_summary
             user_question = user_question.format(word_count=word_count)
