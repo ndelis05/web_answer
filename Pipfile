@@ -16,13 +16,13 @@ pypdf = "*"
 pypdf2 = "*"
 scikit-learn = "*"
 faiss-cpu = "*"
-pdfplumber = "*"
 beautifulsoup4 = "*"
 audio-recorder-streamlit = "*"
 nltk = "*"
 elevenlabs = "*"
 sounddevice = "*"
 soundfile = "*"
+pymupdf = "*"
 
 [dev-packages]
 

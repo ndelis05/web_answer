@@ -20,7 +20,9 @@ from langchain.embeddings.openai import OpenAIEmbeddings
 from langchain.callbacks.manager import CallbackManager
 from langchain.chains import QAGenerationChain
 from langchain.vectorstores import FAISS
-import pdfplumber
+import os
+import fitz
+from io import StringIO
 
 
 
@@ -338,24 +340,25 @@ def answer_using_prefix(prefix, sample_question, sample_answer, my_ask, temperat
     # st.write(full_answer)
     return full_answer # Change how you access the message content
 
-@st.cache_data
+@st.cache_data  # Updated decorator name from cache_data to cache
 def load_docs(files):
     all_text = ""
-    for file_path in files:
-        file_extension = os.path.splitext(file_path.name)[1]
+    for file in files:
+        file_extension = os.path.splitext(file.name)[1]
         if file_extension == ".pdf":
-            pdf_reader = pdfplumber.open(file_path)
+            pdf_data = file.read()  # Read the file into bytes
+            pdf_reader = fitz.open("pdf", pdf_data)  # Open the PDF from bytes
             text = ""
-            for page in pdf_reader.pages:
-                text += page.extract_text()
+            for page in pdf_reader:
+                text += page.get_text()
             all_text += text
+
         elif file_extension == ".txt":
-            stringio = StringIO(file_path.getvalue().decode("utf-8"))
+            stringio = StringIO(file.getvalue().decode("utf-8"))
             text = stringio.read()
             all_text += text
         else:
             st.warning('Please provide txt or pdf.', icon="⚠️")
-    # st.write(all_text)
     return all_text
 
 
@@ -1052,7 +1055,8 @@ if check_password():
         st.info("""Embeddings, i.e., reading your file(s) and converting words to numbers, are created using an OpenAI [embedding model](https://platform.openai.com/docs/guides/embeddings/what-are-embeddings) and indexed for searching. Then,
                 your selected model (e.g., gpt-3.5-turbo-16k) is used to answer your questions.""")
         st.warning("""Some PDFs are images and not formatted text. If the summary feature doesn't work, you may first need to convert your PDF
-                   using Adobe Acrobat. Choose: `Scan and OCR`,`Enhance scanned file` \n   Save your updates, upload and voilà, you can chat with your PDF!""")
+                   using Adobe Acrobat. Choose: `Scan and OCR`,`Enhance scanned file` \n   Alternatively, sometimes PDFs are created with 
+                   unusual fonts or LaTeX symbols. Export the file to Word, re-save as a PDF and try again. Save your updates, upload and voilà, you can chat with your PDF! """)
         uploaded_files = []
         # os.environ["OPENAI_API_KEY"] = st.secrets["OPENAI_API_KEY"]
 
@@ -1077,14 +1081,20 @@ if check_password():
             st.warning("No files uploaded.")       
             st.write("Ready to answer your questions!")
 
-
-        pdf_chat_option = st.radio("Select an Option", ("Summary", "Custom Question"))
+        col1, col2 = st.columns(2)
+        with col1:
+            pdf_chat_option = st.radio("Select an Option", ("Summary", "Custom Question"))
         if pdf_chat_option == "Summary":
-            st.write("Generated with [Chain of Density](https://arxiv.org/abs/2309.04269) methodology.")
-            word_count = st.slider("~Word Count for the Summary", 20, 500, 150)
-            # user_question = "Summary: Using context provided, generate a concise and comprehensive summary. Key Points: Generate a list of Key Points by using a conclusion section if present and the full context otherwise."
-            user_question = chain_of_density_summary
-            user_question = user_question.format(word_count=word_count)
+            with col2:
+                summary_method= st.radio("Select a Summary Method", ("Standard Summary", "Chain of Density"))
+            word_count = st.slider("Approximate Word Count for the Summary. Most helpful for very long articles", 100, 1000, 250)
+            if summary_method == "Chain of Density":
+                st.write("Generated with [Chain of Density](https://arxiv.org/abs/2309.04269) methodology.")
+                user_question = chain_of_density_summary_template
+                user_question = user_question.format(word_count=word_count, context = "{context}")
+            if summary_method == "Standard Summary":
+                user_question = key_points_summary_template
+                user_question = user_question.format(word_count=word_count, context = "{context}")
             
         if pdf_chat_option == "Custom Question":
             user_question = st.text_input("Please enter your own question about the PDF(s):")
