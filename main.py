@@ -1083,7 +1083,7 @@ if check_password():
 
         col1, col2 = st.columns(2)
         with col1:
-            pdf_chat_option = st.radio("Select an Option", ("Summary", "Custom Question"))
+            pdf_chat_option = st.radio("Select an Option", ("Summary", "Custom Question", "Generate MCQs", "Appraise a Clinical Trial"))
         if pdf_chat_option == "Summary":
             with col2:
                 summary_method= st.radio("Select a Summary Method", ("Standard Summary", "Chain of Density"))
@@ -1098,7 +1098,25 @@ if check_password():
             
         if pdf_chat_option == "Custom Question":
             user_question = st.text_input("Please enter your own question about the PDF(s):")
-
+            
+        if pdf_chat_option == "Generate MCQs":
+            num_mcq = st.slider("Number of MCQs", 1, 10, 3)
+            with col2: 
+                mcq_options = st.radio("Select a Sub_Option", ("Generate MCQs", "Generate MCQs on a Specific Topic"))
+            
+            if mcq_options == "Generate MCQs":
+                user_question = mcq_generation_template
+                user_question = user_question.format(num_mcq=num_mcq, context = "{context}")
+                
+            if mcq_options == "Generate MCQs on a Specific Topic":
+                user_focus = st.text_input("Please enter a covered topic for the focus of your MCQ:")
+                user_question = f'Topic for question generation: {user_focus}' + f'\n\n {mcq_generation_template}'
+                user_question = user_question.format(num_mcq=num_mcq, context = "{context}")
+        if pdf_chat_option == "Appraise a Clinical Trial":
+            st.write('Note GPT4 is much better; may take a few minutes to run.')
+            word_count = st.slider("Approximate Word Count for the Summary. Most helpful for very long articles", 100, 1000, 600)
+            user_question = clinical_trial_template
+            user_question = user_question.format(word_count=word_count, context = "{context}")
         if st.button("Generate a Response"):
             index_context = f'Use only the reference document for knowledge. Question: {user_question}'
             pdf_answer = qa(index_context)
