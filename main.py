@@ -506,7 +506,7 @@ if check_password():
         st.write("Last updated 8/12/23")
 
     with st.sidebar.expander("Select a GPT Language Model", expanded=True):
-        st.session_state.model = st.selectbox("Model Options", ("openai/gpt-3.5-turbo", "openai/gpt-3.5-turbo-16k", "openai/gpt-4", "anthropic/claude-instant-v1", "google/palm-2-chat-bison", "meta-llama/codellama-34b-instruct", "meta-llama/llama-2-70b-chat", "gryphe/mythomax-L2-13b", "nousresearch/nous-hermes-llama2-13b"), index=1)
+        st.session_state.model = st.selectbox("Model Options", ("openai/gpt-3.5-turbo", "openai/gpt-3.5-turbo-16k",  "openai/gpt-4", "anthropic/claude-instant-v1", "google/palm-2-chat-bison", "meta-llama/codellama-34b-instruct", "meta-llama/llama-2-70b-chat", "gryphe/mythomax-L2-13b", "nousresearch/nous-hermes-llama2-13b"), index=1)
         if st.session_state.model == "google/palm-2-chat-bison":
             st.warning("The Google model doesn't stream the output, but it's fast. (Will add Med-Palm2 when it's available.)")
             st.markdown("[Information on Google's Palm 2 Model](https://ai.google/discover/palm2/)")
@@ -1113,10 +1113,10 @@ if check_password():
                 user_question = f'Topic for question generation: {user_focus}' + f'\n\n {mcq_generation_template}'
                 user_question = user_question.format(num_mcq=num_mcq, context = "{context}")
         if pdf_chat_option == "Appraise a Clinical Trial":
-            st.write('Note GPT4 is much better; may take a few minutes to run.')
-            word_count = st.slider("Approximate Word Count for the Summary. Most helpful for very long articles", 100, 1000, 600)
+            st.write('Note GPT4 is much better; may take a couple minutes to run.')
+            # word_count = st.slider("Approximate Word Count for the Summary. Most helpful for very long articles", 100, 1000, 600)
             user_question = clinical_trial_template
-            user_question = user_question.format(word_count=word_count, context = "{context}")
+            # user_question = user_question.format(word_count=word_count, context = "{context}")
         if st.button("Generate a Response"):
             index_context = f'Use only the reference document for knowledge. Question: {user_question}'
             pdf_answer = qa(index_context)

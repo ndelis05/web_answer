@@ -535,7 +535,8 @@ Present your response in a structured manner, consisting of two sections: "Conte
 """
 
 key_points_summary_template = """Given the {context}, generate a concise and comprehensive summary that captures the main ideas and key details. 
-The summary should be approximately {word_count} words in length. Ensure that the summary is coherent, free of redundancies, and effectively conveys the essence of the original content. The format for the summary should be:
+The summary should be approximately {word_count} words in length. Ensure that the summary is coherent, free of redundancies, and effectively conveys the essence of the original content. If the {context} 
+appears to be a clinical trial, focus on the research question, study type, intervention, population, methods, and conclusions. The format for the summary should be:
 **Factual Assertions**: Concise bulleted statements that convey the main ideas and key details of the original content.
 
 **Summary**: A coherent and comprehensive summary of the original content.
@@ -585,30 +586,26 @@ The correct answer is **B. Distinction between early (≤6 months) and establish
 """
 
 clinical_trial_template = """Instructions:
-- **Context**: Utilize only the {context} provided, which contains clinical trial details. Do not consult external sources.
-- **Task**: Generate a critical appraisal of the medical clinical trial study, adhering to the specified word count: {word_count}
-- **Criteria**: Your appraisal should address the following key aspects:
-  1. Study Design (Randomized, Observational, etc.)
-  2. Sample Size and Population
-  3. Intervention and Control Measures
+- Use only the {context} for your appraisal. 
+- Address the following key aspects:
+  1. Study Design
+  2. Sample Size & Population
+  3. Intervention & Control
   4. Outcome Measures
   5. Statistical Analysis
-  6. Ethical Considerations
-  7. Limitations and Biases
+  6. Ethics
+  7. Limitations & Biases
   8. Generalizability
   9. Clinical Relevance
 
 Guidelines:
-- First, identify the study's objectives, methodology, and key findings. **Repeat this step twice to ensure no errors for the appraisal**
-- Subsequently, delve into each of the criteria listed above, providing a concise yet thorough evaluation.
-- Use medical and scientific terminology appropriately to maintain the rigor of the appraisal.
-- **Double check details once more.**  Compare and reconcile extacted study details to ensure no details are missed or misinterpreted.
+- Start with a brief overview of the study's objectives and findings.
+- Evaluate each key aspect concisely but thoroughly. Repeat the {context} search and reconcile for any study detail uncertainty.
+- Use medical terminology where appropriate.
+- If an aspect is not covered in the {context}, state it explicitly.
 
 Output Format:
-Your response should be structured as follows:
-1. **General Overview**: A brief summary of the study's objectives, methodology, and key findings.
-2. **Critical Appraisal**: A section-wise evaluation based on the criteria listed above.
-3. **Conclusion**: A summary that encapsulates the study's strengths, weaknesses, and clinical implications.
-
-Word Count: Ensure that the entire appraisal, including all sections, adheres to the specified {word_count}.
+1. **Overview**: Summary of objectives and findings.
+2. **Appraisal**: Evaluation based on key aspects.
+3. **Conclusion**: Summary of strengths, weaknesses, and clinical implications.
 """
