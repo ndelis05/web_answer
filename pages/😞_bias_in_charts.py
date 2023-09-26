@@ -137,7 +137,7 @@ if check_password():
     """
     openai_api_key = st.secrets["OPENAI_API_KEY"]
     openai.api_key = openai_api_key
-    with st.expander('About Bias Checkwer - Important Disclaimer'):
+    with st.expander('About Bias Checker - Important Disclaimer'):
         st.write("Author: David Liebovitz, MD, Northwestern University")
         st.info(disclaimer)
         st.write("Last updated 9/26/23")
