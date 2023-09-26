@@ -105,7 +105,7 @@ def check_password():
 if check_password():
     
     if 'model_bias' not in st.session_state:
-        st.session_state.model_bias = "openai/gpt-3.5-turbo-16k"
+        st.session_state.model_bias = "openai/gpt-4"
     
     if 'sample_progress_note' not in st.session_state:
         st.session_state.sample_progress_note = ''
@@ -128,8 +128,8 @@ if check_password():
     # API_O = st.secrets["OPENAI_API_KEY"]
     # Define Streamlit app layout
 
-    st.set_page_config(page_title='Bias Checker', layout = 'centered', page_icon = ':stethoscope:', initial_sidebar_state = 'auto')
-    st.title("Bias Checker")
+    st.set_page_config(page_title='Bias Checker', layout = 'centered', page_icon = ':disappointed:', initial_sidebar_state = 'auto')
+    st.title("Bias Checker - EARLY DRAFT VERSION")
     st.write("ALPHA version 0.2")
     disclaimer = """**Disclaimer:** This is a early draft tool to identify chart note biases. \n 
 2. This tool is not a real doctor. \n    
@@ -143,8 +143,8 @@ if check_password():
         st.write("Last updated 9/26/23")
     with st.expander("Types of Biases (not a complete list)"):
         st.markdown(bias_types)
-        
-    st.session_state.model_bias = st.selectbox("Model Options", ("openai/gpt-3.5-turbo", "openai/gpt-3.5-turbo-16k", "openai/gpt-4", "anthropic/claude-instant-v1", "google/palm-2-chat-bison", "meta-llama/codellama-34b-instruct", "meta-llama/llama-2-70b-chat", "gryphe/mythomax-L2-13b", "nousresearch/nous-hermes-llama2-13b"), index=1)
+    
+    st.session_state.model_bias = st.selectbox("Model Options", ("openai/gpt-3.5-turbo", "openai/gpt-3.5-turbo-16k", "openai/gpt-4", "anthropic/claude-instant-v1", "google/palm-2-chat-bison", "meta-llama/codellama-34b-instruct", "meta-llama/llama-2-70b-chat", "gryphe/mythomax-L2-13b", "nousresearch/nous-hermes-llama2-13b"), index=2)
     if st.session_state.model_bias == "google/palm-2-chat-bison":
         st.warning("The Google model doesn't stream the output, but it's fast. (Will add Med-Palm2 when it's available.)")
         st.markdown("[Information on Google's Palm 2 Model](https://ai.google/discover/palm2/)")
@@ -172,6 +172,7 @@ if check_password():
         task = st.radio("What would you like to do?", ("Generate a sample note and check for bias", "Paste a sample note to check for bias", "Upload a batch of notes to check for bias",))
 
     if task == "Generate a sample note and check for bias":
+        st.sidebar.warning("This is an EARLY PHASE TOOL undergoing significant updates soon. Eventually, it will generate biased yet realistic note examples for us all to learn from.")    
         st.warning("Enter details into the sidebar on the left and use the buttons to generate response")
         desired_note_content = st.sidebar.text_input("Please enter a desired specialty and diagnoses for your sample note: ")
         desired_note_bias = st.sidebar.text_input("Please enter one or more biases you would like to insert within your sample note: ")
@@ -205,9 +206,9 @@ if check_password():
                 model = st.session_state.model_bias,
                 )   
     if task == "Paste a sample note to check for bias":
-        st.warning("Enter details into the sidebar on the left and use the buttons to generate response")
+        st.warning("No PHI!!!: Enter details into the text box")
         st.session_state.pasted_note = st.text_area("Please paste a sample note to check for bias: ")
-        if st.sidebar.button("Step 1: Assess for Bias"):
+        if st.button("Assess for Bias"):
             bias_assessment = answer_using_prefix(
                 bias_detection_prompt, 
                 biased_note_example, 
@@ -219,9 +220,9 @@ if check_password():
                 )
             
     if task == "Upload a batch of notes to check for bias":
-        st.warning("Enter details into the sidebar on the left and use the buttons to generate response")
+        st.warning("No PHI!!! Enter details into the sidebar on the left and use the buttons to generate response")
         st.session_state.uploaded_file = st.sidebar.file_uploader("Please upload a batch of notes to check for bias: ")
-        if st.sidebar.button("Step 1: Assess for Bias"):
+        if st.button("Assess for Bias"):
             if st.session_state.uploaded_file is not None:
                 st.session_state.copied_note = st.session_state.uploaded_file.getvalue().decode("utf-8")
                 bias_assessment = answer_using_prefix(

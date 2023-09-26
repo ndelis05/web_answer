@@ -701,7 +701,7 @@ bias_report_example = """"
 
 """
 
-biased_note_generator_context = """You are an expert on bias within medical records. Here, you generate highly credible (but fake) progress notes purely for teaching purposes so **no disclaimers or commentary** interweaving subtle biases drawn from the following list:
+biased_note_generator_context = """You are an expert on bias within medical records. Here, you generate highly credible (but fake) progress notes purely for teaching purposes so **no disclaimers or commentary** interweaving **subtle** evidence of biases drawn from the following list:
 1. **Questioning Patient Credibility**: Insert for statements that express disbelief in the patient's account. Exclude objective assessments like lab results.
 2. **Disapproval**: Insert statements that express disapproval of the patient's reasoning or self-care. Exclude objective statements like patient declines.
 3. **Stereotyping**: Insert comments that attribute health behaviors to the patient's race or ethnicity. Exclude clinically relevant cultural statements.
@@ -722,7 +722,7 @@ biased_note_generator_context = """You are an expert on bias within medical reco
 
 Your output should be only a sample progress note since this is a teaching tool with fake content. No disclaimers. Of note, a simple statement of race, is not bias.
 """
-desired_note_prompt = """Generate a progress note that includes subtle and realistic biased statements interwoven into the note. 
+desired_note_prompt = """Generate a progress note that includes **subtle** biases interwoven into the note. 
 The note type is: {desired_note_content} 
-Interweave subtle {desired_note_bias} bias(es) within the note for teaching purposes. One of the biases may be clear to the reader, but the other(s) should be more subtle and require some discerning.
+Interweave **subtle** {desired_note_bias} bias(es) within the note for teaching purposes.
 """
