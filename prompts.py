@@ -610,4 +610,119 @@ Output Format:
 3. **Conclusion**: Summary of strengths, weaknesses, and clinical implications.
 """
 
-sample = "test"
+bias_detection_prompt  = """Your goal is to identify bias in patient progress notes and suggest alternative approaches. The {context} provided is one more more
+patient progress notes. Assess for for bias according to:
+
+1. **Questioning Patient Credibility**: Look for statements that express disbelief in the patient's account. Exclude objective assessments like lab results.
+2. **Disapproval**: Identify statements that express disapproval of the patient's reasoning or self-care. Exclude objective statements like patient declines.
+3. **Stereotyping**: Spot comments that attribute health behaviors to the patient's race or ethnicity. Exclude clinically relevant cultural statements.
+4. **Difficult Patient**: Search for language that portrays the patient as difficult or non-adherent. Exclude pain reports related to labor and birth.
+5. **Unilateral Decisions**: Highlight language that emphasizes clinician authority over the patient. Exclude recommendations based on clinical judgment.
+6. **Assess Social and Behavioral Risks**: Look for notes that document social risk factors like substance abuse. Exclude structured assessments.
+7. **Power/Privilege Language**: Identify statements that describe the patient's psychological and social state in terms of power or privilege. Exclude clinical assessments.
+8. **Assumptions based on Appearance**: Spot statements that make health assumptions based solely on appearance. Exclude objective assessments.
+9. **Language reinforcing Stereotypes**: Identify language that perpetuates stereotypes or biases. Exclude objective evidence.
+10. **Inappropriate use of Medical Terminology**: Look for incorrect or demeaning medical terms. Exclude proper and respectful usage.
+11. **Language undermining Patient Autonomy**: Spot statements that undermine patient autonomy. Exclude informative or guiding statements.
+12. **Disrespectful or Condescending Language**: Identify disrespectful or condescending language. Exclude respectful and professional tone.
+13. **Cultural Insensitivity**: Look for language that shows a lack of cultural sensitivity. Exclude appropriate cultural context.
+14. **Ageism**: Identify age-based prejudice or stereotypes. Exclude age-related medical conditions.
+15. **Gender Biases**: Spot gender-based stereotypes or biases. Exclude gender-specific medical conditions.
+16. **Classism**: Look for prejudice based on socioeconomic status. Exclude objective socioeconomic factors.
+17. **Language Barriers and Cultural Competence**: Identify statements that disregard language barriers or cultural differences. Exclude efforts to provide language or cultural accommodations.
+
+Your output should include a list of statements that meet the above criteria. For each statement, suggest an alternative approach that avoids bias. Sample output:
+
+Biased Statement: "The patient's poor English makes communication difficult."
+Unbiased Alternative: "Language barriers exist; interpretation services may be beneficial."
+
+Biased Statement: "The patient is non-compliant with treatment."
+Unbiased Alternative: "The patient has not yet followed the treatment plan."
+
+Biased Statement: "The patient wants to try alternative medicine, but that's not recommended."
+Unbiased Alternative: "The patient expressed interest in alternative medicine; standard treatment is also available."
+
+Biased Statement: "It's unclear whether the patient is being honest about their symptoms."
+Unbiased Alternative: "The patient reports experiencing symptoms of X and Y."
+"""
+
+bias_types = """
+1. **Questioning Patient Credibility**: Look for statements that express disbelief in the patient's account. Exclude objective assessments like lab results.
+2. **Disapproval**: Identify statements that express disapproval of the patient's reasoning or self-care. Exclude objective statements like patient declines.
+3. **Stereotyping**: Spot comments that attribute health behaviors to the patient's race or ethnicity. Exclude clinically relevant cultural statements.
+4. **Difficult Patient**: Search for language that portrays the patient as difficult or non-adherent. Exclude pain reports related to labor and birth.
+5. **Unilateral Decisions**: Highlight language that emphasizes clinician authority over the patient. Exclude recommendations based on clinical judgment.
+6. **Assess Social and Behavioral Risks**: Look for notes that document social risk factors like substance abuse. Exclude structured assessments.
+7. **Power/Privilege Language**: Identify statements that describe the patient's psychological and social state in terms of power or privilege. Exclude clinical assessments.
+8. **Assumptions based on Appearance**: Spot statements that make health assumptions based solely on appearance. Exclude objective assessments.
+9. **Language reinforcing Stereotypes**: Identify language that perpetuates stereotypes or biases. Exclude objective evidence.
+10. **Inappropriate use of Medical Terminology**: Look for incorrect or demeaning medical terms. Exclude proper and respectful usage.
+11. **Language undermining Patient Autonomy**: Spot statements that undermine patient autonomy. Exclude informative or guiding statements.
+12. **Disrespectful or Condescending Language**: Identify disrespectful or condescending language. Exclude respectful and professional tone.
+13. **Cultural Insensitivity**: Look for language that shows a lack of cultural sensitivity. Exclude appropriate cultural context.
+14. **Ageism**: Identify age-based prejudice or stereotypes. Exclude age-related medical conditions.
+15. **Gender Biases**: Spot gender-based stereotypes or biases. Exclude gender-specific medical conditions.
+16. **Classism**: Look for prejudice based on socioeconomic status. Exclude objective socioeconomic factors.
+17. **Language Barriers and Cultural Competence**: Identify statements that disregard language barriers or cultural differences. Exclude efforts to provide language or cultural accommodations.
+"""
+
+biased_note_example = """Subject: Medical Progress Note
+
+Patient: Anonymous
+
+Date: [Insert Date]
+
+Chief Complaint: Patient presents with persistent, non-specific abdominal discomfort for the past two weeks.
+
+History of Present Illness: The patient, a 59-year-old male, reports a dull, constant ache in the lower abdomen. He denies any associated symptoms such as fever, nausea, vomiting, or changes in bowel habits. The patient, who has a history of stress-related disorders, has not noticed any recent changes in diet or lifestyle that could explain the discomfort.
+
+Physical Examination: Abdomen is soft, non-distended with mild tenderness in the lower quadrants. No rebound or guarding. Bowel sounds are normoactive. Rest of the examination is unremarkable.
+
+Assessment: Non-specific abdominal pain. Given the patient's age and history, the differential diagnoses lean towards conditions such as irritable bowel syndrome or gastritis, which can be exacerbated by stress. However, other possibilities such as peptic ulcer disease and diverticulitis are also considered.
+
+Plan: Recommend further diagnostic evaluation with abdominal ultrasound and upper GI endoscopy. Advise the patient to maintain a food diary to identify potential dietary triggers and consider stress management techniques as part of a holistic approach to his health.
+
+Signed,
+[Your Name]
+[Your Title]"""
+
+bias_report_example = """"
+#### 1. History of Present Illness
+- **Biased Statement**: "The patient, who has a history of stress-related disorders, has not noticed any recent changes in diet or lifestyle that could explain the discomfort."
+- **Unbiased Alternative**: "The patient reports no recent changes in diet or lifestyle that could explain the discomfort. The patient has a history of stress-related disorders."
+
+#### 2. Assessment
+- **Biased Statement**: "Given the patient's age and history, the differential diagnoses lean towards conditions such as irritable bowel syndrome or gastritis, which can be exacerbated by stress."
+- **Unbiased Alternative**: "The differential diagnoses include conditions such as irritable bowel syndrome, gastritis, peptic ulcer disease, and diverticulitis. The patient's age and history are noted but do not solely guide the diagnostic process."
+
+#### 3. Plan
+- **Biased Statement**: "Advise the patient to maintain a food diary to identify potential dietary triggers and consider stress management techniques as part of a holistic approach to his health."
+- **Unbiased Alternative**: "Recommend further diagnostic evaluation with abdominal ultrasound and upper GI endoscopy. A food diary may help identify potential dietary triggers. Stress management techniques can be considered as part of a comprehensive approach to health."
+
+"""
+
+biased_note_generator_context = """You are an expert on bias within medical records. Here, you generate highly credible (but fake) progress notes purely for teaching purposes so **no disclaimers or commentary** interweaving subtle biases drawn from the following list:
+1. **Questioning Patient Credibility**: Insert for statements that express disbelief in the patient's account. Exclude objective assessments like lab results.
+2. **Disapproval**: Insert statements that express disapproval of the patient's reasoning or self-care. Exclude objective statements like patient declines.
+3. **Stereotyping**: Insert comments that attribute health behaviors to the patient's race or ethnicity. Exclude clinically relevant cultural statements.
+4. **Difficult Patient**: Insert language that portrays the patient as difficult or non-adherent. Exclude pain reports related to labor and birth.
+5. **Unilateral Decisions**: Insert language that emphasizes clinician authority over the patient. Exclude recommendations based on clinical judgment.
+6. **Assess Social and Behavioral Risks**: Include notes that document social risk factors like substance abuse. Exclude structured assessments.
+7. **Power/Privilege Language**: Insert statements that describe the patient's psychological and social state in terms of power or privilege. Exclude clinical assessments.
+8. **Assumptions based on Appearance**: Insert statements that make health assumptions based solely on appearance. Exclude objective assessments.
+9. **Language reinforcing Stereotypes**: Insert language that perpetuates stereotypes or biases. Exclude objective evidence.
+10. **Inappropriate use of Medical Terminology**: Insert incorrect or demeaning medical terms. Exclude proper and respectful usage.
+11. **Language undermining Patient Autonomy**: Insert statements that undermine patient autonomy. Exclude informative or guiding statements.
+12. **Disrespectful or Condescending Language**: Insert disrespectful or condescending language. Exclude respectful and professional tone.
+13. **Cultural Insensitivity**: Use language that shows a lack of cultural sensitivity. Exclude appropriate cultural context.
+14. **Ageism**: Insert age-based prejudice or stereotypes. Exclude age-related medical conditions.
+15. **Gender Biases**: Use gender-based stereotypes or biases. Exclude gender-specific medical conditions.
+16. **Classism**: Show prejudice based on socioeconomic status. Exclude objective socioeconomic factors.
+17. **Language Barriers and Cultural Competence**: Insert statements that disregard language barriers or cultural differences. Exclude efforts to provide language or cultural accommodations.
+
+Your output should be only a sample progress note since this is a teaching tool with fake content. No disclaimers. Of note, a simple statement of race, is not bias.
+"""
+desired_note_prompt = """Generate a progress note that includes subtle and realistic biased statements interwoven into the note. 
+The note type is: {desired_note_content} 
+Interweave subtle {desired_note_bias} bias(es) within the note for teaching purposes. One of the biases may be clear to the reader, but the other(s) should be more subtle and require some discerning.
+"""
