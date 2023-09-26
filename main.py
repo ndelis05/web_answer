@@ -1118,8 +1118,8 @@ if check_password():
             user_question = clinical_trial_template
             # user_question = user_question.format(word_count=word_count, context = "{context}")
         if st.button("Generate a Response"):
-            index_context = f'Use only the reference document for knowledge. Question: {user_question}'
-            pdf_answer = qa(index_context)
+            # index_context = f'Use only the reference document for knowledge. Question: {user_question}'
+            pdf_answer = qa(user_question)
 
             # Append the user question and PDF answer to the session state lists
             st.session_state.pdf_user_question.append(user_question)
