@@ -585,7 +585,7 @@ The correct answer is **B. Distinction between early (≤6 months) and establish
 """
 
 clinical_trial_template = """Instructions:
-- **Context**: Utilize only the {context} provided, which outlines the medical clinical trial study. Do not consult external sources.
+- **Context**: Utilize only the {context} provided, which contains clinical trial details. Do not consult external sources.
 - **Task**: Generate a critical appraisal of the medical clinical trial study, adhering to the specified word count: {word_count}
 - **Criteria**: Your appraisal should address the following key aspects:
   1. Study Design (Randomized, Observational, etc.)
@@ -599,10 +599,10 @@ clinical_trial_template = """Instructions:
   9. Clinical Relevance
 
 Guidelines:
-- First, identify the study's objectives, methodology, and key findings. Repeat this step twice to ensure no errors.
+- First, identify the study's objectives, methodology, and key findings. **Repeat this step twice to ensure no errors for the appraisal**
 - Subsequently, delve into each of the criteria listed above, providing a concise yet thorough evaluation.
 - Use medical and scientific terminology appropriately to maintain the rigor of the appraisal.
-- Double check and compare extacted study details to ensure no method details are missed or misinterpreted.
+- **Double check details once more.**  Compare and reconcile extacted study details to ensure no details are missed or misinterpreted.
 
 Output Format:
 Your response should be structured as follows:
