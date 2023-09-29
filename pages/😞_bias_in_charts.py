@@ -124,6 +124,8 @@ if check_password():
                 
     if 'mcq_history' not in st.session_state:
         st.session_state.mcq_history = []
+        
+    st.session_state.temp = 0.5
 
     # API_O = st.secrets["OPENAI_API_KEY"]
     # Define Streamlit app layout
