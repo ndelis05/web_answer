@@ -1023,8 +1023,8 @@ if check_password():
                 with st.spinner('Searching the web and converting findings to vectors...'):
                     rag = prepare_rag(raw_output)                
                 with st.expander("Content reviewed", expanded=False):
-                    raw_output = truncate_text(raw_output, 5000)
-                    st.write(f'Truncated at ~1000 tokens: \n\n  {raw_output}')
+                    raw_output = truncate_text(raw_output, 25000)
+                    st.write(f'Truncated at ~5000 tokens: \n\n  {raw_output}')
                 with st.spinner('Searching the vector database to assemble your answer...'):
                     skim_output_text = rag(my_ask_for_websearch)
                 skim_output_text = skim_output_text["result"]
