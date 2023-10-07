@@ -24,7 +24,13 @@ import os
 import fitz
 from io import StringIO
 
-
+@st.cache_data
+def display_articles_with_streamlit(articles):
+    i = 1
+    for article in articles:
+        st.write(f"{i}. {article['title']}[{article['year']}]({article['link']})")
+        i+=1
+        # st.write("---")  # Adds a horizontal line for separation
 
 def set_llm_chat(model, temperature):
     if model == "openai/gpt-3.5-turbo":
@@ -256,6 +262,79 @@ def websearch(web_query: str, deep, max) -> float:
         # st.info("Web snippets reviewed.")
         return response_data, urls
 
+@st.cache_data
+def pubmed_abstracts(search_terms, search_type="all"):
+    # URL encoding
+    search_terms_encoded = requests.utils.quote(search_terms)
+
+    # Define the publication type filter based on the search_type parameter
+    if search_type == "all":
+        publication_type_filter = ""
+    elif search_type == "clinical trials":
+        publication_type_filter = "+AND+Clinical+Trial[Publication+Type]"
+    elif search_type == "reviews":
+        publication_type_filter = "+AND+Review[Publication+Type]"
+    else:
+        raise ValueError("Invalid search_type parameter. Use 'all', 'clinical trials', or 'reviews'.")
+
+    # Construct the search query with the publication type filter
+    search_query = f"{search_terms_encoded}{publication_type_filter}"
+    
+    # Query to get the top 20 results
+    url = f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=pubmed&term={search_query}&retmode=json&retmax=20&api_key={st.secrets['pubmed_api_key']}"
+    try:
+        response = requests.get(url)
+        response.raise_for_status()  # Raise an exception for HTTP errors
+        data = response.json()
+        
+        # Check if no results were returned, and if so, use a longer approach
+        if 'count' in data['esearchresult'] and int(data['esearchresult']['count']) == 0:
+            return st.write("No results found. Try a different search or try again after re-loading the page.")
+    except requests.exceptions.RequestException as e:
+        st.error(f"Error fetching search results: {e}")
+        return []
+
+    ids = data['esearchresult']['idlist']
+    articles = []
+
+    for id in ids:
+        details_url = f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?db=pubmed&id={id}&retmode=json&api_key={st.secrets['pubmed_api_key']}"
+        try:
+            details_response = requests.get(details_url)
+            details_response.raise_for_status()  # Raise an exception for HTTP errors
+            details = details_response.json()
+            if 'result' in details and str(id) in details['result']:
+                article = details['result'][str(id)]
+                year = article['pubdate'].split(" ")[0]
+                if year.isdigit():
+                    articles.append({
+                        'title': article['title'],
+                        'year': year,
+                        'link': f"https://pubmed.ncbi.nlm.nih.gov/{id}"
+                    })
+            else:
+                st.warning(f"Details not available for ID {id}")
+        except requests.exceptions.RequestException as e:
+            st.error(f"Error fetching details for ID {id}: {e}")
+        time.sleep(1)  # Introduce a delay to avoid hitting rate limits only if there's an error
+
+    # Second query: Get the abstract texts for the top 10 results
+    abstracts = []
+    for id in ids:
+        abstract_url = f"https://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=pubmed&id={id}&retmode=text&rettype=abstract&api_key={st.secrets['pubmed_api_key']}"
+        try:
+            abstract_response = requests.get(abstract_url)
+            abstract_response.raise_for_status()  # Raise an exception for HTTP errors
+            abstract_text = abstract_response.text
+            if "API rate limit exceeded" not in abstract_text:
+                abstracts.append(abstract_text)
+            else:
+                st.warning(f"Rate limit exceeded when fetching abstract for ID {id}")
+        except requests.exceptions.RequestException as e:
+            st.error(f"Error fetching abstract for ID {id}: {e}")
+        time.sleep(1)  # Introduce a delay to avoid hitting rate limits only if there's an error
+
+    return articles, "\n".join(abstracts)
 
 def answer_using_prefix_openai(prefix, sample_question, sample_answer, my_ask, temperature, history_context):
     openai.api_base = "https://api.openai.com/v1/"
@@ -487,6 +566,30 @@ if "pdf_user_answer" not in st.session_state:
 
 if "last_uploaded_files" not in st.session_state:
     st.session_state["last_uploaded_files"] = []
+    
+if "abstract_questions" not in st.session_state:
+    st.session_state["abstract_questions"] = []
+    
+if "abstract_answers" not in st.session_state:
+    st.session_state["abstract_answers"] = []
+
+if "last_answer" not in st.session_state:
+    st.session_state["last_answer"] = []
+
+if "abstracts" not in st.session_state:
+    st.session_state["abstracts"] = ""
+    
+if "your_question" not in st.session_state:
+    st.session_state["your_question"] = ""
+    
+if "texts" not in st.session_state:
+    st.session_state["texts"] = ""
+    
+if "citations" not in st.session_state:
+    st.session_state["citations"] = ""
+    
+if "search_terms" not in st.session_state:
+    st.session_state["search_terms"] = ""   
 
 if check_password():
     
@@ -960,12 +1063,10 @@ if check_password():
         if 'temp' not in st.session_state:
             st.session_state.temp = 0.3
         search_temp = st.session_state.temp
-        deep = st.checkbox("Deep search (Retrieves full text from a few pages instead of snippets from many pages)", value=False)
-        if deep:
-            max = st.slider("Max number of sites to analyze deeply", 1, 5, 1)
+
         domain = "Analyze only reputable sites."
                  
-        set_domain = st.selectbox("Select a domain to emphasize:", ( "Medscape", "NLM Bookshelf", "CDC", "Stat Pearls", "You specify a domain", "Any", ))
+        set_domain = st.selectbox("Select a domain to emphasize:", ("NLM Bookshelf", "Ask PubMed", "Medscape", "CDC", "Stat Pearls", "You specify a domain", "Any", ))
         if set_domain == "UpToDate.com":
             domain = "site: UpToDate.com, "
         if set_domain == "CDC":
@@ -976,8 +1077,7 @@ if check_password():
             domain = "site: ncbi.nlm.nih.gov/books/, "
         if set_domain == "Stat Pearls":
             domain = "site: statpearls.com, "
-        if set_domain == "PubMed":
-            domain = "site: pubmed.ncbi.nlm.nih.gov, "
+
         if set_domain == "Google Scholar":
             domain = "site: scholar.google.com, "
         if set_domain == "Any":
@@ -985,66 +1085,185 @@ if check_password():
         if set_domain == "You specify a domain":
             domain = "site: " + st.text_input("Enter a full web domain to emphasize:", placeholder="e.g., cdc.gov, pubmed.ncbi.nlm.nih.gov, etc.", label_visibility='visible') + ", "
         
-        my_ask_for_websearch = st.text_area("Skim the web to answer your question:", placeholder="e.g., how can I prevent kidney stones, what is the weather in Chicago tomorrow, etc.", label_visibility='visible', height=100)
-        my_ask_for_websearch_part1 = domain + my_ask_for_websearch.replace("\n", " ")
-
+        if set_domain != "Ask PubMed":
+            deep = st.checkbox("Deep search (Retrieves full text from a few pages instead of snippets from many pages)", value=False)
+            if deep:
+                max = st.slider("Max number of sites to analyze deeply", 1, 5, 1)
         
-        if st.button("Enter your question for a fun (NOT authoritative) draft websearch tool"):
-            st.info("Review all content carefully before considering any use!")
-            raw_output, urls = websearch(my_ask_for_websearch_part1, deep, max)
-            
-            if not deep:
-                # raw_output = json.dumps(raw_output)
-                new_text = ""
-                i = 0
-                for item in raw_output["data"]:
-                    snippet = item["snippet"]
-                    domain = item["domain"]
-                    new_text += f"Snippet: {snippet} from domain: {domain}\n\n"
-                raw_output = new_text
-                with st.expander("Content Reviewed", expanded=False):
-                    st.write(raw_output)
-                    # st.write(urls)
-                my_ask_for_websearch = f'User: {my_ask_for_websearch} \n\n Content basis for your answer: {raw_output}'
+        if set_domain == "Ask PubMed":
+            st.warning("""This PubMed option isn't web scraping like the others. Here, we perform a PubMed search and then search a vector database of retrieved abstracts in order to answer your question. Clearly,
+            this will often be inadequate and is intended to illustrate an AI approach that will become (much) better with time. View citations and retrieved abtracts on the left sidebar. """)
 
+            search_type = st.radio("Select an Option", ("all", "clinical trials", "reviews"), horizontal=True)
+            your_question = st.text_input("Your question for PubMed", placeholder="Enter your question here")
+            st.session_state.your_question = your_question
             
-                if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-16k" or st.session_state.model == "openai/gpt-4":
-                    st.warning("Be sure to validate! This just used web snippets to answer your question!")
-                    skim_output_text = answer_using_prefix_openai(interpret_search_results_prefix, "", '', my_ask_for_websearch, search_temp, history_context="")
-                    
-                else:
-                    st.warning("Be sure to validate! This just used web snippets to answer your question!")
-                    skim_output_text = answer_using_prefix(interpret_search_results_prefix, "", '', my_ask_for_websearch, search_temp, history_context="")
-                if st.session_state.model == "google/palm-2-chat-bison":
-                    st.write("Answer:", skim_output_text)
-                    
+            if st.session_state.your_question != "":
+                search_terms = answer_using_prefix("Convert the user's question into relevant PubMed search terms; include related MeSH terms to improve sensitivity.", 
+                                            "What are the effects of intermittent fasting on weight loss in adults over 50?",
+                                            "(Intermittent fasting OR Fasting[MeSH]) AND (Weight loss OR Weight Reduction Programs[MeSH]) AND (Adults OR Middle Aged[MeSH]) AND Age 50+ ", st.session_state.your_question, 0.5, None)
+                                            
+                # st.write(f'Here are your search terms: {search_terms}')                                   
+                st.session_state.search_terms = search_terms
+                with st.sidebar.expander("Current Question", expanded=False):
+                    st.write(st.session_state.your_question)
+                    st.write('Search terms used: ' + st.session_state.search_terms)
+                with st.spinner("Searching PubMed... (Temperamental - ignore errors if otherwise working. NLM throttles queries; API access can take a minute or two.)"):
+                    if st.session_state.search_terms != "":
+                        st.session_state.citations, st.session_state.abstracts = pubmed_abstracts(st.session_state.search_terms, search_type=search_type)
+                        if st.session_state.citations == [] or st.session_state.abstracts == "":
+                            st.warning("The PubMed API is tempermental. Refresh and try again.")
+                            st.stop()
+
+
+                # st.write(st.session_state.citations)
+                # st.write(st.session_state.abstracts)
+
+            with st.sidebar.expander("Show citations"):
+                display_articles_with_streamlit(st.session_state.citations)
+            with st.sidebar.expander("Show abstracts"):
+                st.write(st.session_state.abstracts)
+            system_context_abstracts = """You receive user query terms and PubMed abstracts for those terms as  your inputs. You first provide a composite summary of all the abstracts emphasizing any of their conclusions. Next,
+            you provide key points from the abstracts in order address the user's likely question based on the on the query terms.       
+            """
+
+            # Unblock below if you'd like to submit the full abtracts. This is not recommended as it is likely to be too long for the model.
+
+            # prompt_for_abstracts = f'User question: {your_question} Abstracts: {st.session_state.abstracts} /n/n Generate one summary covering all the abstracts and then list key points to address likely user questions.'
+
+            # with st.spinner("Waiting on LLM analysis of abstracts..."):
+            #     full_answer = answer_using_prefix(system_context_abstracts, "","",prompt_for_abstracts, 0.5, None, st.session_state.model)
+            # with st.expander("Show summary and key points"):
+            #     st.write(f'Here is the full abstracts inferred answers: {full_answer}')
+
+
+            # st.write("'Reading' all the abstracts to answer your question. This may take a few minutes.")
+
+
+            st.info("""Next, words in the abstracts are converted to numbers for analysis. This is called embedding and is performed using an OpenAI [embedding model](https://platform.openai.com/docs/guides/embeddings/what-are-embeddings) and then indexed for searching. Lastly,
+                    your selected model (e.g., gpt-3.5-turbo-16k) is used to answer your question.""")
+
+
+            if st.session_state.abstracts != "":
+                
+                # with st.spinner("Embedding text from the abstracts (lots of math can take a couple minutes to change words into vectors)..."):
+                #     st.session_state.retriever = create_retriever(st.session_state.abstracts)
+
+                with st.spinner("Splitting text from the abstracts into concept chunks..."):
+                    st.session_state.texts = split_texts(st.session_state.abstracts, chunk_size=1250,
+                                                overlap=200, split_method="splitter_type")
+                with st.spinner("Embedding the text (converting words to vectors) and indexing to answer questions about the abtracts (Takes a couple minutes)."):
+                    st.session_state.retriever = create_retriever(st.session_state.texts)
+
+
+                # openai.api_base = "https://openrouter.ai/api/v1"
+                # openai.api_key = st.secrets["OPENROUTER_API_KEY"]
+
+                llm = set_llm_chat(model=st.session_state.model, temperature=st.session_state.temp)
+                # llm = ChatOpenAI(model_name='gpt-3.5-turbo-16k', openai_api_base = "https://api.openai.com/v1/")
+
+                qa = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=st.session_state.retriever)
+
             else:
-                # raw_output = truncate_text(raw_output, 5000)
-                with st.spinner('Searching the web and converting findings to vectors...'):
-                    rag = prepare_rag(raw_output)                
-                with st.expander("Content reviewed", expanded=False):
-                    raw_output = truncate_text(raw_output, 25000)
-                    st.write(f'Truncated at ~5000 tokens: \n\n  {raw_output}')
-                with st.spinner('Searching the vector database to assemble your answer...'):
-                    skim_output_text = rag(my_ask_for_websearch)
-                skim_output_text = skim_output_text["result"]
-                st.warning(f'Be sure to validate! This just used {max} webpage(s) to answer your question!')
-                st.write(skim_output_text)
+                st.warning("No files uploaded.")       
+                st.write("Ready to answer your questions!")
+
+
+
+            user_question_abstract = st.text_input("Ask followup questions about the retrieved abstracts. Here was your initial question:", your_question)
+
+            index_context = f'Use only the reference document for knowledge. Question: {user_question_abstract}'
+            if st.session_state.abstracts != "":
+                abstract_answer = qa(index_context)
+
+                if st.button("Ask more about the abstracts"):
+                    index_context = f'Use only the reference document for knowledge. Question: {user_question_abstract}'
+                    abstract_answer = qa(index_context)
+
+                # Append the user question and PDF answer to the session state lists
+                st.session_state.abstract_questions.append(user_question_abstract)
+                st.session_state.abstract_answers.append(abstract_answer)
+
+                # Display the PubMed answer
+                st.write(abstract_answer["result"])
+
+                # Prepare the download string for the PDF questions
+                abstract_download_str = f"{disclaimer}\n\nPDF Questions and Answers:\n\n"
+                for i in range(len(st.session_state.abstract_questions)):
+                    abstract_download_str += f"Question: {st.session_state.abstract_questions[i]}\n"
+                    abstract_download_str += f"Answer: {st.session_state.abstract_answers[i]['result']}\n\n"
+
+                # Display the expander section with the full thread of questions and answers
+                with st.expander("Your Conversation with your Abstracts", expanded=False):
+                    for i in range(len(st.session_state.abstract_questions)):
+                        st.info(f"Question: {st.session_state.abstract_questions[i]}", icon="🧐")
+                        st.success(f"Answer: {st.session_state.abstract_answers[i]['result']}", icon="🤖")
+
+                    if abstract_download_str:
+                        st.download_button('Download', abstract_download_str, key='abstract_questions_downloads')
+            
+    
+        else:
+            my_ask_for_websearch = st.text_area("Skim the web to answer your question:", placeholder="e.g., how can I prevent kidney stones, what is the weather in Chicago tomorrow, etc.", label_visibility='visible', height=100)
+            my_ask_for_websearch_part1 = domain + my_ask_for_websearch.replace("\n", " ")
 
             
-            skim_download_str = []
+            if st.button("Enter your question for a fun (NOT authoritative) draft websearch tool"):
+                st.info("Review all content carefully before considering any use!")
+                raw_output, urls = websearch(my_ask_for_websearch_part1, deep, max)
+                
+                if not deep:
+                    # raw_output = json.dumps(raw_output)
+                    new_text = ""
+                    i = 0
+                    for item in raw_output["data"]:
+                        snippet = item["snippet"]
+                        domain = item["domain"]
+                        new_text += f"Snippet: {snippet} from domain: {domain}\n\n"
+                    raw_output = new_text
+                    with st.expander("Content Reviewed", expanded=False):
+                        st.write(raw_output)
+                        # st.write(urls)
+                    my_ask_for_websearch = f'User: {my_ask_for_websearch} \n\n Content basis for your answer: {raw_output}'
+
+                
+                    if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-16k" or st.session_state.model == "openai/gpt-4":
+                        st.warning("Be sure to validate! This just used web snippets to answer your question!")
+                        skim_output_text = answer_using_prefix_openai(interpret_search_results_prefix, "", '', my_ask_for_websearch, search_temp, history_context="")
+                        
+                    else:
+                        st.warning("Be sure to validate! This just used web snippets to answer your question!")
+                        skim_output_text = answer_using_prefix(interpret_search_results_prefix, "", '', my_ask_for_websearch, search_temp, history_context="")
+                    if st.session_state.model == "google/palm-2-chat-bison":
+                        st.write("Answer:", skim_output_text)
+                        
+                else:
+                    # raw_output = truncate_text(raw_output, 5000)
+                    with st.spinner('Searching the web and converting findings to vectors...'):
+                        rag = prepare_rag(raw_output)                
+                    with st.expander("Content reviewed", expanded=False):
+                        raw_output = truncate_text(raw_output, 25000)
+                        st.write(f'Truncated at ~5000 tokens: \n\n  {raw_output}')
+                    with st.spinner('Searching the vector database to assemble your answer...'):
+                        skim_output_text = rag(my_ask_for_websearch)
+                    skim_output_text = skim_output_text["result"]
+                    st.warning(f'Be sure to validate! This just used {max} webpage(s) to answer your question!')
+                    st.write(skim_output_text)
+
+                
+                skim_download_str = []
             
-            # ENTITY_MEMORY_CONVERSATION_TEMPLATE
-            # Display the conversation history using an expander, and allow the user to download it
-            with st.expander("Links Identified"):
-                for item in urls:
-                    st.write(item)
-            with st.expander("Sifting Web Summary", expanded=False):
-                st.info(f'Topic: {my_ask_for_websearch}',icon="🧐")
-                st.success(f'Your Sifted Response: **REVIEW CAREFULLY FOR ERRORS** \n\n {skim_output_text}', icon="🤖")      
-                skim_download_str = f"{disclaimer}\n\nSifted Summary: {my_ask_for_websearch}:\n\n{skim_output_text}"
-                if skim_download_str:
-                        st.download_button('Download', skim_download_str, key = 'skim_questions')
+                # ENTITY_MEMORY_CONVERSATION_TEMPLATE
+                # Display the conversation history using an expander, and allow the user to download it
+                with st.expander("Links Identified"):
+                    for item in urls:
+                        st.write(item)
+                with st.expander("Sifting Web Summary", expanded=False):
+                    st.info(f'Topic: {my_ask_for_websearch}',icon="🧐")
+                    st.success(f'Your Sifted Response: **REVIEW CAREFULLY FOR ERRORS** \n\n {skim_output_text}', icon="🤖")      
+                    skim_download_str = f"{disclaimer}\n\nSifted Summary: {my_ask_for_websearch}:\n\n{skim_output_text}"
+                    if skim_download_str:
+                            st.download_button('Download', skim_download_str, key = 'skim_questions')
         
     
     
