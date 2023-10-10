@@ -723,6 +723,6 @@ biased_note_generator_context = """You are an expert on bias within medical reco
 Your output should be only a sample progress note since this is a teaching tool with fake content. No disclaimers. Of note, a simple statement of race, is not bias.
 """
 desired_note_prompt = """Generate a progress note that includes **subtle** biases interwoven into the note. 
-The note type is: {desired_note_content} 
-Interweave **subtle** {desired_note_bias} bias(es) within the note for teaching purposes.
-"""
+The note type is: {desired_note_content}. 
+Use test patient charateristics: {patient_attributes}. These are not biases.
+Interweave **subtle** physician biases within the note for teaching purposes: {desired_note_bias} bias(es)."""

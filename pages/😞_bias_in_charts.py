@@ -176,9 +176,10 @@ if check_password():
     if task == "Generate a sample note and check for bias":
         st.sidebar.warning("This is an EARLY PHASE TOOL undergoing significant updates soon. Eventually, it will generate biased yet realistic note examples for us all to learn from.")    
         st.warning("Enter details into the sidebar on the left and use the buttons to generate response")
-        desired_note_content = st.sidebar.text_input("Please enter a desired specialty and diagnoses for your sample note: ")
+        desired_note_content = st.sidebar.text_input("Please enter a desired specialty and diagnoses for your simulated patient:")
+        patient_attributes = st.sidebar.text_input("Please enter one or more patient attributes you would like to insert within your sample note (e.g., age, race, sex assigned at birth, gender identity, ethnicity, etc.): ")
         desired_note_bias = st.sidebar.text_input("Please enter one or more biases you would like to insert within your sample note: ")
-        desired_note_prompt = desired_note_prompt.format(desired_note_content=desired_note_content, desired_note_bias=desired_note_bias)
+        desired_note_prompt = desired_note_prompt.format(desired_note_content=desired_note_content, patient_attributes = patient_attributes, desired_note_bias=desired_note_bias)
         
         if st.sidebar.button("Step 1: Generate a Sample Progress Note"):
 
