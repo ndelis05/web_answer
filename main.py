@@ -25,6 +25,56 @@ import fitz
 from io import StringIO
 
 @st.cache_data
+def browserless(url_list, max):
+    # st.write(url_list)
+    if max > 5:
+        max = 5
+    response_complete = []
+    i = 0
+    key = st.secrets["BROWSERLESS_API_KEY"]
+    api_url = f'https://chrome.browserless.io/content?token={key}'
+    headers = {
+        'Cache-Control': 'no-cache',
+        'Content-Type': 'application/json'
+    }
+    while i < max and i < len(url_list):
+        url = url_list[i]
+        url_parts = urlparse(url)
+        # st.write("Scraping...")
+        if 'uptodate.com' in url_parts.netloc:
+            method = "POST"
+            url_parts = url_parts._replace(path=url_parts.path + '/print')
+            url = urlunparse(url_parts)
+            st.write(f' here is a {url}')
+        payload =  {
+            "url": url,
+        }
+        
+        response = requests.post(api_url, headers=headers, json=payload)
+        # response = requests.post(url, json=payload, headers=headers)
+        if response.status_code != 200:
+            st.write(f'The site failed to release all content: {response.status_code}')
+            # st.write(f'Response text: {response.text}')
+            # st.write(f'Response headers: {response.headers}')
+        try:
+            # st.write(f'Response text: {response.text}')  # Print out the raw response text
+            soup = BeautifulSoup(response.text, 'html.parser')
+            clean_text = soup.get_text(separator=' ')
+            # st.write(clean_text)
+            # st.write("Scraped!")
+            response_complete.append(clean_text)
+        except json.JSONDecodeError:
+            st.write("Error decoding JSON")
+        i += 1
+    full_response = ' '.join(response_complete)
+    # limited_text = limit_tokens(full_response, 12000)
+    # st.write(f'Here is the lmited text: {limited_text}')
+    return full_response
+    # st.write(full_response)    
+    # Join all the scraped text into a single string
+    # return full_response
+
+@st.cache_data
 def display_articles_with_streamlit(articles):
     i = 1
     for article in articles:
@@ -232,7 +282,7 @@ def scrapeninja(url_list, max):
     # return full_response
 
 @st.cache_data
-def websearch(web_query: str, deep, max) -> float:
+def websearch(web_query: str, deep, scrape_method, max) -> float:
     """
     Obtains real-time search results from across the internet. 
     Supports all Google Advanced Search operators such (e.g. inurl:, site:, intitle:, etc).
@@ -268,7 +318,10 @@ def websearch(web_query: str, deep, max) -> float:
         urls.append(item['url'])    
     if deep:
             # st.write(item['url'])
-        response_data = scrapeninja(urls, max)
+        if scrape_method != "Browserless":
+            response_data = scrapeninja(urls, max)
+        else:
+            response_data = browserless(urls, max)
         # st.info("Web results reviewed.")
         return response_data, urls
 
@@ -1107,8 +1160,10 @@ if check_password():
         
         if set_domain != "Ask PubMed" and set_domain != "Semantic Search":
             deep = st.checkbox("Deep search (Retrieves full text from a few pages instead of snippets from many pages)", value=False)
+            scrape_method = "ScrapeNinja"
             if deep:
-                max = st.slider("Max number of sites to analyze deeply", 1, 5, 1)
+                max = st.slider("Max number of sites to analyze deeply", 1, 10, 5)
+                scrape_method = st.radio("Select a webscraping method - switch if there are error codes", ("Browserless", "ScrapeNinja"))
         
         
         if set_domain == "Semantic Search":
@@ -1214,14 +1269,18 @@ if check_password():
                     your selected model (e.g., gpt-3.5-turbo-16k) is used to answer your question.""")
 
 
-            if st.session_state.abstracts != "":
+            if st.session_state.abstracts != "" or st.session_state.s2_abstracts != "":
                 
                 # with st.spinner("Embedding text from the abstracts (lots of math can take a couple minutes to change words into vectors)..."):
                 #     st.session_state.retriever = create_retriever(st.session_state.abstracts)
 
                 with st.spinner("Splitting text from the abstracts into concept chunks..."):
                     # st.write(f'Here are the abstracts: {st.session_state.abstracts}')
-                    st.session_state.texts = split_texts(st.session_state.abstracts, chunk_size=1250,
+                    if set_domain == "Semantic Search":
+                        st.session_state.texts = split_texts(st.session_state.s2_abstracts, chunk_size=1250,
+                                                overlap=200, split_method="splitter_type")
+                    if set_domain == "Ask PubMed":
+                        st.session_state.texts = split_texts(st.session_state.abstracts, chunk_size=1250,
                                                 overlap=200, split_method="splitter_type")
                 with st.spinner("Embedding the text (converting words to vectors) and indexing to answer questions about the abtracts (Takes a couple minutes)."):
                     st.session_state.retriever = create_retriever(st.session_state.texts)
@@ -1236,7 +1295,7 @@ if check_password():
                 qa = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=st.session_state.retriever)
 
             else:
-                st.warning("No files uploaded.")       
+                st.warning("No abstracts available for searching.")       
                 st.write("Ready to answer your questions!")
 
 
@@ -1244,7 +1303,7 @@ if check_password():
             user_question_abstract = st.text_input("Ask followup questions about the retrieved abstracts. Here was your initial question:", your_question)
 
             index_context = f'Use only the reference document for knowledge. Question: {user_question_abstract}'
-            if st.session_state.abstracts != "":
+            if st.session_state.abstracts != "" or st.session_state.s2_abstracts != "":
                 with st.spinner("Reviewing the abstracts to formulate a response..."):
                     abstract_answer = qa(index_context)
 
@@ -1283,7 +1342,9 @@ if check_password():
             
             if st.button("Enter your question for a fun (NOT authoritative) draft websearch tool"):
                 st.info("Review all content carefully before considering any use!")
-                raw_output, urls = websearch(my_ask_for_websearch_part1, deep, max)
+
+                raw_output, urls = websearch(my_ask_for_websearch_part1, deep, scrape_method, max)
+
                 
                 if not deep:
                     # raw_output = json.dumps(raw_output)
