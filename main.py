@@ -52,17 +52,17 @@ def truncate_text(text, max_characters):
         truncated_text = text[:max_characters]
         return truncated_text
 
-def semantic_search(search_term):
-    
-    rsp = requests.get(f"https://api.semanticscholar.org/graph/v1/paper/search?query={search_term}=url,title,abstract",
-                       headers={'X-API-KEY': st.secrets["S2_API_KEY"]},
-                       params={'fields': 'title,abstract,url', 'limit': 20})
+def semantic_search(search_term, max_results, year, publication_type):
+    # rsp = requests.get(f"https://api.semanticscholar.org/graph/v1/paper/search?query={search_term}=url,title,abstract",
+    rsp = requests.get(f"https://api.semanticscholar.org/graph/v1/paper/search",
+                       headers={'X-API-KEY': st.secrets["S2_API_KEY"]}, 
+                       params={'query': search_term, 'fields': 'title,year,abstract,url', 'year': year, 'publicationTypes': publication_type, 'limit': max_results})
     rsp.raise_for_status()
     results = rsp.json()
     # abstracts = [f"{item['abstract']}" for item in results['data']]
-    abstracts = '\n'.join([f"{item['abstract']}" for item in results['data']])
+    abstracts = '\n'.join([f"{item['abstract']} {item['year']}" for item in results['data']])
     # citations = [f"{item['title']}, {item['url']}" for item in results['data']]
-    citations = '\n\n'.join([f"{item['title']} [link]({item['url']})" for item in results['data']])
+    citations = '\n\n'.join([f"{item['title']} {item['year']} [link]({item['url']})" for item in results['data']])
 
     # st.write(f'here are your s2 results {abstracts}')
     return citations, abstracts
@@ -1108,7 +1108,23 @@ if check_password():
         if set_domain == "Semantic Search":
             st.markdown("""Here, we use [Semantic Scholar](https://www.semanticscholar.org) to search a vector database of retrieved abstracts in order to answer your question. Clearly,
             this will often be inadequate and is intended to illustrate an AI approach that will become (much) better with time. View citations and retrieved abtracts on the left sidebar. """)
+            with st.expander("Semantic Scholar Search Options", expanded=False):
+                max_results = st.slider("Max number of results to return", 1, 50, 20)
+                time_range = st.radio("Time range", ("All", "Last 5 years", "Last 10 years"), index=0)
+                if time_range == "All":
+                    year = "-2030"
+                if time_range == "Last 5 years":
+                    year = "2017-"
+                if time_range == "Last 10 years":
+                    year = "2013-"
+                publication_types = st.radio("Publication types", ("All", "Clinical Trials", "Reviews"), index=0)
             your_question = st.text_input("Your question for Semantic Scholar", placeholder="Enter your question here")
+            if publication_types == "All":
+                publicationTypes = ""
+            if publication_types == "Clinical Trials":
+                publicationTypes = "ClinicalTrial"
+            if publication_types == "Reviews":
+                publicationTypes = "Review"
             st.session_state.your_question = your_question
             if st.session_state.your_question != "":
                 st.warning("Rephrasing your question for use with Semantic Scholar:")
@@ -1125,7 +1141,7 @@ if check_password():
                     try:
                         with st.spinner("Using Semantic Search..."):
                             # st.session_state.citations, st.session_state.abstracts = pubmed_abstracts(st.session_state.search_terms, search_type=search_type)
-                            st.session_state.citations, st.session_state.abstracts = semantic_search(st.session_state.search_terms)
+                            st.session_state.citations, st.session_state.abstracts = semantic_search(st.session_state.search_terms, max_results, year, publicationTypes)
                     except:
                         st.warning("Insufficient findings to parse results.")
                         st.stop()
