@@ -592,6 +592,9 @@ if "last_answer" not in st.session_state:
 
 if "abstracts" not in st.session_state:
     st.session_state["abstracts"] = ""
+
+if "s2_abstracts" not in st.session_state:
+    st.session_state["s2_abstracts"] = ""
     
 if "your_question" not in st.session_state:
     st.session_state["your_question"] = ""
@@ -601,6 +604,9 @@ if "texts" not in st.session_state:
     
 if "citations" not in st.session_state:
     st.session_state["citations"] = ""
+    
+if "s2_citations" not in st.session_state:
+    st.session_state["s2_citations"] = ""
     
 if "search_terms" not in st.session_state:
     st.session_state["search_terms"] = ""   
@@ -1140,14 +1146,14 @@ if check_password():
                     try:
                         with st.spinner("Using Semantic Search..."):
                             # st.session_state.citations, st.session_state.abstracts = pubmed_abstracts(st.session_state.search_terms, search_type=search_type)
-                            st.session_state.citations, st.session_state.abstracts = semantic_search(st.session_state.search_terms, max_results, year, publication_types)
+                            st.session_state.s2_citations, st.session_state.s2_abstracts = semantic_search(st.session_state.search_terms, max_results, year, publication_types)
                     except:
                         st.warning("Insufficient findings to parse results.")
                         st.stop()
             with st.sidebar.expander("Show citations"):
-                st.write(st.session_state.citations)
+                st.write(st.session_state.s2_citations)
             with st.sidebar.expander("Show abstracts"):
-                st.write(st.session_state.abstracts)
+                st.write(st.session_state.s2_abstracts)
         
         if set_domain == "Ask PubMed":
             st.warning("""Here, we perform a PubMed search and then search a vector database of retrieved abstracts in order to answer your question. Clearly,
