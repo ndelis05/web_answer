@@ -1120,7 +1120,7 @@ if check_password():
                 restrict_type = st.checkbox("Restrict to publication type")
                 publication_types = ""
                 if restrict_type:
-                    publication_types = st.multiselect("Publication types - click dropdown for options", ["JournalArticle", "ClinicalTrial", "Study", "Review", "CaseReport", "Dataset", "Editorial", "LettersandComments", "MetaAnalysis", "News", "Book", "BookSection"],
+                    publication_types = st.multiselect("Publication types - click dropdown for all options", ["JournalArticle", "ClinicalTrial", "Study", "Review", "CaseReport", "Dataset", "Editorial", "LettersandComments", "MetaAnalysis", "News", "Book", "BookSection"],
                                                    ["ClinicalTrial", "Review", "MetaAnalysis"])
                     publication_types = ', '.join(publication_types)
             your_question = st.text_input("Your question for Semantic Scholar", placeholder="Enter your question here")
