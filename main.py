@@ -52,6 +52,20 @@ def truncate_text(text, max_characters):
         truncated_text = text[:max_characters]
         return truncated_text
 
+def semantic_search(search_term):
+    
+    rsp = requests.get(f"https://api.semanticscholar.org/graph/v1/paper/search?query={search_term}=url,title,abstract",
+                       headers={'X-API-KEY': st.secrets["S2_API_KEY"]},
+                       params={'fields': 'title,abstract,url', 'limit': 20})
+    rsp.raise_for_status()
+    results = rsp.json()
+    # abstracts = [f"{item['abstract']}" for item in results['data']]
+    abstracts = '\n'.join([f"{item['abstract']}" for item in results['data']])
+    # citations = [f"{item['title']}, {item['url']}" for item in results['data']]
+    citations = '\n\n'.join([f"{item['title']} [link]({item['url']})" for item in results['data']])
+
+    # st.write(f'here are your s2 results {abstracts}')
+    return citations, abstracts
 
 def clear_session_state_except_password_correct():
     # Make a copy of the session_state keys
@@ -1066,7 +1080,7 @@ if check_password():
 
         domain = "Analyze only reputable sites."
                  
-        set_domain = st.selectbox("Select a domain to emphasize:", ("NLM Bookshelf", "Ask PubMed", "Medscape", "CDC", "Stat Pearls", "You specify a domain", "Any", ))
+        set_domain = st.selectbox("Select a domain to emphasize:", ("NLM Bookshelf", "Medscape", "CDC", "Stat Pearls", "Ask PubMed", "Semantic Search", "You specify a domain", "Any", ))
         if set_domain == "UpToDate.com":
             domain = "site: UpToDate.com, "
         if set_domain == "CDC":
@@ -1085,13 +1099,43 @@ if check_password():
         if set_domain == "You specify a domain":
             domain = "site: " + st.text_input("Enter a full web domain to emphasize:", placeholder="e.g., cdc.gov, pubmed.ncbi.nlm.nih.gov, etc.", label_visibility='visible') + ", "
         
-        if set_domain != "Ask PubMed":
+        if set_domain != "Ask PubMed" and set_domain != "Semantic Search":
             deep = st.checkbox("Deep search (Retrieves full text from a few pages instead of snippets from many pages)", value=False)
             if deep:
                 max = st.slider("Max number of sites to analyze deeply", 1, 5, 1)
         
+        
+        if set_domain == "Semantic Search":
+            st.markdown("""Here, we use [Semantic Scholar](https://www.semanticscholar.org) to search a vector database of retrieved abstracts in order to answer your question. Clearly,
+            this will often be inadequate and is intended to illustrate an AI approach that will become (much) better with time. View citations and retrieved abtracts on the left sidebar. """)
+            your_question = st.text_input("Your question for Semantic Scholar", placeholder="Enter your question here")
+            st.session_state.your_question = your_question
+            if st.session_state.your_question != "":
+                st.warning("Rephrasing your question for use with Semantic Scholar:")
+                search_terms = answer_using_prefix("Convert the user's question into a comprehensive and concise Semantic Scholar search phrase.", 
+                                            "What are the effects of intermittent fasting on weight loss in adults over 50?",
+                                            "Effects of intermittent fasting on weight loss in adults over 50", st.session_state.your_question, 0.5, None)
+                                # st.write(f'Here are your search terms: {search_terms}')                                   
+                st.session_state.search_terms = search_terms
+                with st.sidebar.expander("Current Question", expanded=False):
+                    st.write(st.session_state.your_question)
+                    st.write('Search terms used: ' + st.session_state.search_terms)
+                    
+                if st.session_state.search_terms != "":
+                    try:
+                        with st.spinner("Using Semantic Search..."):
+                            # st.session_state.citations, st.session_state.abstracts = pubmed_abstracts(st.session_state.search_terms, search_type=search_type)
+                            st.session_state.citations, st.session_state.abstracts = semantic_search(st.session_state.search_terms)
+                    except:
+                        st.warning("Insufficient findings to parse results.")
+                        st.stop()
+            with st.sidebar.expander("Show citations"):
+                st.write(st.session_state.citations)
+            with st.sidebar.expander("Show abstracts"):
+                st.write(st.session_state.abstracts)
+        
         if set_domain == "Ask PubMed":
-            st.warning("""This PubMed option isn't web scraping like the others. Here, we perform a PubMed search and then search a vector database of retrieved abstracts in order to answer your question. Clearly,
+            st.warning("""Here, we perform a PubMed search and then search a vector database of retrieved abstracts in order to answer your question. Clearly,
             this will often be inadequate and is intended to illustrate an AI approach that will become (much) better with time. View citations and retrieved abtracts on the left sidebar. """)
 
             search_type = st.radio("Select an Option", ("all", "clinical trials", "reviews"), horizontal=True)
@@ -1099,6 +1143,7 @@ if check_password():
             st.session_state.your_question = your_question
             
             if st.session_state.your_question != "":
+                st.warning("Rephrasing your question for use with PubMed:")
                 search_terms = answer_using_prefix("Convert the user's question into relevant PubMed search terms; include related MeSH terms to improve sensitivity.", 
                                             "What are the effects of intermittent fasting on weight loss in adults over 50?",
                                             "(Intermittent fasting OR Fasting[MeSH]) AND (Weight loss OR Weight Reduction Programs[MeSH]) AND (Adults OR Middle Aged[MeSH]) AND Age 50+ ", st.session_state.your_question, 0.5, None)
@@ -1113,6 +1158,7 @@ if check_password():
                     try:
                         with st.spinner("Searching PubMed... (Temperamental - ignore errors if otherwise working. NLM throttles queries; API access can take a minute or two.)"):
                             st.session_state.citations, st.session_state.abstracts = pubmed_abstracts(st.session_state.search_terms, search_type=search_type)
+                            
                     except:
                         st.warning("Insufficient findings to parse results.")
                         st.stop()
@@ -1128,9 +1174,7 @@ if check_password():
                 display_articles_with_streamlit(st.session_state.citations)
             with st.sidebar.expander("Show abstracts"):
                 st.write(st.session_state.abstracts)
-            system_context_abstracts = """You receive user query terms and PubMed abstracts for those terms as  your inputs. You first provide a composite summary of all the abstracts emphasizing any of their conclusions. Next,
-            you provide key points from the abstracts in order address the user's likely question based on the on the query terms.       
-            """
+
 
             # Unblock below if you'd like to submit the full abtracts. This is not recommended as it is likely to be too long for the model.
 
@@ -1144,7 +1188,7 @@ if check_password():
 
             # st.write("'Reading' all the abstracts to answer your question. This may take a few minutes.")
 
-
+        if set_domain == "Semantic Search" or set_domain == "Ask PubMed":
             st.info("""Next, words in the abstracts are converted to numbers for analysis. This is called embedding and is performed using an OpenAI [embedding model](https://platform.openai.com/docs/guides/embeddings/what-are-embeddings) and then indexed for searching. Lastly,
                     your selected model (e.g., gpt-3.5-turbo-16k) is used to answer your question.""")
 
@@ -1155,6 +1199,7 @@ if check_password():
                 #     st.session_state.retriever = create_retriever(st.session_state.abstracts)
 
                 with st.spinner("Splitting text from the abstracts into concept chunks..."):
+                    # st.write(f'Here are the abstracts: {st.session_state.abstracts}')
                     st.session_state.texts = split_texts(st.session_state.abstracts, chunk_size=1250,
                                                 overlap=200, split_method="splitter_type")
                 with st.spinner("Embedding the text (converting words to vectors) and indexing to answer questions about the abtracts (Takes a couple minutes)."):
@@ -1195,7 +1240,7 @@ if check_password():
                 st.write(abstract_answer["result"])
 
                 # Prepare the download string for the PDF questions
-                abstract_download_str = f"{disclaimer}\n\nPDF Questions and Answers:\n\n"
+                abstract_download_str = f"{disclaimer}\n\nAbstracts Questions and Answers:\n\n"
                 for i in range(len(st.session_state.abstract_questions)):
                     abstract_download_str += f"Question: {st.session_state.abstract_questions[i]}\n"
                     abstract_download_str += f"Answer: {st.session_state.abstract_answers[i]['result']}\n\n"

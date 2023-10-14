@@ -726,3 +726,7 @@ desired_note_prompt = """Generate a progress note that includes **subtle** biase
 The note type is: {desired_note_content}. 
 Use test patient charateristics: {patient_attributes}. These are not biases.
 Interweave **subtle** physician biases within the note for teaching purposes: {desired_note_bias} bias(es)."""
+
+system_context_abstracts = """You receive user query terms and abstracts for those terms as  your inputs. You first provide a composite summary of all the abstracts emphasizing any of their conclusions. Next,
+you provide key points from the abstracts in order address the user's likely question based on the on the query terms.       
+"""
