@@ -1117,14 +1117,13 @@ if check_password():
                     year = "2017-"
                 if time_range == "Last 10 years":
                     year = "2013-"
-                publication_types = st.radio("Publication types", ("All", "Clinical Trials", "Reviews"), index=0)
+                restrict_type = st.checkbox("Restrict to publication type")
+                publication_types = ""
+                if restrict_type:
+                    publication_types = st.multiselect("Publication types - click dropdown for options", ["JournalArticle", "ClinicalTrial", "Study", "Review", "CaseReport", "Dataset", "Editorial", "LettersandComments", "MetaAnalysis", "News", "Book", "BookSection"],
+                                                   ["ClinicalTrial", "Review", "MetaAnalysis"])
+                    publication_types = ', '.join(publication_types)
             your_question = st.text_input("Your question for Semantic Scholar", placeholder="Enter your question here")
-            if publication_types == "All":
-                publicationTypes = ""
-            if publication_types == "Clinical Trials":
-                publicationTypes = "ClinicalTrial"
-            if publication_types == "Reviews":
-                publicationTypes = "Review"
             st.session_state.your_question = your_question
             if st.session_state.your_question != "":
                 st.warning("Rephrasing your question for use with Semantic Scholar:")
@@ -1141,7 +1140,7 @@ if check_password():
                     try:
                         with st.spinner("Using Semantic Search..."):
                             # st.session_state.citations, st.session_state.abstracts = pubmed_abstracts(st.session_state.search_terms, search_type=search_type)
-                            st.session_state.citations, st.session_state.abstracts = semantic_search(st.session_state.search_terms, max_results, year, publicationTypes)
+                            st.session_state.citations, st.session_state.abstracts = semantic_search(st.session_state.search_terms, max_results, year, publication_types)
                     except:
                         st.warning("Insufficient findings to parse results.")
                         st.stop()
