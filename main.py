@@ -1108,12 +1108,17 @@ if check_password():
                 with st.sidebar.expander("Current Question", expanded=False):
                     st.write(st.session_state.your_question)
                     st.write('Search terms used: ' + st.session_state.search_terms)
-                with st.spinner("Searching PubMed... (Temperamental - ignore errors if otherwise working. NLM throttles queries; API access can take a minute or two.)"):
-                    if st.session_state.search_terms != "":
-                        st.session_state.citations, st.session_state.abstracts = pubmed_abstracts(st.session_state.search_terms, search_type=search_type)
-                        if st.session_state.citations == [] or st.session_state.abstracts == "":
-                            st.warning("The PubMed API is tempermental. Refresh and try again.")
-                            st.stop()
+                
+                if st.session_state.search_terms != "":
+                    try:
+                        with st.spinner("Searching PubMed... (Temperamental - ignore errors if otherwise working. NLM throttles queries; API access can take a minute or two.)"):
+                            st.session_state.citations, st.session_state.abstracts = pubmed_abstracts(st.session_state.search_terms, search_type=search_type)
+                    except:
+                        st.warning("Insufficient findings to parse results.")
+                        st.stop()
+                    if st.session_state.citations == [] or st.session_state.abstracts == "":
+                        st.warning("The PubMed API is tempermental. Refresh and try again.")
+                        st.stop()
 
 
                 # st.write(st.session_state.citations)
@@ -1174,11 +1179,13 @@ if check_password():
 
             index_context = f'Use only the reference document for knowledge. Question: {user_question_abstract}'
             if st.session_state.abstracts != "":
-                abstract_answer = qa(index_context)
+                with st.spinner("Reviewing the abstracts to formulate a response..."):
+                    abstract_answer = qa(index_context)
 
                 if st.button("Ask more about the abstracts"):
                     index_context = f'Use only the reference document for knowledge. Question: {user_question_abstract}'
-                    abstract_answer = qa(index_context)
+                    with st.spinner("Reviewing the abstracts to formulate a response..."):
+                        abstract_answer = qa(index_context)
 
                 # Append the user question and PDF answer to the session state lists
                 st.session_state.abstract_questions.append(user_question_abstract)
