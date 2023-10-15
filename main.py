@@ -669,9 +669,9 @@ if check_password():
     openai.api_base = "https://openrouter.ai/api/v1"
     openai.api_key = st.secrets["OPENROUTER_API_KEY"]
 
-    st.set_page_config(page_title='GPT and Med Ed', layout = 'centered', page_icon = ':stethoscope:', initial_sidebar_state = 'auto')
-    st.title("GPT and Medical Education")
-    st.write("ALPHA version 0.3")
+    st.set_page_config(page_title='MediMate: GPT and Med Ed', layout = 'centered', page_icon = ':stethoscope:', initial_sidebar_state = 'auto')
+    st.title("MediMate: GPT and Med Ed")
+    st.write("ALPHA version 1.0")
     os.environ['OPENAI_API_KEY'] = fetch_api_key()
 
 
@@ -679,7 +679,7 @@ if check_password():
         st.write("Author: David Liebovitz, MD, Northwestern University")
         st.info(disclaimer)
         st.session_state.temp = st.slider("Select temperature (Higher values more creative but tangential and more error prone)", 0.0, 1.0, 0.3, 0.01)
-        st.write("Last updated 8/12/23")
+        st.write("Last updated 10/14/23")
 
     with st.sidebar.expander("Select a GPT Language Model", expanded=True):
         st.session_state.model = st.selectbox("Model Options", ("openai/gpt-3.5-turbo", "openai/gpt-3.5-turbo-16k",  "openai/gpt-4", "anthropic/claude-instant-v1", "google/palm-2-chat-bison", "meta-llama/codellama-34b-instruct", "meta-llama/llama-2-70b-chat", "gryphe/mythomax-L2-13b", "nousresearch/nous-hermes-llama2-13b"), index=1)
