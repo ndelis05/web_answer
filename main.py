@@ -675,7 +675,7 @@ if check_password():
     os.environ['OPENAI_API_KEY'] = fetch_api_key()
 
 
-    with st.expander('About GPT and Med Ed - Important Disclaimer'):
+    with st.expander('About MediMate - Important Disclaimer'):
         st.write("Author: David Liebovitz, MD, Northwestern University")
         st.info(disclaimer)
         st.session_state.temp = st.slider("Select temperature (Higher values more creative but tangential and more error prone)", 0.0, 1.0, 0.3, 0.01)
