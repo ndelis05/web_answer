@@ -709,7 +709,11 @@ if check_password():
             
 
         st.info("Since GPT (without major tweaks) isn't up to date, ask only about basic principles, NOT current treatments.")
-        persona = st.radio("Select teaching persona", ("Teacher 1 (academic)", "Teacher 2 (analogies)", "Create Your Own Teaching Style"), index=0)
+        persona = st.radio("Select teaching persona", ("Teacher 1 (academic)", "Teacher 2 (analogies)", "Interactive mode", "Create Your Own Teaching Style"), index=0)
+
+        
+        if persona == "Interactive mode":
+            system_context = interactive_teacher
 
         if persona == "Create Your Own Teaching Style":
             system_context = st.sidebar.text_area('Enter a persona description: (e.g., "Explain as if I am 10 yo.")', 
@@ -730,52 +734,91 @@ if check_password():
         my_ask = st.text_area('Enter a topic: (e.g., RAAS, Frank-Starling, sarcoidosis, etc.)',placeholder="e.g., sarcoidosis", label_visibility='visible', height=100, key="my_ask")
         my_ask = my_ask.replace("\n", " ")
         my_ask = "Teach me about: " + my_ask
-        
-        if st.button("Enter"):
-            openai.api_key = os.environ['OPENAI_API_KEY']
-            st.session_state.history.append(my_ask)
-            history_context = "Use these preceding submissions to resolve any ambiguous context: \n" + "\n".join(st.session_state.history) + "now, for the current question: \n"
-            if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-16k" or st.session_state.model == "openai/gpt-4":
-                output_text = answer_using_prefix_openai(system_context, sample_question, sample_response, my_ask, st.session_state.temp, history_context=history_context)
-            else:
-                output_text = answer_using_prefix(system_context, sample_question, sample_response, my_ask, st.session_state.temp, history_context=history_context)
-            # st.session_state.my_ask = ''
-            # st.write("Answer", output_text)
+        if persona == "Interactive mode":
             
-            # st.write(st.session_state.history)
-            # st.write(f'Me: {my_ask}')
-            # st.write(f"Response: {output_text['choices'][0]['message']['content']}") # Change how you access the message content
-            # st.write(list(output_text))
-            # st.session_state.output_history.append((output_text['choices'][0]['message']['content']))
+            if st.button("Clear Memory (when you don't want to send prior context)"):
+                st.session_state.messages = []
+                st.write("Memory cleared")
             
-            if st.session_state.model == "google/palm-2-chat-bison":
-                st.write("Answer:", output_text)
-            
-            st.session_state.output_history.append((output_text))
-            
-        # if st.button("Clear Memory (when you don't want to send prior context)"):
-        #     st.session_state.history = []
-        #     st.session_state.output_history = []
-        #     clear_session_state_except_password_correct()
-        #     st.write("Memory cleared")
-        
-        tab1_download_str = []
+                # Initialize chat history
+            if "messages" not in st.session_state:
+                st.session_state.messages = [{'role': 'system', 'content': system_context},]
                 
-            # ENTITY_MEMORY_CONVERSATION_TEMPLATE
-            # Display the conversation history using an expander, and allow the user to download it
-        with st.expander("View or Download Thread", expanded=False):
-            for i in range(len(st.session_state['output_history'])-1, -1, -1):
-                st.info(st.session_state["history"][i],icon="🧐")
-                st.success(st.session_state["output_history"][i], icon="🤖")
-                tab1_download_str.append(st.session_state["history"][i])
-                tab1_download_str.append(st.session_state["output_history"][i])
-            tab1_download_str = [disclaimer] + tab1_download_str 
+            for message in st.session_state.messages:
+                with st.chat_message(message["role"]):
+                    st.markdown(message["content"]) 
+                    
+            if prompt := st.chat_input("What topic do you want to learn about?"):
+                # Add user message to chat history
+                st.session_state.messages.append({"role": "user", "content": prompt})
+                # Display user message in chat message container
+                with st.chat_message("user"):
+                    st.markdown(prompt)
+                # Display assistant response in chat message container
+                with st.chat_message("assistant"):
+                    message_placeholder = st.empty()
+                    full_response = ""
+                    
+            for response in openai.ChatCompletion.create(
+                    model=st.session_state["openai_model"],
+                    messages=[{"role": m["role"], "content": m["content"]} for m in st.session_state.messages],
+                    stream=True,
+                ):
+                full_response += response.choices[0].delta.get("content", "")
+                message_placeholder.markdown(full_response + "▌")
+                message_placeholder.markdown(full_response)
+            st.session_state.messages.append({"role": "assistant", "content": full_response})
+
             
             
-            # Can throw error - requires fix
-            tab1_download_str = '\n'.join(tab1_download_str)
-            if tab1_download_str:
-                st.download_button('Download',tab1_download_str, key = "Conversation_Thread")
+        
+        if persona != "Interactive mode":
+        
+            if st.button("Enter"):
+                openai.api_key = os.environ['OPENAI_API_KEY']
+                st.session_state.history.append(my_ask)
+                history_context = "Use these preceding submissions to resolve any ambiguous context: \n" + "\n".join(st.session_state.history) + "now, for the current question: \n"
+                if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-16k" or st.session_state.model == "openai/gpt-4":
+                    output_text = answer_using_prefix_openai(system_context, sample_question, sample_response, my_ask, st.session_state.temp, history_context=history_context)
+                else:
+                    output_text = answer_using_prefix(system_context, sample_question, sample_response, my_ask, st.session_state.temp, history_context=history_context)
+                # st.session_state.my_ask = ''
+                # st.write("Answer", output_text)
+                
+                # st.write(st.session_state.history)
+                # st.write(f'Me: {my_ask}')
+                # st.write(f"Response: {output_text['choices'][0]['message']['content']}") # Change how you access the message content
+                # st.write(list(output_text))
+                # st.session_state.output_history.append((output_text['choices'][0]['message']['content']))
+                
+                if st.session_state.model == "google/palm-2-chat-bison":
+                    st.write("Answer:", output_text)
+                
+                st.session_state.output_history.append((output_text))
+                
+            # if st.button("Clear Memory (when you don't want to send prior context)"):
+            #     st.session_state.history = []
+            #     st.session_state.output_history = []
+            #     clear_session_state_except_password_correct()
+            #     st.write("Memory cleared")
+            
+            tab1_download_str = []
+                    
+                # ENTITY_MEMORY_CONVERSATION_TEMPLATE
+                # Display the conversation history using an expander, and allow the user to download it
+            with st.expander("View or Download Thread", expanded=False):
+                for i in range(len(st.session_state['output_history'])-1, -1, -1):
+                    st.info(st.session_state["history"][i],icon="🧐")
+                    st.success(st.session_state["output_history"][i], icon="🤖")
+                    tab1_download_str.append(st.session_state["history"][i])
+                    tab1_download_str.append(st.session_state["output_history"][i])
+                tab1_download_str = [disclaimer] + tab1_download_str 
+                
+                
+                # Can throw error - requires fix
+                tab1_download_str = '\n'.join(tab1_download_str)
+                if tab1_download_str:
+                    st.download_button('Download',tab1_download_str, key = "Conversation_Thread")
                 
     with tab2:
         # st.subheader("Patient Communication")
