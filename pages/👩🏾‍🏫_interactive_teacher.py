@@ -147,7 +147,7 @@ def summarize_messages(messages):
 
 
 
-st.set_page_config(page_title='Interactive Teacher for Medical Topics!', layout = 'centered', page_icon = ':teacher_medium_dark_skin_tone:', initial_sidebar_state = 'auto')
+st.set_page_config(page_title='Interactive Teacher for Medical Topics!', layout = 'centered', page_icon = '🧑🏾‍🏫', initial_sidebar_state = 'auto')
 st.title("Interactive Teacher for Foundational Medical Topics!")
 
 if check_password():
@@ -159,7 +159,7 @@ if check_password():
 
         with st.expander("Settings and ℹ️ About this app"):
             st.session_state.temp = st.slider("Select temperature (Higher values more creative but tangential and more error prone)", 0.0, 1.0, 0.3, 0.01)
-            st.session_state.model = st.selectbox("Model Options", ("openai/gpt-3.5-turbo", "openai/gpt-3.5-turbo-16k",  "openai/gpt-4", "anthropic/claude-instant-v1", "google/palm-2-chat-bison",), index=1)
+            st.session_state.model = st.selectbox("Model Options", ("openai/gpt-3.5-turbo", "openai/gpt-3.5-turbo-16k",  "openai/gpt-4", "anthropic/claude-instant-v1", "google/palm-2-chat-bison",), index=2)
             st.write("ℹ️ Do not use to learn about the latest treatments. Use to bulk up your foundational knowledge where GPT is most reliable.")
         
             # Initialize chat history
