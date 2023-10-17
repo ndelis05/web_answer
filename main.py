@@ -709,7 +709,7 @@ if check_password():
             
 
         st.info("Since GPT (without major tweaks) isn't up to date, ask only about basic principles, NOT current treatments.")
-        persona = st.radio("Select teaching persona", ("Teacher 1 (academic)", "Teacher 2 (analogies)", "Interactive mode", "Create Your Own Teaching Style"), index=0)
+        persona = st.radio("Select teaching persona", ("Teacher 1 (academic)", "Teacher 2 (analogies)", "Create Your Own Teaching Style"), index=0)
 
         
         if persona == "Interactive mode":
