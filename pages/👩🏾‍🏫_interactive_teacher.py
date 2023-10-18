@@ -407,8 +407,7 @@ if check_password():
     proceed = st.checkbox("Acknowledge - this tool should be used for foundational knowledge only. Use responsibly. Do not use to learn about the latest treatments.")
     
     if proceed:
-        st.write("👇🏾Enter your question or topic at the 👇🏾bottom👇🏾 of the page. Thank you for using this tool responsibly.")
-
+        
         with st.expander("Settings and ℹ️ About this app"):
             st.session_state.temp = st.slider("Select temperature (Higher values more creative but tangential and more error prone)", 0.0, 1.0, 0.3, 0.01)
             st.session_state.model = st.selectbox("Model Options", ("openai/gpt-3.5-turbo", "openai/gpt-3.5-turbo-16k",  "openai/gpt-4", "anthropic/claude-instant-v1", "google/palm-2-chat-bison",), index=2)
@@ -422,11 +421,15 @@ if check_password():
             if message['role'] != 'system':
                 with st.chat_message(message["role"]):
                     st.markdown(message["content"], unsafe_allow_html=True)
-                    
-
+        
+        learner = st.radio("Select your learner type", ("Medical Student", "Attending", "Advanced - extra dense and concise",))
+        st.write("👇🏾Enter your question or topic at the 👇🏾bottom👇🏾 of the page. Thank you for using this tool responsibly.")            
+        
+        
                 
         if prompt := st.chat_input("Enter your text for the dialog here!"):
             # Add user message to chat history
+            prompt = prompt.format(learner=learner)
             st.session_state.current_question = prompt
             st.session_state.messages.append({"role": "user", "content": prompt})
             # Display user message in chat message container
