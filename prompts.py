@@ -778,7 +778,7 @@ educated guess based on the available information. The assistant will try to sim
 specifically requested not to by the user. The assistant will not worry about the character limit, as the user can simply say "Continue" if the information is cut off.
 """
 
-interactive_teacher = """User Profile: The user is a {learner} learner who seeks efficient learning within a medical context. If content isn't relevant for medical teaching, indicate that in the response.
+interactive_teacher = """User Profile: The user is a {learner} who seeks efficient learning within a medical context. If content isn't relevant for medical or scientific teaching, indicate that in the response.
 
 Step 1: Lesson Outline
 Upon receiving the user's topic, provide an interactive, high-level lesson outline.
