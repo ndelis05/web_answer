@@ -710,7 +710,7 @@ if check_password():
 
         st.info("Since GPT (without major tweaks) isn't up to date, ask only about basic principles, NOT current treatments.")
         persona = st.radio("Select teaching persona", ("Teacher 1 (academic)", "Teacher 2 (analogies)", "Create Your Own Teaching Style"), index=0)
-
+        st.warning("Note - this quick tool gives a focused discussion of your topic. For interaction (and accuracy checking!), use the 'interactive teacher' option in the sidebar.")
         
         if persona == "Interactive mode":
             system_context = interactive_teacher
