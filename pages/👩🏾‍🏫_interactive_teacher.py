@@ -466,7 +466,7 @@ if check_password():
                 topic_area_of_concern = st.text_input("Topic of concern: Be specific (as if doing a reference search) so the correct references are used from NLM.")
                 if topic_area_of_concern != "":
                 
-                    raw_output, urls = websearch(topic_area_of_concern, True, "Browserless", 8)
+                    raw_output, urls = websearch(f'site:https://www.ncbi.nlm.nih.gov/books/ {topic_area_of_concern}', True, "Browserless", 8)
                             
                     # raw_output = truncate_text(raw_output, 5000)
                     with st.spinner('Searching the web and converting findings to vectors...'):
