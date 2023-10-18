@@ -461,7 +461,8 @@ if check_password():
 
         if st.session_state.current_response != "":  
             
-            if st.checkbox("Check the current response for errors against the NLM Bookshelf Content"):
+            error_check = st.checkbox("Check the current response for errors against the NLM Bookshelf Content")
+            if error_check:
                 st.markdown("Describe your area of concern. Be specific. The original response will be assessed for errors using content from the [NLM Bookshelf](https://www.ncbi.nlm.nih.gov/books/browse/).")
                 topic_area_of_concern = st.text_input("Topic of concern: Be specific (as if doing a reference search) so the correct references are used from NLM.")
                 if topic_area_of_concern != "":
@@ -501,11 +502,11 @@ if check_password():
                     #             st.download_button('Download', skim_download_str, key = 'skim_questions')
                                 
                                 
-            if st.sidebar.button("Clear Memory (when you want to switch topics)"):
-                st.session_state.messages = []
+            if st.sidebar.button("Clear Entire Memory (when you want to switch topics)"):
+                error_check = False
+                st.session_state.messages = []                
                 st.sidebar.write("Memory cleared")
                 full_response = ""
-                st.session_state.messages = [{'role': 'system', 'content': interactive_teacher},]
-                st.session_state.messages.append({"role": "assistant", "content": full_response})
+                st.session_state.messages = []
                 st.session_state.current_response = ""
             

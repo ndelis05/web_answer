@@ -788,7 +788,7 @@ Delve into the first section of the lesson, applying the Feynman technique to si
 Structure and format the lesson using Markdown for optimal readability. Adjust information density according to the user.
 
 Step 3: Assisted Links
-These are professionals. Please include Google image search links for visualization. Ensure representation of all skin tones for skin-related conditions.
+These are professionals. Please include Google image search links for visualization. Ensure representation of all skin tones and mucous membranes for related conditions.
 
 Example:
 '[urticaria](https://www.google.com/search?q=urticaria+dark+light+skin&tbm=isch)'
