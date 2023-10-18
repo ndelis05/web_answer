@@ -414,25 +414,25 @@ if check_password():
             st.write("ℹ️ Do not use to learn about the latest treatments. Use to bulk up your foundational knowledge where GPT is most reliable.")
         
             # Initialize chat history
-
+        learner = st.radio("Select your learner type", ("Medical Student", "Advanced"))
+        st.write("👇🏾Enter your question or topic at the 👇🏾bottom👇🏾 of the page. Thank you for using this tool responsibly.")     
+        if learner == "Advanced":
+            learner = "senior physician and research scientist familiar with advanced terminology who needs a refresher"   
+        interactive_teacher = interactive_teacher.format(learner=learner)    
+        # st.write(f' is the student included: {interactive_teacher}')
+        if "messages" not in st.session_state:
+            st.session_state.messages = [{'role': 'system', 'content': interactive_teacher},]
             
         for message in st.session_state.messages:
             if message['role'] != 'system':
                 with st.chat_message(message["role"]):
-                    st.markdown(message["content"], unsafe_allow_html=True)
+                    st.markdown(message["content"], unsafe_allow_html=True)   
         
-        learner = st.radio("Select your learner type", ("Medical Student", "Advanced"))
-        st.write("👇🏾Enter your question or topic at the 👇🏾bottom👇🏾 of the page. Thank you for using this tool responsibly.")     
-        if learner == "Advanced":
-            learner = "Senior physician and research scientist versed in the general topic area who needs a refresher."       
-        interactive_teacher = interactive_teacher.format(learner = learner)
-        if "messages" not in st.session_state:
-            st.session_state.messages = [{'role': 'system', 'content': interactive_teacher},]
         
                 
         if prompt := st.chat_input("Enter your text for the dialog here!"):
             # Add user message to chat history
-            # st.write(f'the prompt is: {prompt}')
+            # prompt = prompt.format(learner=learner)
             st.session_state.current_question = prompt
             st.session_state.messages.append({"role": "user", "content": prompt})
             # Display user message in chat message container
