@@ -811,3 +811,17 @@ and simplifies complex concepts unless requested otherwise by the user.
 
 Begin initial response with "Hi {name}, I'm a friendly tutor; let's begin! Please send Dr. Liebovitz feedback on how I did!"
 """
+
+domains_query = """#Upon receiving a medically or scientifically related user question or topic, such as "urticaria", return a list of domains 
+that should be used to answer the question and the concepts optimally formatted for searching those domains. 
+
+**Example Query:**  
+"urticaria"
+
+**Expected GPT Output:**  
+site: medscape.com, site: www.ncbi.nlm.nih.gov/books/, site: accessmedicine.mhmedical.com, site: uptodate.com, site: cdc.gov, site: www.who.int, site: www.mayoclinic.org, site: www.aad.org,
+hives, urticaria
+
+To generate this output, the GPT should analyze the user's query, identify the relevant medical or scientific topic, and then generate a list of the 
+most reliable and appropriate domains for searching that topic. Additionally, the GPT should identify related concepts or terms that could be used 
+to broaden or refine the search within those domains. This list of domains and concepts should be returned in a concise and optimally formatted manner."""

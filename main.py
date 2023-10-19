@@ -25,6 +25,104 @@ import fitz
 from io import StringIO
 
 @st.cache_data
+def websearch_learn(web_query: str, deep, scrape_method, max) -> float:
+    """
+    Obtains real-time search results from across the internet. 
+    Supports all Google Advanced Search operators such (e.g. inurl:, site:, intitle:, etc).
+    
+    :param web_query: A search query, including any Google Advanced Search operators
+    :type web_query: string
+    :return: A list of search results
+    :rtype: json
+    
+    """
+    # st.info(f'Here is the websearch input: **{web_query}**')
+    url = "https://real-time-web-search.p.rapidapi.com/search"
+    querystring = {"q":web_query,"limit":"10"}
+    headers = {
+        "X-RapidAPI-Key": st.secrets["X-RapidAPI-Key"],
+        "X-RapidAPI-Host": "real-time-web-search.p.rapidapi.com"
+    }
+
+    response = requests.get(url, headers=headers, params=querystring)
+    response_data = response.json()
+    # def display_search_results(json_data):
+    #     data = json_data['data']
+    #     for item in data:
+    #         st.sidebar.markdown(f"### [{item['title']}]({item['url']})")
+    #         st.sidebar.write(item['snippet'])
+    #         st.sidebar.write("---")
+    # st.info('Searching the web using: **{web_query}**')
+    # display_search_results(response_data)
+    # st.session_state.done = True
+    # st.write(response_data)
+    urls = []
+    for item in response_data['data']:
+        urls.append(item['url'])    
+    if deep:
+            # st.write(item['url'])
+        if scrape_method != "Browserless":
+            response_data = scrapeninja(urls, max)
+        else:
+            response_data = browserless(urls, max)
+        # st.info("Web results reviewed.")
+        return response_data, urls
+
+    else:
+        # st.info("Web snippets reviewed.")
+        return response_data, urls
+
+def generate_medical_search(topic):
+    openai.api_base = "https://api.openai.com/v1/"
+    openai.api_key = st.secrets['OPENAI_API_KEY']
+    with st.spinner("Compressing messsages for summary..."):
+        completion = openai.ChatCompletion.create(
+            model = "gpt-3.5-turbo-16k",
+            temperature = 0.3,
+            messages = [
+                {
+                    "role": "system",
+                    "content": nlm_query_template
+                },
+                {
+                    "role": "user",
+                    "content": topic
+                }
+            ],
+            max_tokens = 300, 
+        )
+    return completion['choices'][0]['message']['content']
+
+def reconcile_answers(context, question, old, new):
+    openai.api_base = "https://api.openai.com/v1/"
+    openai.api_key = st.secrets['OPENAI_API_KEY']
+    with st.spinner("Reconciling with new evidence..."):
+        completion = openai.ChatCompletion.create(
+            model = "gpt-3.5-turbo-16k",
+            temperature = 0.3,
+            messages = [
+                {
+                    "role": "system",
+                    "content": context
+                },
+                {
+                    "role": "user",
+                    "content": question
+                },
+                {
+                    "role": "assistant",
+                    "content": old
+                },
+                {
+                    "role": "user",
+                    "content": f'Review and update your last response using this content I retrieved from NLM Bookshelf: {new}. List changes and corrections made to your response based on the additional content.'
+                }
+            ],
+            max_tokens = 1000, 
+        )
+    return completion['choices'][0]['message']['content']
+
+@st.cache_data
 def browserless(url_list, max):
     # st.write(url_list)
     if max > 5:
@@ -422,14 +520,15 @@ def answer_using_prefix_openai(prefix, sample_question, sample_answer, my_ask, t
             {'role': 'assistant', 'content': sample_answer},
             {'role': 'user', 'content': history_context + my_ask},]
     # history_context = "Use these preceding submissions to address any ambiguous context for the input weighting the first three items most: \n" + "\n".join(st.session_state.history) + "now, for the current question: \n"
-    completion = openai.ChatCompletion.create( # Change the function Completion to ChatCompletion
-    # model = 'gpt-3.5-turbo',
-    model = model,
-    messages = messages,
-    temperature = temperature,
-    max_tokens = 750,
-    stream = stream,   
-    )
+    with st.spinner("Generating response..."):
+        completion = openai.ChatCompletion.create( # Change the function Completion to ChatCompletion
+        # model = 'gpt-3.5-turbo',
+        model = model,
+        messages = messages,
+        temperature = temperature,
+        max_tokens = 750,
+        stream = stream,   
+        )
         
     start_time = time.time()
     delay_time = 0.01
@@ -457,17 +556,19 @@ def answer_using_prefix(prefix, sample_question, sample_answer, my_ask, temperat
             {'role': 'assistant', 'content': sample_answer},
             {'role': 'user', 'content': history_context + my_ask},]
     # history_context = "Use these preceding submissions to address any ambiguous context for the input weighting the first three items most: \n" + "\n".join(st.session_state.history) + "now, for the current question: \n"
-    completion = openai.ChatCompletion.create( # Change the function Completion to ChatCompletion
-    # model = 'gpt-3.5-turbo',
-    model = st.session_state.model,
-    route = "fallback",
-    messages = messages,
-    headers={ "HTTP-Referer": "https://fsm-gpt-med-ed.streamlit.app", # To identify your app
-          "X-Title": "GPT and Med Ed"},
-    temperature = temperature,
-    max_tokens = 500,
-    stream = True,   
-    )
+    with st.spinner("Generating response..."):
+    
+        completion = openai.ChatCompletion.create( # Change the function Completion to ChatCompletion
+        # model = 'gpt-3.5-turbo',
+        model = st.session_state.model,
+        route = "fallback",
+        messages = messages,
+        headers={ "HTTP-Referer": "https://fsm-gpt-med-ed.streamlit.app", # To identify your app
+            "X-Title": "GPT and Med Ed"},
+        temperature = temperature,
+        max_tokens = 500,
+        stream = True,   
+        )
     
     
     start_time = time.time()
@@ -708,12 +809,11 @@ if check_password():
             
             
 
-        st.info("Since GPT (without major tweaks) isn't up to date, ask only about basic principles, NOT current treatments.")
-        persona = st.radio("Select teaching persona", ("Teacher 1 (academic)", "Teacher 2 (analogies)", "Create Your Own Teaching Style"), index=0)
-        st.warning("Note - this quick tool gives a focused discussion of your topic. For interaction (and accuracy checking!), use the 'interactive teacher' option in the sidebar.")
+        st.info("Since GPT isn't up to date, this tool also checks with the NLM Bookshelf to validate and update responses and is why it is slower than typing into ChatGPT. Desite the extra accuracy check, please use with caution.")
+        persona = st.radio("Select teaching persona", ("Teacher 1 (academic)", "Teacher 2 (analogies)", "Fact Listing", "Create Your Own Teaching Style"), index=0)
+        st.warning("Note - this tool gives a focused answer. For interactive dialog about a topic, use the 'interactive teacher' option in the sidebar.")
         
-        if persona == "Interactive mode":
-            system_context = interactive_teacher
+        
 
         if persona == "Create Your Own Teaching Style":
             system_context = st.sidebar.text_area('Enter a persona description: (e.g., "Explain as if I am 10 yo.")', 
@@ -726,99 +826,87 @@ if check_password():
             system_context = teacher1
         elif persona == "Teacher 2 (analogies)":
             system_context = teacher2
+        elif persona == "Fact Listing":
+            system_context = "List 20 facts about the topic: \n"
         
         # show_prompt = st.checkbox("Show selected persona details")
         # if show_prompt:
         #     st.sidebar.markdown(system_context)
             
-        my_ask = st.text_area('Enter a topic: (e.g., RAAS, Frank-Starling, sarcoidosis, etc.)',placeholder="e.g., sarcoidosis", label_visibility='visible', height=100, key="my_ask")
-        my_ask = my_ask.replace("\n", " ")
-        my_ask = "Teach me about: " + my_ask
-        if persona == "Interactive mode":
-            
-            if st.button("Clear Memory (when you don't want to send prior context)"):
-                st.session_state.messages = []
-                st.write("Memory cleared")
-            
-                # Initialize chat history
-            if "messages" not in st.session_state:
-                st.session_state.messages = [{'role': 'system', 'content': system_context},]
-                
-            for message in st.session_state.messages:
-                with st.chat_message(message["role"]):
-                    st.markdown(message["content"]) 
-                    
-            if prompt := st.chat_input("What topic do you want to learn about?"):
-                # Add user message to chat history
-                st.session_state.messages.append({"role": "user", "content": prompt})
-                # Display user message in chat message container
-                with st.chat_message("user"):
-                    st.markdown(prompt)
-                # Display assistant response in chat message container
-                with st.chat_message("assistant"):
-                    message_placeholder = st.empty()
-                    full_response = ""
-                    
-            for response in openai.ChatCompletion.create(
-                    model=st.session_state["openai_model"],
-                    messages=[{"role": m["role"], "content": m["content"]} for m in st.session_state.messages],
-                    stream=True,
-                ):
-                full_response += response.choices[0].delta.get("content", "")
-                message_placeholder.markdown(full_response + "▌")
-                message_placeholder.markdown(full_response)
-            st.session_state.messages.append({"role": "assistant", "content": full_response})
+        my_topic = st.text_area('Enter a question or topic to learn about: (e.g., RAAS, Frank-Starling, sarcoidosis, etc.)',placeholder="e.g., sarcoidosis", label_visibility='visible', height=100, key="my_ask")
 
-            
-            
         
-        if persona != "Interactive mode":
+        if st.button("Enter") and my_topic != "":
+            
+            # my_topic_ready = generate_medical_search(my_topic)
+            my_topic_ready = my_topic + "site:ncbi.nlm.nih.gov/books/"
+            # st.write(f'Here is the topic: {my_topic_ready}')
+            # my_ask = my_ask.replace("\n", " ")
+            # my_ask = "Teach me about: " + my_ask
         
-            if st.button("Enter"):
-                openai.api_key = os.environ['OPENAI_API_KEY']
-                st.session_state.history.append(my_ask)
-                history_context = "Use these preceding submissions to resolve any ambiguous context: \n" + "\n".join(st.session_state.history) + "now, for the current question: \n"
+            raw_output, urls = websearch_learn(my_topic_ready, True, "Browserless", 5)
+            
+            # st.write(f'Here is the raw output:  \n\n  {raw_output}')
+                    
+            # raw_output = truncate_text(raw_output, 5000)
+            with st.spinner('Searching the web and converting findings to vectors...'):
+                rag = prepare_rag(raw_output)                
+            # with st.expander("Content reviewed", expanded=False):
+            #     raw_output = truncate_text(raw_output, 25000)
+            #     st.write(f'Truncated below at ~5000 tokens, but all in vector database:  \n\n  {raw_output}')
+            with st.spinner('Searching the vector database to assemble your answer...'):
+                skim_output_text = rag(my_topic)
+            skim_output_text = skim_output_text["result"]
+            # st.warning(f'This is using NLM Bookshelf for current content.')
+
+
+
+
+
+
+            my_ask= my_topic
+
+            openai.api_key = os.environ['OPENAI_API_KEY']
+            st.session_state.history.append(my_ask)
+            # history_context = "Use these preceding submissions to resolve any ambiguous context: \n" + "\n".join(st.session_state.history) + "now, for the current question: \n"
+            with st.expander("Preliminary Answer - pending NLM content review below", expanded=True):
                 if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-16k" or st.session_state.model == "openai/gpt-4":
-                    output_text = answer_using_prefix_openai(system_context, sample_question, sample_response, my_ask, st.session_state.temp, history_context=history_context)
+                    # output_text = answer_using_prefix_openai(system_context, sample_question, sample_response, my_ask, st.session_state.temp, history_context="")
+                    output_text = answer_using_prefix_openai(system_context, "", "", my_ask, st.session_state.temp, history_context="")
                 else:
-                    output_text = answer_using_prefix(system_context, sample_question, sample_response, my_ask, st.session_state.temp, history_context=history_context)
-                # st.session_state.my_ask = ''
-                # st.write("Answer", output_text)
-                
-                # st.write(st.session_state.history)
-                # st.write(f'Me: {my_ask}')
-                # st.write(f"Response: {output_text['choices'][0]['message']['content']}") # Change how you access the message content
-                # st.write(list(output_text))
-                # st.session_state.output_history.append((output_text['choices'][0]['message']['content']))
+                    output_text = answer_using_prefix(system_context, "", "", my_ask, st.session_state.temp, history_context="")
                 
                 if st.session_state.model == "google/palm-2-chat-bison":
                     st.write("Answer:", output_text)
-                
-                st.session_state.output_history.append((output_text))
-                
-            # if st.button("Clear Memory (when you don't want to send prior context)"):
-            #     st.session_state.history = []
-            #     st.session_state.output_history = []
-            #     clear_session_state_except_password_correct()
-            #     st.write("Memory cleared")
             
-            tab1_download_str = []
-                    
-                # ENTITY_MEMORY_CONVERSATION_TEMPLATE
-                # Display the conversation history using an expander, and allow the user to download it
-            with st.expander("View or Download Thread", expanded=False):
-                for i in range(len(st.session_state['output_history'])-1, -1, -1):
-                    st.info(st.session_state["history"][i],icon="🧐")
-                    st.success(st.session_state["output_history"][i], icon="🤖")
-                    tab1_download_str.append(st.session_state["history"][i])
-                    tab1_download_str.append(st.session_state["output_history"][i])
-                tab1_download_str = [disclaimer] + tab1_download_str 
+            st.session_state.output_history.append((output_text))
+            
+            with st.expander("NLM Bookshelf Content Reviewed", expanded=False):
+                st.write(skim_output_text)
+                for item in urls:
+                    st.write(item)
+            
+            final_answer = reconcile_answers(system_context, my_ask, output_text, skim_output_text)
+            st.write(final_answer)
+            
+        
+        tab1_download_str = []
                 
-                
-                # Can throw error - requires fix
-                tab1_download_str = '\n'.join(tab1_download_str)
-                if tab1_download_str:
-                    st.download_button('Download',tab1_download_str, key = "Conversation_Thread")
+            # ENTITY_MEMORY_CONVERSATION_TEMPLATE
+            # Display the conversation history using an expander, and allow the user to download it
+        with st.expander("View or Download Thread", expanded=False):
+            for i in range(len(st.session_state['output_history'])-1, -1, -1):
+                st.info(st.session_state["history"][i],icon="🧐")
+                st.success(st.session_state["output_history"][i], icon="🤖")
+                tab1_download_str.append(st.session_state["history"][i])
+                tab1_download_str.append(st.session_state["output_history"][i])
+            tab1_download_str = [disclaimer] + tab1_download_str 
+            
+            
+            # Can throw error - requires fix
+            tab1_download_str = '\n'.join(tab1_download_str)
+            if tab1_download_str:
+                st.download_button('Download',tab1_download_str, key = "Conversation_Thread")
                 
     with tab2:
         # st.subheader("Patient Communication")
