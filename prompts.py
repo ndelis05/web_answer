@@ -823,3 +823,11 @@ hives, urticaria
 To generate this output, the GPT should analyze the user's query, identify the relevant medical or scientific topic, and then generate a list of the 
 most reliable and appropriate domains for searching that topic. Additionally, the GPT should identify related concepts or terms that could be used 
 to broaden or refine the search within those domains. This list of domains and concepts should be returned in a concise and optimally formatted manner."""
+
+reconcile_prompt = """Format your response as:
+
+**Updated Response:** ...
+
+**Changes from Original:** ...
+1. ...
+2. ..."""

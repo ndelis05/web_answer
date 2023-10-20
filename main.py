@@ -115,10 +115,10 @@ def reconcile_answers(context, question, old, new):
                 },
                 {
                     "role": "user",
-                    "content": f'Review and update your last response using this content I retrieved from NLM Bookshelf: {new}. List changes and corrections made to your response based on the additional content.'
-                }
+                    "content": f'Review and update your last response using this content I retrieved from NLM Bookshelf: {new}' + reconcile_prompt
+                },
             ],
-            max_tokens = 1000, 
+            max_tokens = 10000, 
         )
     return completion['choices'][0]['message']['content']
 
@@ -880,7 +880,7 @@ if check_password():
                 if st.session_state.model == "google/palm-2-chat-bison":
                     st.write("Answer:", output_text)
             
-            st.session_state.output_history.append((output_text))
+            
             
             with st.expander("NLM Bookshelf Content Reviewed", expanded=False):
                 st.write(skim_output_text)
@@ -889,6 +889,7 @@ if check_password():
             
             final_answer = reconcile_answers(system_context, my_ask, output_text, skim_output_text)
             st.write(final_answer)
+            st.session_state.output_history.append((final_answer))
             
         
         tab1_download_str = []
