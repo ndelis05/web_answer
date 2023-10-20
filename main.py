@@ -837,8 +837,23 @@ if check_password():
 
         
         if st.button("Enter") and my_topic != "":
+     
+            my_ask= my_topic
+
+            openai.api_key = os.environ['OPENAI_API_KEY']
+            st.session_state.history.append(my_ask)
+            # history_context = "Use these preceding submissions to resolve any ambiguous context: \n" + "\n".join(st.session_state.history) + "now, for the current question: \n"
+            with st.expander("Preliminary Answer - pending NLM content review below", expanded=True):
+                if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-16k" or st.session_state.model == "openai/gpt-4":
+                    # output_text = answer_using_prefix_openai(system_context, sample_question, sample_response, my_ask, st.session_state.temp, history_context="")
+                    output_text = answer_using_prefix_openai(system_context, "", "", my_ask, st.session_state.temp, "")
+                else:
+                    output_text = answer_using_prefix(system_context, "", "", my_ask, st.session_state.temp, "")
+                
+                if st.session_state.model == "google/palm-2-chat-bison":
+                    st.write("Answer:", output_text)
             
-            # my_topic_ready = generate_medical_search(my_topic)
+                        # my_topic_ready = generate_medical_search(my_topic)
             my_topic_ready = my_topic + "site:ncbi.nlm.nih.gov/books/"
             # st.write(f'Here is the topic: {my_topic_ready}')
             # my_ask = my_ask.replace("\n", " ")
@@ -860,27 +875,6 @@ if check_password():
             skim_output_text = skim_output_text["result"]
             # st.warning(f'This is using NLM Bookshelf for current content.')
 
-
-
-
-
-
-            my_ask= my_topic
-
-            openai.api_key = os.environ['OPENAI_API_KEY']
-            st.session_state.history.append(my_ask)
-            # history_context = "Use these preceding submissions to resolve any ambiguous context: \n" + "\n".join(st.session_state.history) + "now, for the current question: \n"
-            with st.expander("Preliminary Answer - pending NLM content review below", expanded=True):
-                if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-16k" or st.session_state.model == "openai/gpt-4":
-                    # output_text = answer_using_prefix_openai(system_context, sample_question, sample_response, my_ask, st.session_state.temp, history_context="")
-                    output_text = answer_using_prefix_openai(system_context, "", "", my_ask, st.session_state.temp, "")
-                else:
-                    output_text = answer_using_prefix(system_context, "", "", my_ask, st.session_state.temp, "")
-                
-                if st.session_state.model == "google/palm-2-chat-bison":
-                    st.write("Answer:", output_text)
-            
-            
             
             with st.expander("NLM Bookshelf Content Reviewed", expanded=False):
                 st.write(skim_output_text)
