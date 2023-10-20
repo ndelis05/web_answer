@@ -833,7 +833,7 @@ if check_password():
         # if show_prompt:
         #     st.sidebar.markdown(system_context)
             
-        my_topic = st.text_area('Enter a question or topic to learn about: (e.g., RAAS, Frank-Starling, sarcoidosis, etc.)',placeholder="e.g., sarcoidosis", label_visibility='visible', height=100, key="my_ask")
+        my_topic = st.text_input('Enter a question or topic to learn about: (e.g., RAAS, Frank-Starling, sarcoidosis, etc.)',placeholder="e.g., sarcoidosis", label_visibility='visible')
 
         
         if st.button("Enter") and my_topic != "":
@@ -850,6 +850,7 @@ if check_password():
                     
             # raw_output = truncate_text(raw_output, 5000)
             with st.spinner('Searching the web and converting findings to vectors...'):
+                # st.write(raw_output)
                 rag = prepare_rag(raw_output)                
             # with st.expander("Content reviewed", expanded=False):
             #     raw_output = truncate_text(raw_output, 25000)
