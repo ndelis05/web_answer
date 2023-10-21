@@ -824,7 +824,7 @@ To generate this output, the GPT should analyze the user's query, identify the r
 most reliable and appropriate domains for searching that topic. Additionally, the GPT should identify related concepts or terms that could be used 
 to broaden or refine the search within those domains. This list of domains and concepts should be returned in a concise and optimally formatted manner."""
 
-reconcile_prompt = """Format your response as:
+reconcile_prompt = """Exclude original content found incorrect. Make bold all validated content. Format your response as:
 
 **Changes from Original:** 
 1. ...
@@ -832,5 +832,11 @@ reconcile_prompt = """Format your response as:
 ...
 
 **Updated Response:** 
+**This is validated content.** This is unvalidated content.
 ...
 """
+
+domains = """(site:www.nih.gov OR site:www.cdc.gov OR site:www.who.int OR site:www.pubmed.gov OR site:www.cochranelibrary.com OR 
+site:www.uptodate.com OR site:www.clinicaltrials.gov OR site:www.medscape.com OR site:www.ama-assn.org OR site:www.nejm.org OR 
+site:www.bmj.com OR site:www.thelancet.com OR site:www.jamanetwork.com OR site:www.mayoclinic.org OR site:www.acpjournals.org OR 
+site:www.cell.com OR site:www.nature.com OR site:www.sciencedirect.com OR site:www.springer.com OR site:www.wiley.com)"""

@@ -38,7 +38,7 @@ def websearch_learn(web_query: str, deep, scrape_method, max) -> float:
     """
     # st.info(f'Here is the websearch input: **{web_query}**')
     url = "https://real-time-web-search.p.rapidapi.com/search"
-    querystring = {"q":web_query,"limit":"10"}
+    querystring = {"q":web_query,"limit":max}
     headers = {
         "X-RapidAPI-Key": st.secrets["X-RapidAPI-Key"],
         "X-RapidAPI-Host": "real-time-web-search.p.rapidapi.com"
@@ -72,33 +72,33 @@ def websearch_learn(web_query: str, deep, scrape_method, max) -> float:
         # st.info("Web snippets reviewed.")
         return response_data, urls
 
-def generate_medical_search(topic):
-    openai.api_base = "https://api.openai.com/v1/"
-    openai.api_key = st.secrets['OPENAI_API_KEY']
-    with st.spinner("Compressing messsages for summary..."):
-        completion = openai.ChatCompletion.create(
-            model = "gpt-3.5-turbo-16k",
-            temperature = 0.3,
-            messages = [
-                {
-                    "role": "system",
-                    "content": nlm_query_template
-                },
-                {
-                    "role": "user",
-                    "content": topic
-                }
-            ],
-            max_tokens = 300, 
-        )
-    return completion['choices'][0]['message']['content']
+# def generate_medical_search(topic):
+#     openai.api_base = "https://api.openai.com/v1/"
+#     openai.api_key = st.secrets['OPENAI_API_KEY']
+#     with st.spinner("Compressing messsages for summary..."):
+#         completion = openai.ChatCompletion.create(
+#             model = "gpt-3.5-turbo-16k",
+#             temperature = 0.3,
+#             messages = [
+#                 {
+#                     "role": "system",
+#                     "content": nlm_query_template
+#                 },
+#                 {
+#                     "role": "user",
+#                     "content": topic
+#                 }
+#             ],
+#             max_tokens = 300, 
+#         )
+#     return completion['choices'][0]['message']['content']
 
 def reconcile_answers(context, question, old, new):
     openai.api_base = "https://api.openai.com/v1/"
     openai.api_key = st.secrets['OPENAI_API_KEY']
     with st.spinner("Reconciling with new evidence..."):
         completion = openai.ChatCompletion.create(
-            model = "gpt-3.5-turbo-16k",
+            model = "gpt-4",
             temperature = 0.3,
             messages = [
                 {
@@ -115,18 +115,18 @@ def reconcile_answers(context, question, old, new):
                 },
                 {
                     "role": "user",
-                    "content": f'Review and update your last response using this content I retrieved from NLM Bookshelf: {new}' + reconcile_prompt
+                    "content": f'Revise your last response using this content retrieved from expert sources: {new} \n\n' + reconcile_prompt
                 },
             ],
-            max_tokens = 10000, 
+            max_tokens = 6000, 
         )
     return completion['choices'][0]['message']['content']
 
 @st.cache_data
 def browserless(url_list, max):
     # st.write(url_list)
-    if max > 5:
-        max = 5
+    # if max > 5:
+    #     max = 5
     response_complete = []
     i = 0
     key = st.secrets["BROWSERLESS_API_KEY"]
@@ -143,7 +143,7 @@ def browserless(url_list, max):
             method = "POST"
             url_parts = url_parts._replace(path=url_parts.path + '/print')
             url = urlunparse(url_parts)
-            st.write(f' here is a {url}')
+            # st.write(f' here is a {url}')
         payload =  {
             "url": url,
         }
@@ -809,7 +809,7 @@ if check_password():
             
             
 
-        st.info("Since GPT isn't up to date, this tool also checks with the NLM Bookshelf to validate and update responses and is why it is slower than typing into ChatGPT. Desite the extra accuracy check, please use with caution.")
+        st.info("Since GPT isn't up to date, this tool also checks with the reliable medical sites to validate and update responses and is why it is slower than typing into ChatGPT. Desite the extra accuracy check, please use with caution.")
         persona = st.radio("Select teaching persona", ("Teacher 1 (academic)", "Teacher 2 (analogies)", "Fact Listing", "Create Your Own Teaching Style"), index=0)
         st.warning("Note - this tool gives a focused answer. For interactive dialog about a topic, use the 'interactive teacher' option in the sidebar.")
         
@@ -854,12 +854,13 @@ if check_password():
                     st.write("Answer:", output_text)
             
                         # my_topic_ready = generate_medical_search(my_topic)
-            my_topic_ready = my_topic + "site:ncbi.nlm.nih.gov/books/"
+            my_topic_ready = f'{domains} {my_topic}'
+            # + "site:ncbi.nlm.nih.gov/books/"
             # st.write(f'Here is the topic: {my_topic_ready}')
             # my_ask = my_ask.replace("\n", " ")
             # my_ask = "Teach me about: " + my_ask
         
-            raw_output, urls = websearch_learn(my_topic_ready, True, "Browserless", 5)
+            raw_output, urls = websearch_learn(my_topic_ready, True, "Browserless", 12 )
             
             # st.write(f'Here is the raw output:  \n\n  {raw_output}')
                     
@@ -876,7 +877,7 @@ if check_password():
             # st.warning(f'This is using NLM Bookshelf for current content.')
 
             
-            with st.expander("NLM Bookshelf Content Reviewed", expanded=False):
+            with st.expander("Sources Reviewed", expanded=False):
                 st.write(skim_output_text)
                 for item in urls:
                     st.write(item)
