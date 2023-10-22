@@ -668,7 +668,7 @@ def generate_eval(text, N, chunk):
 def prepare_rag(text):
     splits = split_texts(text, chunk_size=1000, overlap=100, split_method="recursive")
     st.session_state.retriever = create_retriever(splits)
-    llm = set_llm_chat(model=st.session_state.model, temperature=st.session_state.temp)
+    llm = set_llm_chat(model="gpt-4", temperature=st.session_state.temp)
     rag = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=st.session_state.retriever)
     return rag
     
@@ -690,6 +690,12 @@ def fn_qa_run(_qa, user_question):
         time.sleep(delay_time)
     
     return full_answer
+
+if 'prelim_response' not in st.session_state:
+    st.session_state.prelim_response = ""
+    
+if 'evidence_response' not in st.session_state:
+    st.session_state.evidence_response = ""
 
 if 'patient_message_history' not in st.session_state:
     st.session_state.patient_message_history = []
@@ -809,9 +815,10 @@ if check_password():
             
             
 
-        st.info("Since GPT isn't up to date, this tool also checks with the reliable medical sites to validate and update responses and is why it is slower than typing into ChatGPT. Desite the extra accuracy check, please use with caution.")
+        st.info("""Since GPT isn't up to date, this tool checks with reliable medical sites to validate and update its response. 
+        Despite the validation process, review the retrieved evidence links. Not for direct care. GPT4 is automatically used for the final review.""")
         persona = st.radio("Select teaching persona", ("Teacher 1 (academic)", "Teacher 2 (analogies)", "Fact Listing", "Create Your Own Teaching Style"), index=0)
-        st.warning("Note - this tool gives a focused answer. For interactive dialog about a topic, use the 'interactive teacher' option in the sidebar.")
+        st.warning("For interactive dialog about a topic, use the 'interactive teacher' option in the left sidebar.")
         
         
 
@@ -852,6 +859,9 @@ if check_password():
                 
                 if st.session_state.model == "google/palm-2-chat-bison":
                     st.write("Answer:", output_text)
+                
+                st.session_state.prelim_response = output_text    
+ 
             
                         # my_topic_ready = generate_medical_search(my_topic)
             my_topic_ready = f'{domains} {my_topic}'
@@ -872,26 +882,42 @@ if check_password():
             #     raw_output = truncate_text(raw_output, 25000)
             #     st.write(f'Truncated below at ~5000 tokens, but all in vector database:  \n\n  {raw_output}')
             with st.spinner('Searching the vector database to assemble your answer...'):
-                skim_output_text = rag(my_topic)
-            skim_output_text = skim_output_text["result"]
+                evidence_response = rag(my_topic)
+            evidence_response = evidence_response["result"]
             # st.warning(f'This is using NLM Bookshelf for current content.')
 
             
-            with st.expander("Sources Reviewed", expanded=False):
-                st.write(skim_output_text)
-                for item in urls:
-                    st.write(item)
+            if st.session_state.evidence_response != "" or evidence_response != "":
+                with st.expander("Sources Reviewed", expanded=False):
+                    st.write(evidence_response)
+                    st.write("Sources reviewed:")
+                    for item in urls:
+                        st.write(item)
+                    sources_reviewed_str = evidence_response + '\n\n Sources reviewed: \n\n\n' + '\n'.join(urls)
+                    st.session_state.evidence_response = sources_reviewed_str
+                       
             
-            final_answer = reconcile_answers(system_context, my_ask, output_text, skim_output_text)
+            final_answer = reconcile_answers(system_context, my_ask, output_text, evidence_response)
             st.write(final_answer)
-            st.session_state.output_history.append((final_answer))
+            st.session_state.output_history.append(final_answer)
             
+        if st.session_state.prelim_response != "":
+            with st.expander("View or Download the Preliminary Response", expanded=False):
+                st.info(st.session_state.prelim_response, icon="🧐")
+                st.download_button('Download Preliminary Output',disclaimer + st.session_state.prelim_response, key = "Preliminary_Output")
+
+        
+        if st.session_state.evidence_response != "":
+            with st.expander("View or Download the Evidence Review", expanded=False):
+                st.info(st.session_state.evidence_response, icon="🧐")
+                st.download_button('Download Evidence Review',disclaimer + st.session_state.evidence_response, key = "Sources_Reviewed")
+
         
         tab1_download_str = []
                 
             # ENTITY_MEMORY_CONVERSATION_TEMPLATE
             # Display the conversation history using an expander, and allow the user to download it
-        with st.expander("View or Download Thread", expanded=False):
+        with st.expander("View or Download Final Responses", expanded=False):
             for i in range(len(st.session_state['output_history'])-1, -1, -1):
                 st.info(st.session_state["history"][i],icon="🧐")
                 st.success(st.session_state["output_history"][i], icon="🤖")
@@ -903,7 +929,7 @@ if check_password():
             # Can throw error - requires fix
             tab1_download_str = '\n'.join(tab1_download_str)
             if tab1_download_str:
-                st.download_button('Download',tab1_download_str, key = "Conversation_Thread")
+                st.download_button('Download Final Responses',tab1_download_str, key = "final_responses")
                 
     with tab2:
         # st.subheader("Patient Communication")

@@ -1,7 +1,9 @@
-disclaimer = """**Disclaimer:** This is a tool to assist education regarding artificial intelligence. Your use of this tool accepts the following:   
-1. This tool does not generate validated medical content. \n 
-2. This tool is not a real doctor. \n    
-3. You will not take any medical action based on the output of this tool. \n   
+disclaimer = """**Disclaimer:** \n
+This is a tool to assist education regarding artificial intelligence. Your use of this tool accepts the following:   \n
+1. This tool does not generate validated medical content.
+2. This tool is not a real doctor.    
+3. You will not take any medical action based on the output of this tool. 
+_______________________________\n
 """
 
 base = """You are an experienced physician and surgeon. You answer questions carefully and to the point using
@@ -836,7 +838,7 @@ reconcile_prompt = """Exclude original content found explicitly to be incorrect.
 ...
 """
 
-domains = """(site:www.cdc.gov OR site:medscape.com OR site:www.ncbi.nlm.nih.gov/books/ OR 
+domains = """(site:www.cdc.gov OR site:medscape.com OR site:www.ncbi.nlm.nih.gov/books/NBK430685/ OR 
 site:www.merckmanuals.com/professional OR site:www.cancer.gov/ OR site:www.ama-assn.org OR site:www.nejm.org OR 
 site:www.bmj.com OR site:www.thelancet.com OR site:www.jamanetwork.com OR site:www.mayoclinic.org OR site:www.acpjournals.org OR 
-site:www.cell.com OR site:www.nature.com OR site:www.sciencedirect.com OR site:www.springer.com OR site:www.wiley.com OR site:www.nih.gov)"""
+site:www.cell.com OR site:www.nature.com OR site:www.ncbi.nlm.nih.gov/books/ OR site:www.sciencedirect.com OR site:www.springer.com OR site:www.wiley.com OR site:www.nih.gov)"""
