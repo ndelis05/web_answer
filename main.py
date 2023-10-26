@@ -23,6 +23,7 @@ from langchain.vectorstores import FAISS
 import os
 import fitz
 from io import StringIO
+from PIL import Image
 
 @st.cache_data
 def websearch_learn(web_query: str, deep, scrape_method, max) -> float:
@@ -770,23 +771,33 @@ if "s2_citations" not in st.session_state:
     
 if "search_terms" not in st.session_state:
     st.session_state["search_terms"] = ""   
+   
+st.set_page_config(page_title='MediMate: GPT and Med Ed', layout = 'centered', page_icon = ':stethoscope:', initial_sidebar_state = 'auto')    
+title1, title2 = st.columns([1, 3])
+with title1:
 
-if check_password():
+    medimate_robot = Image.open('images/medimate_robot.png')
+    st.image(medimate_robot, use_column_width=True)
     
-    openai.api_base = "https://openrouter.ai/api/v1"
-    openai.api_key = st.secrets["OPENROUTER_API_KEY"]
-
-    st.set_page_config(page_title='MediMate: GPT and Med Ed', layout = 'centered', page_icon = ':stethoscope:', initial_sidebar_state = 'auto')
+with title2:
+        
     st.title("MediMate: GPT and Med Ed")
-    st.write("ALPHA version 1.0")
-    os.environ['OPENAI_API_KEY'] = fetch_api_key()
-
 
     with st.expander('About MediMate - Important Disclaimer'):
         st.write("Author: David Liebovitz, MD, Northwestern University")
         st.info(disclaimer)
         st.session_state.temp = st.slider("Select temperature (Higher values more creative but tangential and more error prone)", 0.0, 1.0, 0.3, 0.01)
         st.write("Last updated 10/14/23")
+        st.write("ALPHA version 1.0")
+
+if check_password():
+    
+    openai.api_base = "https://openrouter.ai/api/v1"
+    openai.api_key = st.secrets["OPENROUTER_API_KEY"]
+
+
+    os.environ['OPENAI_API_KEY'] = fetch_api_key()
+
 
     with st.sidebar.expander("Select a GPT Language Model", expanded=True):
         st.session_state.model = st.selectbox("Model Options", ("openai/gpt-3.5-turbo", "openai/gpt-3.5-turbo-16k",  "openai/gpt-4", "anthropic/claude-instant-v1", "google/palm-2-chat-bison", "meta-llama/codellama-34b-instruct", "meta-llama/llama-2-70b-chat", "gryphe/mythomax-L2-13b", "nousresearch/nous-hermes-llama2-13b"), index=1)
