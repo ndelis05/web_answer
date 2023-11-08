@@ -873,9 +873,15 @@ if check_password():
             with st.expander("Preliminary Answer - pending NLM content review below", expanded=True):
                 if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-16k" or st.session_state.model == "openai/gpt-4" or st.session_state.model== "openai/gpt-4-11-6-preview":
                     # output_text = answer_using_prefix_openai(system_context, sample_question, sample_response, my_ask, st.session_state.temp, history_context="")
-                    output_text = answer_using_prefix_openai(system_context, "", "", my_ask, st.session_state.temp, "")
+                    try:
+                        output_text = answer_using_prefix_openai(system_context, "", "", my_ask, st.session_state.temp, "")
+                    except:
+                        st.warning("OPENAI appears slow at the moment; please try again in a moment or change the model.")
                 else:
-                    output_text = answer_using_prefix(system_context, "", "", my_ask, st.session_state.temp, "")
+                    try:
+                        output_text = answer_using_prefix(system_context, "", "", my_ask, st.session_state.temp, "")
+                    except:
+                        st.warning("OpenRouter appears slow at the moment; please try again in a moment or change the model.")
                 
                 if st.session_state.model == "google/palm-2-chat-bison":
                     st.write("Answer:", output_text)
