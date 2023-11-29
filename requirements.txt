@@ -22,7 +22,7 @@ chroma-hnswlib==0.7.3
 chromadb==0.4.16
 click==8.1.7
 coloredlogs==15.0.1
-cryptography==41.0.5
+cryptography==41.0.6
 cssselect==1.2.0
 dataclasses-json==0.6.1
 decorator==5.1.1
