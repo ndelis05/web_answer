@@ -3,6 +3,7 @@ import base64
 import requests
 import os
 from PIL import Image
+from prompts import image_gen_explanation
 
 def check_password():
     """Returns `True` if the user had the correct password."""
@@ -37,6 +38,8 @@ st.set_page_config(page_title="Fun Image Generation", page_icon="🩻")
 
 st.header("🩻 Fun Image Generation")
 st.info("This is a fun demo of [Stability API](https://stability.ai/) image generation. Make a **safe for all viewers** request for a quick image.")
+with st.expander("How will this be useful in the future?"):
+    st.markdown(image_gen_explanation)
 st.warning("Note - any medical images are NOT anatomically/structurally/physiologically correct, but they are fun to show what's possible now! The underlying tech (and accuracy) is advancing rapidly, though!")
 
 if check_password():
@@ -99,3 +102,4 @@ if check_password():
                 img = Image.open(f'./out/txt2img_{image["seed"]}.png')
                 st.image(img, caption=f'Text-to-Image {i+1}')
         st.warning("Note: these are obviously NOT anatomically/structurally/physiologically correct, but they are fun! Soon, much more correct generative images will be available.")
+  

@@ -857,3 +857,53 @@ domains = """(site:www.cdc.gov OR site:medscape.com OR site:www.ncbi.nlm.nih.gov
 site:www.merckmanuals.com/professional OR site:www.cancer.gov/ OR site:www.ama-assn.org OR site:www.nejm.org OR 
 site:www.bmj.com OR site:www.thelancet.com OR site:www.jamanetwork.com OR site:www.mayoclinic.org OR site:www.acpjournals.org OR 
 site:www.cell.com OR site:www.nature.com OR site:www.ncbi.nlm.nih.gov/books/ OR site:www.sciencedirect.com OR site:www.springer.com OR site:www.wiley.com OR site:www.nih.gov)"""
+
+image_gen_explanation = """Once these tools are accurate in their depictions (soon...) Many use cases will emerge. This tool will show you how close we are now, but not yet ready for the following use cases:
+
+### Medical Education
+
+1. **Visual Learning**:
+   - Image generation tools can create detailed anatomical diagrams or pathological illustrations that enhance the visual learning experience for students.
+   - They can generate images of rare conditions or presentations that may not be readily available in textbooks or online databases.
+
+2. **Simulation and Training**:
+   - Tools can simulate patient scenarios, including the progression of diseases, to help students understand the dynamic nature of human physiology and pathology.
+   - They can be used to create virtual dissection labs or surgical simulations, providing an interactive learning environment without the need for cadavers or physical models.
+
+3. **Customization for Curriculum**:
+   - Educators can tailor images to specific teaching points or curricular needs, highlighting particular structures or pathologies relevant to the lesson.
+   - They can generate images that correlate with specific patient cases or scenarios discussed in problem-based learning sessions.
+
+4. **Accessibility and Diversity**:
+   - Image generation can provide a diverse range of patient images, representing various ages, genders, and ethnicities, promoting inclusivity in medical education.
+   - They can create images that are easily accessible to students for self-study or remote learning.
+
+5. **Assessment and Testing**:
+   - Tools can generate images for use in exams or quizzes, testing students' diagnostic skills or anatomical knowledge.
+   - They can create novel clinical scenarios that require students to apply their knowledge in new and unfamiliar contexts.
+
+### Clinical Care
+
+1. **Patient Education and Communication**:
+   - Clinicians can use image generation tools to create visual aids that help explain diagnoses, procedures, or treatment plans to patients.
+   - They can generate images that are personalized to the patient's condition, improving understanding and adherence to treatment.
+
+2. **Surgical Planning and Rehearsal**:
+   - Surgeons can use generated images to plan complex procedures by visualizing anatomy and pathology in a three-dimensional context.
+   - They can simulate different surgical approaches or techniques to determine the optimal strategy before actual surgery.
+
+3. **Telemedicine**:
+   - In telemedicine consultations, clinicians can use image generation to convey information to patients or to other healthcare providers when discussing cases.
+   - Tools can also help generate anatomical models based on patient imaging data, facilitating remote diagnosis and treatment planning.
+
+4. **Prosthesis and Implant Design**:
+   - Custom images and models can be generated for the design of personalized prosthetics or implants, ensuring a better fit and function for individual patients.
+   - They can also be used to visualize the integration of the implant with the patient's existing anatomy.
+
+5. **Enhancing Diagnostic Accuracy**:
+   - Image generation tools can help create augmented images that highlight specific features or pathologies, assisting clinicians in making more accurate diagnoses.
+   - They can be used to generate comparative images that demonstrate the progression of a disease or the response to treatment over time.
+
+In both educational and clinical settings, the use of image generation tools must be guided by ethical considerations, ensuring that generated images are used appropriately and do not mislead or replace the need for actual patient data and consent where necessary. 
+Furthermore, the quality and accuracy of the generated images must be validated to ensure they meet the high standards required for medical use.
+"""
