@@ -184,7 +184,7 @@ if check_password():
         )
 
         if response.status_code != 200:
-            st.write("Don't keep trying to outfake the AI, it's not going to work AND we'll lose access!")
+            st.warning("Flagged as inappropriate. Don't keep trying to outfake the AI! It's not going to work AND we'll lose access!")
             raise Exception("Non-200 response: " + str(response.text))
             
 

@@ -3,3 +3,5 @@ pt_sims2.py
 backup.py
 prompt_backup.py
 pt_latest.mp3
+out/
+.gitignore
