@@ -6,6 +6,17 @@ from PIL import Image
 from prompts import image_gen_explanation, using_docker
 
 
+# Function to generate a download link for an image file
+def get_image_download_link(img_path):
+    with open(img_path, "rb") as file:
+        btn = st.download_button(
+            label="Download Image",
+            data=file,
+            file_name=img_path,
+            mime="image/png"
+        )
+    return btn
+
 def check_password():
     """Returns `True` if the user had the correct password."""
 
@@ -34,8 +45,20 @@ def check_password():
     else:
         # Password correct.
         return True
+    
+# Initialize session state for storing images
+if 'displayed_images' not in st.session_state:
+    st.session_state['displayed_images'] = []
+    
+if 'user_subject' not in st.session_state:
+    st.session_state['user_subject'] = ""
 
 st.set_page_config(page_title="Fun Image Generation", page_icon="🩻")
+
+
+# Create a directory for output images if it doesn't exist
+os.makedirs('./out', exist_ok=True)
+
 
 st.header("🩻 Fun Image Generation")
 st.info("This is a fun demo of [Stability API](https://stability.ai/) image generation. Make a **safe for all viewers** request for a quick image.")
@@ -45,7 +68,7 @@ st.warning("Note - any medical images are NOT anatomically/structurally/physiolo
 
 if check_password():
 
-    user_subject = st.text_input("Enter the image subject, something that is SAFE FOR WORK, e.g, a skeleton or brain. ", key="user_request")
+    st.session_state.user_subject = st.text_input("Be specific about what is in your picture. Choose something that is SAFE FOR WORK, e.g, medical students on bedside rounds in a hospital. ", key="user_request")
     # image_type = st.selectbox("Select the type of image you want to generate", ["photo", "medical", "artistic",  "cartoon", "sketch", ])
 
 
@@ -114,8 +137,8 @@ if check_password():
     # Filter out empty strings and join the elements with commas
     prompt = ', '.join(filter(None, prompt_elements))
     # Add the user subject at the beginning if provided
-    if user_subject:
-        prompt = f"{user_subject}: {prompt}"
+    if st.session_state.user_subject != "":
+        prompt = f"{st.session_state.user_subject}: {prompt}"
 
         # Here you would typically send the prompt to the Stable Diffusion API
         # response = call_stable_diffusion_api(prompt)
@@ -137,7 +160,7 @@ if check_password():
                 "weight": 1
             },
             {
-                "text": """blurry, bad, obscene, nudity, ((((ugly)))), (((duplicate))), ((morbid)), ((mutilated)), 
+                "text": """blurry, bad, obscene, nudity, ((((ugly)))), (((duplicate))), ((morbid)), ((mutilated)), unrepresentative of minorities,
                 [out of frame], extra fingers, mutated hands, malrotated torso, ((poorly drawn hands)), ((poorly drawn face)), (((mutation))), (((deformed))), ((ugly)), 
                 blurry, ((bad anatomy)), (((bad proportions))), ((extra limbs)), cloned face, (((disfigured))), out of frame, ugly, extra limbs, 
                 (bad anatomy), gross proportions, (malformed limbs), ((missing arms)), ((missing legs)), (((extra arms))), (((extra legs))), mutated hands, 
@@ -167,19 +190,23 @@ if check_password():
 
         data = response.json()
 
-        # Delete prior images
-        image_dir = "./out"
-        if os.path.exists(image_dir):
-            for filename in os.listdir(image_dir):
-                file_path = os.path.join(image_dir, filename)
-                os.remove(file_path)
-        else:
-            os.makedirs(image_dir)
-
+        # Update the session state with new images
         for i, image in enumerate(data["artifacts"]):
-            with open(f'./out/txt2img_{image["seed"]}.png', "wb") as f:
+            # Define the file path for the image
+            img_path = f'./out/txt2img_{image["seed"]}.png'
+            
+            # Write the image to the file system
+            with open(img_path, "wb") as f:
                 f.write(base64.b64decode(image["base64"]))
-                img = Image.open(f'./out/txt2img_{image["seed"]}.png')
-                st.image(img, caption=f'Text-to-Image {i+1}')
-        st.warning("Note: these are obviously NOT anatomically/structurally/physiologically correct, but they are fun! Soon, much more correct generative images will be available.")
+                
+            # Add the image path to the session state if it's not already there
+            if img_path not in st.session_state['displayed_images']:
+                st.session_state['displayed_images'].append(img_path)
 
+    # Display images and download buttons using the session state
+    for img_path in st.session_state['displayed_images']:
+        img = Image.open(img_path)
+        st.image(img, caption=f'Text-to-Image {img_path}')
+        get_image_download_link(img_path)
+
+    st.warning("Note: these are obviously NOT anatomically/structurally/physiologically correct, but they are fun! Soon, much more correct generative images will be available.")
