@@ -3,7 +3,8 @@ import base64
 import requests
 import os
 from PIL import Image
-from prompts import image_gen_explanation
+from prompts import image_gen_explanation, using_docker
+
 
 def check_password():
     """Returns `True` if the user had the correct password."""

@@ -1,3 +1,5 @@
+using_docker = False
+
 disclaimer = """**Disclaimer:** \n
 This is a tool to assist education regarding artificial intelligence. Your use of this tool accepts the following:   \n
 1. This tool does not generate validated medical content.

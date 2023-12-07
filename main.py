@@ -795,7 +795,7 @@ with title2:
         st.write("ALPHA version 1.0")
     st.info("With OpenAI announcement 11-6-2023, new model added: GPT-4-1106-preview. It's in beta and has a huge context window.")
 
-if check_password():
+if check_password() or using_docker:
     
     openai.api_base = "https://openrouter.ai/api/v1"
     openai.api_key = st.secrets["OPENROUTER_API_KEY"]
