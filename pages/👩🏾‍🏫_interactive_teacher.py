@@ -15,6 +15,7 @@ from langchain.chains import QAGenerationChain
 from langchain.vectorstores import FAISS
 import requests
 import json
+from using_docker import using_docker
 
 # Set a default model
 if "openai_model" not in st.session_state:

@@ -1,4 +1,4 @@
-using_docker = False
+
 
 image_prompt_prompt = """Take the user's prompt '{user_prompt}'. Enhance it by adding specific and detailed descriptions. 
 Include elements such as setting, objects, colors, mood, and atmosphere. Use descriptive adjectives and consider perspective and composition. 

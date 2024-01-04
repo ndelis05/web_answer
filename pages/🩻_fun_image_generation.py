@@ -4,8 +4,9 @@ import requests
 import os
 import io
 from PIL import Image
-from prompts import image_gen_explanation, using_docker, image_prompt_prompt, stable_diffusion_image_prompt
+from prompts import image_gen_explanation, image_prompt_prompt, stable_diffusion_image_prompt
 from openai import OpenAI
+from using_docker import using_docker
 
 
 # Function to generate a download link for an image file

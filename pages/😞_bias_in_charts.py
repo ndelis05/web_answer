@@ -7,6 +7,7 @@ from langchain.prompts import ChatPromptTemplate
 from prompts import *
 from openai import OpenAI
 import time
+from using_docker import using_docker
 
 def process_model_name(model):
     prefix = "openai/"
