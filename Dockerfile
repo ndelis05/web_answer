@@ -25,6 +25,7 @@ COPY using_docker.py ./
 COPY pages/ ./pages/
 COPY images/ ./images/
 COPY .streamlit/ ./.streamlit/
+COPY .static/ ./.static/
 
 # Expose port 8501 for Streamlit
 EXPOSE 8501
