@@ -17,6 +17,7 @@ RUN pip3 install -r requirements.txt
 COPY main.py ./
 COPY prompts.py ./
 COPY functions.py ./
+COPY using_docker.py ./
 
 
 # If there are other files or directories to include, add them here
