@@ -45,6 +45,7 @@ def process_model_name(model):
 def answer_using_prefix(prefix, sample_question, sample_answer, my_ask, temperature, history_context):
     # st.write('yes the function is being used!')
     messages_blank = []
+    st.session_state.expanded = False
     messages = update_messages(
         messages = messages_blank, 
         system_content=f'{prefix}; Sample question: {sample_question} Sample response: {sample_answer} Preceding conversation: {history_context}', 
@@ -91,6 +92,7 @@ def answer_using_prefix(prefix, sample_question, sample_answer, my_ask, temperat
 
 def answer_using_prefix_openai(prefix, sample_question, sample_answer, my_ask, temperature, history_context):
     # st.write('yes the function is being used!')
+    st.session_state.expanded = False
     messages_blank = []
     messages = update_messages(
         messages = messages_blank, 
@@ -260,7 +262,7 @@ def update_messages(messages, system_content=None, assistant_content=None, user_
     :param assistant_content: Optional new content for the assistant message.
     :return: Updated list of message dictionaries.
     """
-
+    st.session_state.expanded = False
     # Update system message or add it if it does not exist
     system_message = next((message for message in messages if message['role'] == 'system'), None)
     if system_message is not None:
@@ -292,6 +294,7 @@ def websearch_learn(web_query: str, deep, scrape_method, max) -> float:
     :rtype: json
     
     """
+    st.session_state.expanded = False
     # st.info(f'Here is the websearch input: **{web_query}**')
     url = "https://real-time-web-search.p.rapidapi.com/search"
     querystring = {"q":web_query,"limit":max}
@@ -350,6 +353,7 @@ def websearch_learn(web_query: str, deep, scrape_method, max) -> float:
 #     return completion['choices'][0]['message']['content']
 
 def reconcile_answers(context, question, old, new):
+    st.session_state.expanded = False
     openai.api_base = "https://api.openai.com/v1/"
     openai.api_key = st.secrets['OPENAI_API_KEY']
     with st.spinner("Reconciling with new evidence..."):
@@ -389,6 +393,7 @@ def browserless(url_list, max):
     # st.write(url_list)
     # if max > 5:
     #     max = 5
+    st.session_state.expanded = False
     response_complete = []
     i = 0
     key = st.secrets["BROWSERLESS_API_KEY"]
@@ -436,6 +441,7 @@ def browserless(url_list, max):
 
 @st.cache_data
 def display_articles_with_streamlit(articles):
+    st.session_state.expanded = False
     i = 1
     for article in articles:
         st.write(f"{i}. {article['title']}[{article['year']}]({article['link']})")
@@ -443,6 +449,7 @@ def display_articles_with_streamlit(articles):
         # st.write("---")  # Adds a horizontal line for separation
 
 def set_llm_chat(model, temperature):
+    st.session_state.expanded = False
     if model == "openai/gpt-3.5-turbo":
         model = "gpt-3.5-turbo"
     if model == "openai/gpt-3.5-turbo-1106":
@@ -466,6 +473,7 @@ def truncate_text(text, max_characters):
         return truncated_text
 
 def semantic_search(search_term, max_results, year, publication_type):
+    st.session_state.expanded = False
     # rsp = requests.get(f"https://api.semanticscholar.org/graph/v1/paper/search?query={search_term}=url,title,abstract",
     rsp = requests.get(f"https://api.semanticscholar.org/graph/v1/paper/search",
                        headers={'X-API-KEY': st.secrets["S2_API_KEY"]}, 
@@ -592,6 +600,7 @@ def limit_tokens(text, max_tokens=10000):
 @st.cache_data
 def scrapeninja(url_list, max):
     # st.write(url_list)
+    st.session_state.expanded = False
     if max > 5:
         max = 5
     response_complete = []
@@ -660,6 +669,7 @@ def websearch(web_query: str, deep, scrape_method, max) -> float:
     :rtype: json
     
     """
+    st.session_state.expanded = False
     # st.info(f'Here is the websearch input: **{web_query}**')
     url = "https://real-time-web-search.p.rapidapi.com/search"
     querystring = {"q":web_query,"limit":"10"}
@@ -698,6 +708,7 @@ def websearch(web_query: str, deep, scrape_method, max) -> float:
 
 @st.cache_data
 def pubmed_abstracts(search_terms, search_type="all"):
+    st.session_state.expanded = False
     # URL encoding
     search_terms_encoded = requests.utils.quote(search_terms)
 
@@ -882,7 +893,7 @@ def load_docs(files):
 
 
 def create_retriever(texts):  
-    
+    st.session_state.expanded = False
     embeddings = OpenAIEmbeddings(model = "text-embedding-ada-002",
                                   openai_api_base = "https://api.openai.com/v1/",
                                   openai_api_key = st.secrets['OPENAI_API_KEY']
@@ -937,6 +948,7 @@ def generate_eval(text, N, chunk):
 
 
 def prepare_rag(text):
+    st.session_state.expanded = False
     splits = split_texts(text, chunk_size=1000, overlap=100, split_method="recursive")
     st.session_state.retriever = create_retriever(splits)
     llm = set_llm_chat(model="gpt-4-1106-preview", temperature=st.session_state.temp)
@@ -1053,6 +1065,9 @@ if "ddx_output_text" not in st.session_state:
     
 if "skim_output_text" not in st.session_state:
     st.session_state["skim_output_text"] = ""
+    
+if "expanded" not in st.session_state:
+    st.session_state["expanded"] = True
    
 st.set_page_config(page_title='MediMate: GPT and Med Ed', layout = 'centered', page_icon = ':stethoscope:', initial_sidebar_state = 'auto')    
 title1, title2 = st.columns([1, 3])
@@ -1194,7 +1209,7 @@ if check_password():
 
             
             if st.session_state.evidence_response != "" or evidence_response != "":
-                with st.expander("Sources Reviewed", expanded=False):
+                with st.expander("Sources Reviewed", expanded=st.session_state.expanded):
                     st.write(evidence_response)
                     st.write("Sources reviewed:")
                     for item in urls:
@@ -1208,32 +1223,36 @@ if check_password():
             st.session_state.output_history.append(final_answer)
             
         if st.session_state.prelim_response != "":
-            with st.expander("View or Download the Preliminary Response", expanded=False):
+            with st.expander("View or Download the Preliminary Response", expanded=st.session_state.expanded):
                 st.info(st.session_state.prelim_response, icon="🧐")
                 st.download_button('Download Preliminary Output',disclaimer + st.session_state.prelim_response, key = "Preliminary_Output")
                 export_as_pdf = st.button("Create PDF version", key = "prelim_output")
                 if export_as_pdf:
+                    st.session_state.expanded = True
                     pdf = FPDF()
                     pdf.add_page()
                     pdf.set_font("Arial", size=12)
                     pdf.multi_cell(0, 5, disclaimer + st.session_state.prelim_response)
                     html = create_download_link(pdf.output(dest="S").encode("latin-1"), "prelim_responses")
-                    st.markdown(html, unsafe_allow_html=True)
+                    st.sidebar.info("Here is your PDF file to download!")
+                    st.sidebar.markdown(html, unsafe_allow_html=True)
                     # pdf.output("final_responses.pdf")
 
         
         if st.session_state.evidence_response != "":
-            with st.expander("View or Download the Evidence Review", expanded=False):
+            with st.expander("View or Download the Evidence Review", expanded=st.session_state.expanded):
                 st.info(st.session_state.evidence_response, icon="🧐")
                 st.download_button('Download Evidence Review',disclaimer + st.session_state.evidence_response, key = "Sources_Reviewed")
                 export_as_pdf = st.button("Create PDF version", key = "evidence")
                 if export_as_pdf:
+                    st.session_state.expanded = True
                     pdf = FPDF()
                     pdf.add_page()
                     pdf.set_font("Arial", size=12)
                     pdf.multi_cell(0, 5, disclaimer + st.session_state.evidence_response)
                     html = create_download_link(pdf.output(dest="S").encode("latin-1"), "evidence_responses")
-                    st.markdown(html, unsafe_allow_html=True)
+                    st.sidebar.info("Here is your PDF file to download!")
+                    st.sidebar.markdown(html, unsafe_allow_html=True)
                     # pdf.output("final_responses.pdf")
 
         
@@ -1241,7 +1260,7 @@ if check_password():
                 
             # ENTITY_MEMORY_CONVERSATION_TEMPLATE
             # Display the conversation history using an expander, and allow the user to download it
-        with st.expander("View or Download Final Responses", expanded=False):
+        with st.expander("View or Download Final Responses", expanded=st.session_state.expanded):
             for i in range(len(st.session_state['output_history'])-1, -1, -1):
                 st.info(st.session_state["history"][i],icon="🧐")
                 st.success(st.session_state["output_history"][i], icon="🤖")
@@ -1256,12 +1275,14 @@ if check_password():
                 st.download_button('Download Final Responses',tab1_download_str, key = "final_responses")
                 export_as_pdf = st.button("Create PDF version")
                 if export_as_pdf:
+                    st.session_state.expanded = True
                     pdf = FPDF()
                     pdf.add_page()
                     pdf.set_font("Arial", size=12)
                     pdf.multi_cell(0, 5, tab1_download_str)
                     html = create_download_link(pdf.output(dest="S").encode("latin-1"), "final_responses")
-                    st.markdown(html, unsafe_allow_html=True)
+                    st.sidebar.info("Here is your PDF file to download!")
+                    st.sidebar.markdown(html, unsafe_allow_html=True)
                     # pdf.output("final_responses.pdf")
                     
                 
@@ -1383,7 +1404,7 @@ if check_password():
                 
                 # ENTITY_MEMORY_CONVERSATION_TEMPLATE
                 # Display the conversation history using an expander, and allow the user to download it
-            with st.expander("View or Download Instructions", expanded=False):
+            with st.expander("View or Download Instructions", expanded=st.session_state.expanded):
                 for i in range(len(st.session_state['dc_history'])-1, -1, -1):
                     st.info(st.session_state["dc_history"][i],icon="🧐")
                     st.success(st.session_state["dc_history"][i], icon="🤖")
@@ -1397,12 +1418,14 @@ if check_password():
                     st.download_button('Download',dc_download_str, key = "DC_Thread")   
                     export_as_pdf = st.button("Create PDF version", key = "dc_download")
                     if export_as_pdf:
+                        st.session_state.expanded = True
                         pdf = FPDF()
                         pdf.add_page()
                         pdf.set_font("Arial", size=12)
                         pdf.multi_cell(0, 5, dc_download_str)
                         html = create_download_link(pdf.output(dest="S").encode("latin-1"), "dc_instructions")
-                        st.markdown(html, unsafe_allow_html=True)
+                        st.sidebar.info("Here is your PDF file to download!")
+                        st.sidebar.markdown(html, unsafe_allow_html=True)
                         # pdf.output("final_responses.pdf")     
                     
 
@@ -1493,7 +1516,7 @@ if check_password():
                 
                 # ENTITY_MEMORY_CONVERSATION_TEMPLATE
                 # Display the conversation history using an expander, and allow the user to download it
-            with st.expander("View or Download Annotations", expanded=False):
+            with st.expander("View or Download Annotations", expanded=st.session_state.expanded):
                 for i in range(len(st.session_state['annotate_history'])-1, -1, -1):
                     st.info(st.session_state["annotate_history"][i],icon="🧐")
                     st.success(st.session_state["annotate_history"][i], icon="🤖")
@@ -1507,12 +1530,14 @@ if check_password():
                     st.download_button('Download',annotate_download_str, key = "Annotate_Thread")
                     export_as_pdf = st.button("Create PDF version", key = "annotate_pdf")
                     if export_as_pdf:
+                        st.session_state.expanded = True
                         pdf = FPDF()
                         pdf.add_page()
                         pdf.set_font("Arial", size=12)
                         pdf.multi_cell(0, 5, annotate_download_str)
                         html = create_download_link(pdf.output(dest="S").encode("latin-1"), "annotations")
-                        st.markdown(html, unsafe_allow_html=True)        
+                        st.sidebar.info("Here is your PDF file to download!")
+                        st.sidebar.markdown(html, unsafe_allow_html=True)        
             
             
     with tab4:
@@ -1563,7 +1588,7 @@ if check_password():
                 
                 # ddx_download_str = []
             if st.session_state.ddx_output_text != "":    
-                with st.expander("Differential Diagnosis Draft", expanded=False):
+                with st.expander("Differential Diagnosis Draft", expanded=st.session_state.expanded):
                     st.info(f'Topic: {ddx_prompt}',icon="🧐")
                     st.success(f'Educational Use Only: **NOT REVIEWED FOR CLINICAL CARE** \n\n {st.session_state.ddx_output_text}', icon="🤖")                         
                     ddx_download_str = f"{disclaimer}\n\nDifferential Diagnoses for {ddx_prompt}:\n\n{st.session_state.ddx_output_text}"
@@ -1571,12 +1596,14 @@ if check_password():
                         st.download_button('Download', ddx_download_str, key = 'ddx_questions_1')
                         export_as_pdf = st.button("Create PDF version", key = "ddx_pdf")
                         if export_as_pdf:
+                            st.session_state.expanded = True
                             pdf = FPDF()
                             pdf.add_page()
                             pdf.set_font("Arial", size=12)
                             pdf.multi_cell(0, 5, ddx_download_str)
                             html = create_download_link(pdf.output(dest="S").encode("latin-1"), "ald_ddx")
-                            st.markdown(html, unsafe_allow_html=True)  
+                            st.sidebar.info("Here is your PDF file to download!")
+                            st.sidebar.markdown(html, unsafe_allow_html=True)  
                         
                         
         # Alternative Diagnosis Generator
@@ -1597,7 +1624,7 @@ if check_password():
                     st.session_state.alt_dx_output_text = alt_dx_output_text
                 # alt_dx_download_str = []
             if st.session_state.alt_dx_output_text != "":
-                with st.expander("Alternative Diagnoses Draft", expanded=False):
+                with st.expander("Alternative Diagnoses Draft", expanded=st.session_state.expanded):
                     st.info(f'Topic: {alt_dx_prompt}',icon="🧐")
                     st.success(f'Educational Use Only: **NOT REVIEWED FOR CLINICAL CARE** \n\n {st.session_state.alt_dx_output_text}', icon="🤖")
                     alt_dx_download_str = f"{disclaimer}\n\nAlternative Diagnoses for {alt_dx_prompt}:\n\n{st.session_state.alt_dx_output_text}"
@@ -1605,12 +1632,14 @@ if check_password():
                         st.download_button('Download', alt_dx_download_str, key = 'alt_dx_output')
                         export_as_pdf = st.button("Create PDF version", key = "alt_dx_output_pdf")
                         if export_as_pdf:
+                            st.session_state.expanded = True
                             pdf = FPDF()
                             pdf.add_page()
                             pdf.set_font("Arial", size=12)
                             pdf.multi_cell(0, 5, alt_dx_download_str)
                             html = create_download_link(pdf.output(dest="S").encode("latin-1"), "ald_ddx")
-                            st.markdown(html, unsafe_allow_html=True)  
+                            st.sidebar.info("Here is your PDF file to download!")
+                            st.sidebar.markdown(html, unsafe_allow_html=True)  
 
     with tab3:
 
@@ -1650,7 +1679,7 @@ if check_password():
             # ENTITY_MEMORY_CONVERSATION_TEMPLATE
             # Display the conversation history using an expander, and allow the user to download it
         if st.session_state.pt_ed_output_text != "":
-            with st.expander("Patient Education Draft", expanded=False):
+            with st.expander("Patient Education Draft", expanded=st.session_state.expanded):
                 st.info(f'Topic: {my_ask_for_pt_ed}',icon="🧐")
                 st.success(f'Draft Patient Education Materials: **REVIEW CAREFULLY FOR ERRORS** \n\n {st.session_state.pt_ed_output_text}', icon="🤖")      
                 pt_ed_download_str = f"{disclaimer}\n\nDraft Patient Education Materials: {my_ask_for_pt_ed}:\n\n{st.session_state.pt_ed_output_text}"
@@ -1658,12 +1687,14 @@ if check_password():
                         st.download_button('Download', pt_ed_download_str, key = 'pt_ed_questions')
                         export_as_pdf = st.button("Create PDF version", key = "pt_ed_pdf")
                         if export_as_pdf:
+                            st.session_state.expanded = True
                             pdf = FPDF()
                             pdf.add_page()
                             pdf.set_font("Arial", size=12)
                             pdf.multi_cell(0, 5, pt_ed_download_str)
                             html = create_download_link(pdf.output(dest="S").encode("latin-1"), "ald_ddx")
-                            st.markdown(html, unsafe_allow_html=True)  
+                            st.sidebar.info("Here is your PDF file to download!")
+                            st.sidebar.markdown(html, unsafe_allow_html=True)  
                         
           
     
@@ -1863,7 +1894,7 @@ if check_password():
                     abstract_download_str += f"Answer: {st.session_state.abstract_answers[i]['result']}\n\n"
 
                 # Display the expander section with the full thread of questions and answers
-                with st.expander("Your Conversation with your Abstracts", expanded=False):
+                with st.expander("Your Conversation with your Abstracts", expanded=st.session_state.expanded):
                     for i in range(len(st.session_state.abstract_questions)):
                         st.info(f"Question: {st.session_state.abstract_questions[i]}", icon="🧐")
                         st.success(f"Answer: {st.session_state.abstract_answers[i]['result']}", icon="🤖")
@@ -1931,19 +1962,21 @@ if check_password():
                     for item in urls:
                         st.write(item)
             if st.session_state.skim_output_text != "":
-                with st.expander("Web Resources Summary", expanded=False):
+                with st.expander("Web Resources Summary", expanded=st.session_state.expanded):
                     st.info(f'Topic: {my_ask_for_websearch}',icon="🧐")
                     st.success(f'Your Response: **REVIEW CAREFULLY FOR ERRORS** \n\n {st.session_state.skim_output_text}', icon="🤖")      
                     skim_download_str = f"{disclaimer}\n\Web Resources Summary: {my_ask_for_websearch}:\n\n{st.session_state.skim_output_text}"
                     st.download_button('Download', skim_download_str, key = 'skim_questions')
                     export_as_pdf = st.button("Create PDF version", key = "skim_pdf")
                     if export_as_pdf:
+                        st.session_state.expanded = True
                         pdf = FPDF()
                         pdf.add_page()
                         pdf.set_font("Arial", size=12)
                         pdf.multi_cell(0, 5, st.session_state.skim_output_text)
                         html = create_download_link(pdf.output(dest="S").encode("latin-1"), "ald_ddx")
-                        st.markdown(html, unsafe_allow_html=True)  
+                        st.sidebar.info("Here is your PDF file to download!")
+                        st.sidebar.markdown(html, unsafe_allow_html=True)  
         
     
     
@@ -2034,7 +2067,7 @@ if check_password():
                 pdf_download_str += f"Answer: {st.session_state.pdf_user_answer[i]['result']}\n\n"
 
             # Display the expander section with the full thread of questions and answers
-            with st.expander("Your Conversation with your PDF", expanded=False):
+            with st.expander("Your Conversation with your PDF", expanded=st.session_state.expanded):
                 for i in range(len(st.session_state.pdf_user_question)):
                     st.info(f"Question: {st.session_state.pdf_user_question[i]}", icon="🧐")
                     st.success(f"Answer: {st.session_state.pdf_user_answer[i]['result']}", icon="🤖")
