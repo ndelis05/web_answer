@@ -5,29 +5,122 @@ from langchain.chat_models import ChatOpenAI
 from langchain.chains import create_extraction_chain, create_extraction_chain_pydantic
 from langchain.prompts import ChatPromptTemplate
 from prompts import *
-import openai
+from openai import OpenAI
 import time
 
+def process_model_name(model):
+    prefix = "openai/"
+    if model.startswith(prefix):
+        model = model[len(prefix):]
+    return model
 
+def update_messages(messages, system_content=None, assistant_content=None, user_content=None):
+    """
+    Updates a list of message dictionaries with new system, user, and assistant content.
+
+    :param messages: List of message dictionaries with keys 'role' and 'content'.
+    :param system_content: Optional new content for the system message.
+    :param user_content: Optional new content for the user message.
+    :param assistant_content: Optional new content for the assistant message.
+    :return: Updated list of message dictionaries.
+    """
+
+    # Update system message or add it if it does not exist
+    system_message = next((message for message in messages if message['role'] == 'system'), None)
+    if system_message is not None:
+        if system_content is not None:
+            system_message['content'] = system_content
+    else:
+        if system_content is not None:
+            messages.append({"role": "system", "content": system_content})
+
+    # Add assistant message if provided
+    if assistant_content is not None:
+        messages.append({"role": "assistant", "content": assistant_content})
+
+    # Add user message if provided
+    if user_content is not None:
+        messages.append({"role": "user", "content": user_content})
+
+    return messages
+
+def answer_using_prefix(prefix, sample_question, sample_answer, my_ask, temperature, history_context, model):
+    # st.write('yes the function is being used!')
+    messages_blank = []
+    messages = update_messages(
+        messages = messages_blank, 
+        system_content=f'{prefix}; Sample question: {sample_question} Sample response: {sample_answer} Preceding conversation: {history_context}', 
+        assistant_content='',
+        user_content=my_ask,
+        )
+    # st.write(messages)
+    model2 = process_model_name(model)
+    if model2 == model:
+        api_key = st.secrets["OPENROUTER_API_KEY"]
+        client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=api_key,
+        )
+        params = {
+            "extra_headers": {
+                "HTTP-Referer": "https://fsm-gpt-med-ed.streamlit.app/",
+                "X-Title": 'MediMate GPT and Med Ed',
+            }
+        }
+        params = {
+            "model": model,
+            "messages": messages,
+            "temperature": temperature,
+            "stream": True,
+        }
+    else:
+        api_key = st.secrets["OPENAI_API_KEY"]
+        client = OpenAI(
+            base_url="https://api.openai.com/v1",
+            api_key=api_key,
+        )
+        params = {
+            "model": model2,
+            "messages": messages,
+            "temperature": temperature,
+            "stream": True,
+        }
+    # st.write(f'here are the params: {params}')
+    try:    
+        completion = client.chat.completions.create(**params)
+    except Exception as e:
+        st.write(e)
+        st.write(f'Here were the params: {params}')
+        return None
+
+    placeholder = st.empty()
+    full_response = ''
+    for chunk in completion:
+        if chunk.choices[0].delta.content is not None:
+            full_response += chunk.choices[0].delta.content
+            # full_response.append(chunk.choices[0].delta.content)
+            placeholder.markdown(full_response)
+    placeholder.markdown(full_response)
+    return full_response
 
 
 
 @st.cache_data
-def answer_using_prefix(prefix, sample_question, sample_answer, my_ask, temperature, history_context, model, print = True):
+def answer_using_prefix_old(prefix, sample_question, sample_answer, my_ask, temperature, history_context, model, print = True):
 
     if model == "openai/gpt-3.5-turbo":
         model = "gpt-3.5-turbo"
-    if model == "openai/gpt-3.5-turbo-16k":
-        model = "gpt-3.5-turbo-16k"
+    if model == "openai/gpt-3.5-turbo-1106":
+        model = "gpt-3.5-turbo-1106"
     if model == "openai/gpt-4":
-        model = "gpt-4"
+        model = "gpt-4-1106-preview"
     if history_context == None:
         history_context = ""
     messages = [{'role': 'system', 'content': prefix},
             {'role': 'user', 'content': sample_question},
             {'role': 'assistant', 'content': sample_answer},
             {'role': 'user', 'content': history_context + my_ask},]
-    if model == "gpt-4" or model == "gpt-3.5-turbo" or model == "gpt-3.5-turbo-16k":
+    if model == "gpt-4-1106-preview" or model == "gpt-3.5-turbo" or model == "gpt-3.5-turbo-1106":
         openai.api_base = "https://api.openai.com/v1/"
         openai.api_key = st.secrets['OPENAI_API_KEY']
         completion = openai.ChatCompletion.create( # Change the function Completion to ChatCompletion
@@ -77,17 +170,21 @@ def check_password():
         """Checks whether a password entered by the user is correct."""
         if st.session_state["password"] == st.secrets["password"]:
             st.session_state["password_correct"] = True
-            del st.session_state["password"]  # don't store password
+            # del st.session_state["password"]  # don't store password
         else:
             st.session_state["password_correct"] = False
 
     if "password_correct" not in st.session_state:
         # First run, show input for password.
-        st.text_input(
-            "Password", type="password", on_change=password_entered, key="password"
-        )
-        st.write("*Please contact David Liebovitz, MD if you need an updated password for access.*")
-        return False
+        if not using_docker:
+            st.text_input(
+                "Password", type="password", on_change=password_entered, key="password"
+            )
+            st.write("*Please contact David Liebovitz, MD if you need an updated password for access.*")
+            return False
+        else:
+            st.session_state["password_correct"] = True
+            return True
     elif not st.session_state["password_correct"]:
         # Password not correct, show input + error.
         st.text_input(
@@ -102,7 +199,7 @@ def check_password():
 
 
 
-if check_password() or using_docker:
+if check_password():
     
     if 'model_bias' not in st.session_state:
         st.session_state.model_bias = "openai/gpt-4"
@@ -146,7 +243,7 @@ if check_password() or using_docker:
     with st.expander("Types of Biases (not a complete list)"):
         st.markdown(bias_types)
     
-    st.session_state.model_bias = st.selectbox("Model Options", ("openai/gpt-3.5-turbo", "openai/gpt-3.5-turbo-16k", "openai/gpt-4", "anthropic/claude-instant-v1", "google/palm-2-chat-bison", "meta-llama/codellama-34b-instruct", "meta-llama/llama-2-70b-chat", "gryphe/mythomax-L2-13b", "nousresearch/nous-hermes-llama2-13b"), index=2)
+    st.session_state.model_bias = st.selectbox("Model Options", ("openai/gpt-3.5-turbo", "openai/gpt-3.5-turbo-1106", "openai/gpt-4", "anthropic/claude-instant-v1", "google/palm-2-chat-bison", "meta-llama/codellama-34b-instruct", "meta-llama/llama-2-70b-chat", "gryphe/mythomax-L2-13b", "nousresearch/nous-hermes-llama2-13b"), index=2)
     if st.session_state.model_bias == "google/palm-2-chat-bison":
         st.warning("The Google model doesn't stream the output, but it's fast. (Will add Med-Palm2 when it's available.)")
         st.markdown("[Information on Google's Palm 2 Model](https://ai.google/discover/palm2/)")
@@ -159,7 +256,7 @@ if check_password() or using_docker:
         st.markdown("[Information on Meta's Llama2](https://ai.meta.com/llama/)")
     if st.session_state.model_bias == "openai/gpt-3.5-turbo":
         st.markdown("[Information on OpenAI's GPT-3.5](https://platform.openai.com/docs/models/gpt-3-5)")
-    if st.session_state.model_bias == "openai/gpt-3.5-turbo-16k":
+    if st.session_state.model_bias == "openai/gpt-3.5-turbo-1106":
         st.markdown("[Information on OpenAI's GPT-3.5](https://platform.openai.com/docs/models/gpt-3-5)")
     if st.session_state.model_bias == "gryphe/mythomax-L2-13b":
         st.markdown("[Information on Gryphe's Mythomax](https://huggingface.co/Gryphe/MythoMax-L2-13b)")
@@ -176,8 +273,8 @@ if check_password() or using_docker:
     if task == "Generate a sample note and check for bias":
         st.sidebar.warning("This is an EARLY PHASE TOOL undergoing significant updates soon. Eventually, it will generate biased yet realistic note examples for us all to learn from.")    
         st.warning("Enter details into the sidebar on the left and use the buttons to generate response")
-        desired_note_content = st.sidebar.text_input("Please enter a desired specialty and diagnoses for your simulated patient:")
-        patient_attributes = st.sidebar.text_input("Please enter one or more patient attributes you would like to insert within your sample note (e.g., age, race, sex assigned at birth, gender identity, ethnicity, etc.): ")
+        desired_note_content = st.sidebar.text_input("Please enter a specialty and diagnoses for your generated progress note:")
+        patient_attributes = st.sidebar.text_input("Please enter one or more patient attributes you would like to use for your note (e.g., 35 yo white male with obesity): ")
         desired_note_bias = st.sidebar.text_input("Please enter one or more biases you would like to insert within your sample note: ")
         desired_note_prompt = desired_note_prompt.format(desired_note_content=desired_note_content, patient_attributes = patient_attributes, desired_note_bias=desired_note_bias)
         

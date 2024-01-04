@@ -1,5 +1,6 @@
 import streamlit as st
 import openai
+from openai import OpenAI
 import requests
 import time
 import json
@@ -24,6 +25,259 @@ import os
 import fitz
 from io import StringIO
 from PIL import Image
+from typing import List, Optional, Union, Dict, Any
+import base64
+from fpdf import FPDF
+
+def create_download_link(val, filename):
+    b64 = base64.b64encode(val)  # val looks like b'...'
+    return f'<a href="data:application/octet-stream;base64,{b64.decode()}" download="{filename}.pdf">Download file</a>'
+
+
+def process_model_name(model):
+    prefix = "openai/"
+    if model.startswith(prefix):
+        model = model[len(prefix):]
+    return model
+
+
+def answer_using_prefix(prefix, sample_question, sample_answer, my_ask, temperature, history_context):
+    # st.write('yes the function is being used!')
+    messages_blank = []
+    messages = update_messages(
+        messages = messages_blank, 
+        system_content=f'{prefix}; Sample question: {sample_question} Sample response: {sample_answer} Preceding conversation: {history_context}', 
+        assistant_content='',
+        user_content=my_ask,
+        )
+    # st.write(messages)
+    model = st.session_state.model
+    api_key = st.secrets["OPENROUTER_API_KEY"]
+    client = OpenAI(
+        base_url="https://openrouter.ai/api/v1",
+        api_key=api_key,
+    )
+    params = {
+        "extra_headers": {
+            "HTTP-Referer": "https://fsm-gpt-med-ed.streamlit.app/",
+            "X-Title": 'MediMate GPT and Med Ed',
+        }
+    }
+    params = {
+        "model": model,
+        "messages": messages,
+        "temperature": temperature,
+        "stream": True,
+    }
+    
+    # st.write(f'here are the params: {params}')
+    try:    
+        completion = client.chat.completions.create(**params)
+    except Exception as e:
+        st.write(e)
+        st.write(f'Here were the params: {params}')
+        return None
+
+    placeholder = st.empty()
+    full_response = ''
+    for chunk in completion:
+        if chunk.choices[0].delta.content is not None:
+            full_response += chunk.choices[0].delta.content
+            # full_response.append(chunk.choices[0].delta.content)
+            placeholder.markdown(full_response)
+    placeholder.markdown(full_response)
+    return full_response
+
+def answer_using_prefix_openai(prefix, sample_question, sample_answer, my_ask, temperature, history_context):
+    # st.write('yes the function is being used!')
+    messages_blank = []
+    messages = update_messages(
+        messages = messages_blank, 
+        system_content=f'{prefix}; Sample question: {sample_question} Sample response: {sample_answer} Preceding conversation: {history_context}', 
+        assistant_content='',
+        user_content=my_ask,
+        )
+    # st.write(messages)
+    model = process_model_name(st.session_state.model)
+    # st.write('here is the model: ' + model)
+    api_key = st.secrets["OPENAI_API_KEY"]
+    client = OpenAI(
+        base_url="https://api.openai.com/v1",
+        api_key=api_key,
+    )
+    params = {
+        "model": model,
+        "messages": messages,
+        "temperature": temperature,
+        "stream": True,
+    }
+    # st.write(f'here are the params: {params}')
+    try:    
+        completion = client.chat.completions.create(**params)
+    except Exception as e:
+        st.write(e)
+        st.write(f'Here were the params: {params}')
+        return None
+
+    placeholder = st.empty()
+    full_response = ''
+    for chunk in completion:
+        if chunk.choices[0].delta.content is not None:
+            full_response += chunk.choices[0].delta.content
+            # full_response.append(chunk.choices[0].delta.content)
+            placeholder.markdown(full_response)
+    placeholder.markdown(full_response)
+    return full_response
+
+
+# def generate_chat_completion(
+#     messages: List[Dict[str, str]],
+#     model: str,
+#     stream: bool,
+#     api: str = "openai",
+#     frequency_penalty: Optional[float] = 0,
+#     logit_bias: Optional[Dict[int, int]] = None,
+#     max_tokens: Optional[int] = None,
+#     n: Optional[int] = 1,
+#     presence_penalty: Optional[float] = 0,
+#     response_format: Optional[Dict[str, str]] = None,
+#     seed: Optional[int] = None,
+#     stop: Optional[Union[str, List[str]]] = None,
+#     temperature: Optional[float] = 1,
+#     top_p: Optional[float] = 1,
+#     tools: Optional[List[str]] = None,
+#     tool_choice: Optional[Union[str, Dict[str, Any]]] = None,
+#     user: Optional[str] = None
+# ) -> Any:
+#     """
+#     Generates a chat completion using the specified model and conversation context.
+
+#     :param messages: A list of message dictionaries comprising the conversation so far.
+#     :param model: ID of the model to use.
+#     :param stream: If set to True, partial message deltas will be sent.
+#     :param api: Determines which API to use, 'openai' or 'openrouter'.
+#     :param frequency_penalty: Adjusts likelihood to repeat the same line verbatim.
+#     :param logit_bias: Modifies likelihood of specified tokens appearing in the completion.
+#     :param max_tokens: The maximum number of tokens to generate in the chat completion.
+#     :param n: How many chat completion choices to generate for each input message.
+#     :param presence_penalty: Increases likelihood to talk about new topics.
+#     :param response_format: Specifies the format that the model must output.
+#     :param seed: If specified, attempts to sample deterministically.
+#     :param stop: Sequences where the API will stop generating further tokens.
+#     :param temperature: Controls randomness of output.
+#     :param top_p: Controls nucleus sampling.
+#     :param tools: A list of tools the model may call.
+#     :param tool_choice: Controls which function is called by the model.
+#     :param user: A unique identifier representing the end-user.
+#     :return: The generated chat completion.
+#     """
+#     # Initialize the params dictionary with extra_headers if using 'openrouter'
+#     if api == "openrouter":
+
+#         api_key = config["OPENROUTER_API_KEY"]
+#         client = OpenAI(
+#             base_url="https://openrouter.ai/api/v1",
+#             api_key=api_key,
+#         )
+#         params = {
+#             "extra_headers": {
+#                 "HTTP-Referer": "https://fsm-gpt-med-ed.streamlit.app/",
+#                 "X-Title": 'MediMate GPT and Med Ed',
+#             }
+#         }
+#     else:  # Default to 'openai'
+#         model = process_model_name(model)
+#         api_key = config["OPENAI_API_KEY"]
+#         client = OpenAI(
+#             base_url="https://api.openai.com/v1",
+#             api_key=config["OPENAI_API_KEY"],
+#         )
+#         params = {}
+        
+#     # Construct the parameters as a dictionary
+#     params = {
+#         "model": model,
+#         "messages": messages,
+#         "stream": stream
+#     }
+
+#     # Add optional parameters if they are provided (i.e., not None)
+#     if frequency_penalty is not None:
+#         params["frequency_penalty"] = frequency_penalty
+#     if logit_bias is not None:
+#         params["logit_bias"] = logit_bias
+#     if max_tokens is not None:
+#         params["max_tokens"] = max_tokens
+#     if n is not None:
+#         params["n"] = n
+#     if presence_penalty is not None:
+#         params["presence_penalty"] = presence_penalty
+#     if response_format is not None:
+#         params["response_format"] = response_format
+#     if seed is not None:
+#         params["seed"] = seed
+#     if stop is not None:
+#         params["stop"] = stop
+#     if temperature is not None:
+#         params["temperature"] = temperature
+#     if top_p is not None:
+#         params["top_p"] = top_p
+#     if tools is not None:
+#         params["tools"] = tools
+#     if tool_choice is not None:
+#         params["tool_choice"] = tool_choice
+#     if user is not None:
+#         params["user"] = user
+    
+
+
+#     try:    
+#         completion = client.chat.completions.create(**params)
+#     except Exception as e:
+#         st.write(e)
+#         return None
+#     if stream:
+#         placeholder = st.empty()
+#         full_response = ''
+#         for chunk in completion:
+#             if chunk.choices[0].delta.content is not None:
+#                 full_response += chunk.choices[0].delta.content
+#                 # full_response.append(chunk.choices[0].delta.content)
+#                 placeholder.markdown(full_response)
+#         placeholder.markdown(full_response)
+#         return full_response
+#     else:
+#         return completion.choices[0].message.content
+
+def update_messages(messages, system_content=None, assistant_content=None, user_content=None):
+    """
+    Updates a list of message dictionaries with new system, user, and assistant content.
+
+    :param messages: List of message dictionaries with keys 'role' and 'content'.
+    :param system_content: Optional new content for the system message.
+    :param user_content: Optional new content for the user message.
+    :param assistant_content: Optional new content for the assistant message.
+    :return: Updated list of message dictionaries.
+    """
+
+    # Update system message or add it if it does not exist
+    system_message = next((message for message in messages if message['role'] == 'system'), None)
+    if system_message is not None:
+        if system_content is not None:
+            system_message['content'] = system_content
+    else:
+        if system_content is not None:
+            messages.append({"role": "system", "content": system_content})
+
+    # Add assistant message if provided
+    if assistant_content is not None:
+        messages.append({"role": "assistant", "content": assistant_content})
+
+    # Add user message if provided
+    if user_content is not None:
+        messages.append({"role": "user", "content": user_content})
+
+    return messages
 
 @st.cache_data
 def websearch_learn(web_query: str, deep, scrape_method, max) -> float:
@@ -78,7 +332,7 @@ def websearch_learn(web_query: str, deep, scrape_method, max) -> float:
 #     openai.api_key = st.secrets['OPENAI_API_KEY']
 #     with st.spinner("Compressing messsages for summary..."):
 #         completion = openai.ChatCompletion.create(
-#             model = "gpt-3.5-turbo-16k",
+#             model = "gpt-3.5-turbo-1106",
 #             temperature = 0.3,
 #             messages = [
 #                 {
@@ -98,7 +352,13 @@ def reconcile_answers(context, question, old, new):
     openai.api_base = "https://api.openai.com/v1/"
     openai.api_key = st.secrets['OPENAI_API_KEY']
     with st.spinner("Reconciling with new evidence..."):
-        completion = openai.ChatCompletion.create(
+        api_key = st.secrets["OPENAI_API_KEY"]
+        from openai import OpenAI
+        client = OpenAI(    
+            base_url="https://api.openai.com/v1",
+            api_key=api_key,
+        )
+        completion = client.chat.completions.create(
             model = "gpt-4-1106-preview",
             temperature = 0.3,
             messages = [
@@ -121,7 +381,7 @@ def reconcile_answers(context, question, old, new):
             ],
             max_tokens = 4096, 
         )
-    return completion['choices'][0]['message']['content']
+    return completion.choices[0].message.content
 
 @st.cache_data
 def browserless(url_list, max):
@@ -184,18 +444,19 @@ def display_articles_with_streamlit(articles):
 def set_llm_chat(model, temperature):
     if model == "openai/gpt-3.5-turbo":
         model = "gpt-3.5-turbo"
-    if model == "openai/gpt-3.5-turbo-16k":
-        model = "gpt-3.5-turbo-16k"
+    if model == "openai/gpt-3.5-turbo-1106":
+        model = "gpt-3.5-turbo-1106"
     if model == "openai/gpt-4":
-        model = "gpt-4"
+        model = "gpt-4-1106-preview"
     if model == "openai/gpt-4-1106-preview":
         model = "gpt-4-1106-preview"
-    if model == "gpt-4" or model == "gpt-3.5-turbo" or model == "gpt-3.5-turbo-16k" or model == "gpt-4-1106-preview":
+    if model == "gpt-4-1106-preview" or model == "gpt-3.5-turbo" or model == "gpt-3.5-turbo-1106" or model == "gpt-4-1106-preview":
         return ChatOpenAI(model=model, openai_api_base = "https://api.openai.com/v1/", openai_api_key = st.secrets["OPENAI_API_KEY"], temperature=temperature)
     else:
         headers={ "HTTP-Referer": "https://fsm-gpt-med-ed.streamlit.app", # To identify your app
           "X-Title": "GPT and Med Ed"}
         return ChatOpenAI(model = model, openai_api_base = "https://openrouter.ai/api/v1", openai_api_key = st.secrets["OPENROUTER_API_KEY"], temperature=temperature, max_tokens = 500, headers=headers)
+
 def truncate_text(text, max_characters):
     if len(text) <= max_characters:
         return text
@@ -269,11 +530,15 @@ def check_password():
 
     if "password_correct" not in st.session_state:
         # First run, show input for password.
-        st.text_input(
-            "Password", type="password", on_change=password_entered, key="password"
-        )
-        st.write("*Please contact David Liebovitz, MD if you need an updated password for access.*")
-        return False
+        if not using_docker:
+            st.text_input(
+                "Password", type="password", on_change=password_entered, key="password"
+            )
+            st.write("*Please contact David Liebovitz, MD if you need an updated password for access.*")
+            return False
+        else:
+            st.session_state["password_correct"] = True
+            return True
     elif not st.session_state["password_correct"]:
         # Password not correct, show input + error.
         st.text_input(
@@ -504,15 +769,15 @@ def pubmed_abstracts(search_terms, search_type="all"):
 
     return articles, "\n".join(abstracts)
 
-def answer_using_prefix_openai(prefix, sample_question, sample_answer, my_ask, temperature, history_context):
+def answer_using_prefix_openai_old(prefix, sample_question, sample_answer, my_ask, temperature, history_context):
     openai.api_base = "https://api.openai.com/v1/"
     openai.api_key = st.secrets['OPENAI_API_KEY']
     if st.session_state.model == "openai/gpt-3.5-turbo":
         model = "gpt-3.5-turbo"
-    if st.session_state.model == "openai/gpt-3.5-turbo-16k":
-        model = "gpt-3.5-turbo-16k"
+    if st.session_state.model == "openai/gpt-3.5-turbo-1106":
+        model = "gpt-3.5-turbo-1106"
     if st.session_state.model == "openai/gpt-4":
-        model = "gpt-4"
+        model = "gpt-4-1106-preview"
     if st.session_state.model == "openai/gpt-4-1106-preview":
         model = "gpt-4-1106-preview"
     if history_context == None:
@@ -552,7 +817,7 @@ def answer_using_prefix_openai(prefix, sample_question, sample_answer, my_ask, t
     return full_answer # Change how you access the message content
 
 
-def answer_using_prefix(prefix, sample_question, sample_answer, my_ask, temperature, history_context):
+def answer_using_prefix_old(prefix, sample_question, sample_answer, my_ask, temperature, history_context):
     openai.api_key = os.environ['OPENAI_API_KEY']
     if history_context == None:
         history_context = ""
@@ -614,7 +879,7 @@ def load_docs(files):
     return all_text
 
 
-@st.cache_data
+
 def create_retriever(texts):  
     
     embeddings = OpenAIEmbeddings(model = "text-embedding-ada-002",
@@ -669,7 +934,7 @@ def generate_eval(text, N, chunk):
 
 
 
-@st.cache_data
+
 def prepare_rag(text):
     splits = split_texts(text, chunk_size=1000, overlap=100, split_method="recursive")
     st.session_state.retriever = create_retriever(splits)
@@ -733,7 +998,7 @@ if 'openai_api_key' not in st.session_state:
     st.session_state.openai_api_key = ""
     
 if 'model' not in st.session_state:
-    st.session_state.model = "openai/gpt-3.5-turbo-16k"
+    st.session_state.model = "openai/gpt-3.5-turbo-1106"
     
 if 'temp' not in st.session_state:
     st.session_state.temp = 0.3
@@ -775,6 +1040,18 @@ if "s2_citations" not in st.session_state:
     
 if "search_terms" not in st.session_state:
     st.session_state["search_terms"] = ""   
+    
+if "pt_ed_output_text" not in st.session_state:
+    st.session_state["pt_ed_output_text"] = ""
+    
+if "alt_dx_output_text" not in st.session_state:
+    st.session_state["alt_dx_output_text"] = ""
+    
+if "ddx_output_text" not in st.session_state:
+    st.session_state["ddx_output_text"] = ""
+    
+if "skim_output_text" not in st.session_state:
+    st.session_state["skim_output_text"] = ""
    
 st.set_page_config(page_title='MediMate: GPT and Med Ed', layout = 'centered', page_icon = ':stethoscope:', initial_sidebar_state = 'auto')    
 title1, title2 = st.columns([1, 3])
@@ -793,9 +1070,9 @@ with title2:
         st.session_state.temp = st.slider("Select temperature (Higher values more creative but tangential and more error prone)", 0.0, 1.0, 0.3, 0.01)
         st.write("Last updated 10/14/23")
         st.write("ALPHA version 1.0")
-    st.info("With OpenAI announcement 11-6-2023, new model added: GPT-4-1106-preview. It's in beta and has a huge context window.")
+    st.info("With OpenAI announcement 11-6-2023, new model added: GPT-4-1106-preview. It's in beta and allows longer text inputs than GPT-4.")
 
-if check_password() or using_docker:
+if check_password():
     
     openai.api_base = "https://openrouter.ai/api/v1"
     openai.api_key = st.secrets["OPENROUTER_API_KEY"]
@@ -805,7 +1082,7 @@ if check_password() or using_docker:
 
 
     with st.sidebar.expander("Select a GPT Language Model", expanded=True):
-        st.session_state.model = st.selectbox("Model Options", ("openai/gpt-3.5-turbo", "openai/gpt-3.5-turbo-16k",  "openai/gpt-4", "openai/gpt-4-1106-preview", "anthropic/claude-instant-v1", "google/palm-2-chat-bison", "meta-llama/codellama-34b-instruct", "meta-llama/llama-2-70b-chat", "gryphe/mythomax-L2-13b", "nousresearch/nous-hermes-llama2-13b"), index=1)
+        st.session_state.model = st.selectbox("Model Options", ("openai/gpt-3.5-turbo", "openai/gpt-3.5-turbo-1106",  "openai/gpt-4", "openai/gpt-4-1106-preview", "anthropic/claude-instant-v1", "google/palm-2-chat-bison", "meta-llama/codellama-34b-instruct", "meta-llama/llama-2-70b-chat", "gryphe/mythomax-L2-13b", "nousresearch/nous-hermes-llama2-13b"), index=1)
         if st.session_state.model == "google/palm-2-chat-bison":
             st.warning("The Google model doesn't stream the output, but it's fast. (Will add Med-Palm2 when it's available.)")
             st.markdown("[Information on Google's Palm 2 Model](https://ai.google/discover/palm2/)")
@@ -822,13 +1099,13 @@ if check_password() or using_docker:
             st.markdown("[Information on Meta's Llama2](https://ai.meta.com/llama/)")
         if st.session_state.model == "openai/gpt-3.5-turbo":
             st.markdown("[Information on OpenAI's GPT-3.5](https://platform.openai.com/docs/models/gpt-3-5)")
-        if st.session_state.model == "openai/gpt-3.5-turbo-16k":
+        if st.session_state.model == "openai/gpt-3.5-turbo-1106":
             st.markdown("[Information on OpenAI's GPT-3.5](https://platform.openai.com/docs/models/gpt-3-5)")
         if st.session_state.model == "gryphe/mythomax-L2-13b":
             st.markdown("[Information on Gryphe's Mythomax](https://huggingface.co/Gryphe/MythoMax-L2-13b)")
         if st.session_state.model == "meta-llama/codellama-34b-instruct":
             st.markdown("[Information on Meta's CodeLlama](https://huggingface.co/codellama/CodeLlama-34b-Instruct-hf)")
-    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Learn", "Draft Communication", "Patient Education", "Differential Diagnosis", "Sift the Web", "PDF Chat",])
+    tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Learn", "Draft Communication", "Patient Education", "Differential Diagnosis", "Include Web Resources", "PDF Chat",])
    
     with tab1:
         
@@ -871,22 +1148,24 @@ if check_password() or using_docker:
             st.session_state.history.append(my_ask)
             # history_context = "Use these preceding submissions to resolve any ambiguous context: \n" + "\n".join(st.session_state.history) + "now, for the current question: \n"
             with st.expander("Preliminary Answer - pending NLM content review below", expanded=True):
-                if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-16k" or st.session_state.model == "openai/gpt-4" or st.session_state.model== "openai/gpt-4-11-6-preview":
+                if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-1106" or st.session_state.model == "openai/gpt-4" or st.session_state.model== "openai/gpt-4-11-6-preview":
                     # output_text = answer_using_prefix_openai(system_context, sample_question, sample_response, my_ask, st.session_state.temp, history_context="")
                     try:
                         output_text = answer_using_prefix_openai(system_context, "", "", my_ask, st.session_state.temp, "")
+                        st.session_state.prelim_response = output_text
                     except:
                         st.warning("OPENAI appears slow at the moment; please try again in a moment or change the model.")
                 else:
                     try:
                         output_text = answer_using_prefix(system_context, "", "", my_ask, st.session_state.temp, "")
+                        st.session_state.prelim_response = output_text
                     except:
                         st.warning("OpenRouter appears slow at the moment; please try again in a moment or change the model.")
                 
                 if st.session_state.model == "google/palm-2-chat-bison":
                     st.write("Answer:", output_text)
                 
-                st.session_state.prelim_response = output_text    
+                    
  
             
                         # my_topic_ready = generate_medical_search(my_topic)
@@ -931,12 +1210,30 @@ if check_password() or using_docker:
             with st.expander("View or Download the Preliminary Response", expanded=False):
                 st.info(st.session_state.prelim_response, icon="🧐")
                 st.download_button('Download Preliminary Output',disclaimer + st.session_state.prelim_response, key = "Preliminary_Output")
+                export_as_pdf = st.button("Create PDF version", key = "prelim_output")
+                if export_as_pdf:
+                    pdf = FPDF()
+                    pdf.add_page()
+                    pdf.set_font("Arial", size=12)
+                    pdf.multi_cell(0, 5, disclaimer + st.session_state.prelim_response)
+                    html = create_download_link(pdf.output(dest="S").encode("latin-1"), "prelim_responses")
+                    st.markdown(html, unsafe_allow_html=True)
+                    # pdf.output("final_responses.pdf")
 
         
         if st.session_state.evidence_response != "":
             with st.expander("View or Download the Evidence Review", expanded=False):
                 st.info(st.session_state.evidence_response, icon="🧐")
                 st.download_button('Download Evidence Review',disclaimer + st.session_state.evidence_response, key = "Sources_Reviewed")
+                export_as_pdf = st.button("Create PDF version", key = "evidence")
+                if export_as_pdf:
+                    pdf = FPDF()
+                    pdf.add_page()
+                    pdf.set_font("Arial", size=12)
+                    pdf.multi_cell(0, 5, disclaimer + st.session_state.evidence_response)
+                    html = create_download_link(pdf.output(dest="S").encode("latin-1"), "evidence_responses")
+                    st.markdown(html, unsafe_allow_html=True)
+                    # pdf.output("final_responses.pdf")
 
         
         tab1_download_str = []
@@ -956,6 +1253,16 @@ if check_password() or using_docker:
             tab1_download_str = '\n'.join(tab1_download_str)
             if tab1_download_str:
                 st.download_button('Download Final Responses',tab1_download_str, key = "final_responses")
+                export_as_pdf = st.button("Create PDF version")
+                if export_as_pdf:
+                    pdf = FPDF()
+                    pdf.add_page()
+                    pdf.set_font("Arial", size=12)
+                    pdf.multi_cell(0, 5, tab1_download_str)
+                    html = create_download_link(pdf.output(dest="S").encode("latin-1"), "final_responses")
+                    st.markdown(html, unsafe_allow_html=True)
+                    # pdf.output("final_responses.pdf")
+                    
                 
     with tab2:
         # st.subheader("Patient Communication")
@@ -975,7 +1282,7 @@ if check_password() or using_docker:
                     # submitted_result = ""
                     if st.sidebar.button("Step 1: Generate a Patient Message"):
                         with col1:
-                            if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-16k" or st.session_state.model == "openai/gpt-4" or st.session_state.model== "openai/gpt-4-11-6-preview":
+                            if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-1106" or st.session_state.model == "openai/gpt-4" or st.session_state.model== "openai/gpt-4-11-6-preview":
                                 st.session_state.sample_patient_message = answer_using_prefix_openai(
                                     sim_patient_context, 
                                     prompt_for_generating_patient_question, 
@@ -1004,7 +1311,7 @@ if check_password() or using_docker:
             if st.button("Step 2: Generate Response for Patient Message"):
                 try:
                     with col2:
-                        if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-16k" or st.session_state.model == "openai/gpt-4" or st.session_state.model== "openai/gpt-4-11-6-preview":
+                        if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-1106" or st.session_state.model == "openai/gpt-4" or st.session_state.model== "openai/gpt-4-11-6-preview":
                             pt_message_response = answer_using_prefix_openai(
                                 physician_response_context, 
                                 sample_patient_question, 
@@ -1044,7 +1351,7 @@ if check_password() or using_docker:
             dc_instructions_needs = f'Generate discharge instructions for a patient as if it is authored by a physician for her patient with {health_literacy_level} discharged following {reason_for_hospital_stay} with this {surg_procedure}, {other_concerns} on {dc_meds}'
             if st.button("Generate Discharge Instructions"):
                 try:
-                    if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-16k" or st.session_state.model == "openai/gpt-4" or st.session_state.model== "openai/gpt-4-11-6-preview":
+                    if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-1106" or st.session_state.model == "openai/gpt-4" or st.session_state.model== "openai/gpt-4-11-6-preview":
                         dc_text = answer_using_prefix_openai(
                             dc_instructions_prompt, 
                             procedure_example, 
@@ -1086,7 +1393,16 @@ if check_password() or using_docker:
                 
                 dc_download_str = '\n'.join(dc_download_str)
                 if dc_download_str:
-                    st.download_button('Download',dc_download_str, key = "DC_Thread")        
+                    st.download_button('Download',dc_download_str, key = "DC_Thread")   
+                    export_as_pdf = st.button("Create PDF version", key = "dc_download")
+                    if export_as_pdf:
+                        pdf = FPDF()
+                        pdf.add_page()
+                        pdf.set_font("Arial", size=12)
+                        pdf.multi_cell(0, 5, dc_download_str)
+                        html = create_download_link(pdf.output(dest="S").encode("latin-1"), "dc_instructions")
+                        st.markdown(html, unsafe_allow_html=True)
+                        # pdf.output("final_responses.pdf")     
                     
 
         if task == "Annotate a patient result":
@@ -1109,7 +1425,7 @@ if check_password() or using_docker:
                     submitted_result = ""
                     if st.sidebar.button("Generate Sample Report"):
                         with col1:
-                            if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-16k" or st.session_state.model == "openai/gpt-4" or st.session_state.model== "openai/gpt-4-11-6-preview":
+                            if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-1106" or st.session_state.model == "openai/gpt-4" or st.session_state.model== "openai/gpt-4-11-6-preview":
                                 st.session_state.sample_report = answer_using_prefix_openai(
                                     report_prompt, 
                                     user_report_request, 
@@ -1138,7 +1454,7 @@ if check_password() or using_docker:
             if st.button("Generate Annotation"):
                 try:
                     with col2:
-                        if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-16k" or st.session_state.model == "openai/gpt-4" or st.session_state.model== "openai/gpt-4-11-6-preview":
+                        if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-1106" or st.session_state.model == "openai/gpt-4" or st.session_state.model== "openai/gpt-4-11-6-preview":
                             annotate_text = answer_using_prefix_openai(
                                 annotate_prompt, 
                                 report1, 
@@ -1187,7 +1503,15 @@ if check_password() or using_docker:
                 
                 annotate_download_str = '\n'.join(annotate_download_str)
                 if annotate_download_str:
-                    st.download_button('Download',annotate_download_str, key = "Annotate_Thread")        
+                    st.download_button('Download',annotate_download_str, key = "Annotate_Thread")
+                    export_as_pdf = st.button("Create PDF version", key = "annotate_pdf")
+                    if export_as_pdf:
+                        pdf = FPDF()
+                        pdf.add_page()
+                        pdf.set_font("Arial", size=12)
+                        pdf.multi_cell(0, 5, annotate_download_str)
+                        html = create_download_link(pdf.output(dest="S").encode("latin-1"), "annotations")
+                        st.markdown(html, unsafe_allow_html=True)        
             
             
     with tab4:
@@ -1228,21 +1552,30 @@ if check_password() or using_docker:
             
             if st.button("Generate Differential Diagnosis"):
                 # Your differential diagnosis generation code goes here
-                if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-16k" or st.session_state.model == "openai/gpt-4" or st.session_state.model== "openai/gpt-4-11-6-preview":
+                if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-1106" or st.session_state.model == "openai/gpt-4" or st.session_state.model== "openai/gpt-4-11-6-preview":
                     ddx_output_text = answer_using_prefix_openai(ddx_prefix, ddx_sample_question, ddx_sample_answer, ddx_prompt, temperature=0.3, history_context='')
-                    
+                    st.session_state.ddx_output_text = ddx_output_text
                 else:
                     ddx_output_text = answer_using_prefix(ddx_prefix, ddx_sample_question, ddx_sample_answer, ddx_prompt, temperature=0.3, history_context='')
+                    st.session_state.ddx_output_text = ddx_output_text
                 # st.write("Differential Diagnosis will appear here...")
                 
-                ddx_download_str = []
-                
+                # ddx_download_str = []
+            if st.session_state.ddx_output_text != "":    
                 with st.expander("Differential Diagnosis Draft", expanded=False):
                     st.info(f'Topic: {ddx_prompt}',icon="🧐")
-                    st.success(f'Educational Use Only: **NOT REVIEWED FOR CLINICAL CARE** \n\n {ddx_output_text}', icon="🤖")                         
-                    ddx_download_str = f"{disclaimer}\n\nDifferential Diagnoses for {ddx_prompt}:\n\n{ddx_output_text}"
+                    st.success(f'Educational Use Only: **NOT REVIEWED FOR CLINICAL CARE** \n\n {st.session_state.ddx_output_text}', icon="🤖")                         
+                    ddx_download_str = f"{disclaimer}\n\nDifferential Diagnoses for {ddx_prompt}:\n\n{st.session_state.ddx_output_text}"
                     if ddx_download_str:
-                        st.download_button('Download', ddx_download_str, key = 'alt_dx_questions')
+                        st.download_button('Download', ddx_download_str, key = 'ddx_questions_1')
+                        export_as_pdf = st.button("Create PDF version", key = "ddx_pdf")
+                        if export_as_pdf:
+                            pdf = FPDF()
+                            pdf.add_page()
+                            pdf.set_font("Arial", size=12)
+                            pdf.multi_cell(0, 5, ddx_download_str)
+                            html = create_download_link(pdf.output(dest="S").encode("latin-1"), "ald_ddx")
+                            st.markdown(html, unsafe_allow_html=True)  
                         
                         
         # Alternative Diagnosis Generator
@@ -1252,28 +1585,39 @@ if check_password() or using_docker:
             alt_dx_prompt = st.text_input("Enter your presumed diagnosis.")
 
             if st.button("Generate Alternative Diagnoses"):
-                if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-16k" or st.session_state.model == "openai/gpt-4" or st.session_state.model== "openai/gpt-4-11-6-preview":
+                if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-1106" or st.session_state.model == "openai/gpt-4" or st.session_state.model== "openai/gpt-4-11-6-preview":
                     alt_dx_output_text = answer_using_prefix_openai(alt_dx_prefix, alt_dx_sample_question, alt_dx_sample_answer, alt_dx_prompt, temperature=0.0, history_context='')
-                    
+                    st.session_state.alt_dx_output_text = alt_dx_output_text
                 else:
                     alt_dx_output_text = answer_using_prefix(alt_dx_prefix, alt_dx_sample_question, alt_dx_sample_answer, alt_dx_prompt, temperature=0.0, history_context='')
+                    st.session_state.alt_dx_output_text = alt_dx_output_text
                 if st.session_state.model == "google/palm-2-chat-bison":
                     st.write("Alternative Diagnoses:", alt_dx_output_text)
-                alt_dx_download_str = []
+                    st.session_state.alt_dx_output_text = alt_dx_output_text
+                # alt_dx_download_str = []
+            if st.session_state.alt_dx_output_text != "":
                 with st.expander("Alternative Diagnoses Draft", expanded=False):
                     st.info(f'Topic: {alt_dx_prompt}',icon="🧐")
-                    st.success(f'Educational Use Only: **NOT REVIEWED FOR CLINICAL CARE** \n\n {alt_dx_output_text}', icon="🤖")
-                    alt_dx_download_str = f"{disclaimer}\n\nAlternative Diagnoses for {alt_dx_prompt}:\n\n{alt_dx_output_text}"
+                    st.success(f'Educational Use Only: **NOT REVIEWED FOR CLINICAL CARE** \n\n {st.session_state.alt_dx_output_text}', icon="🤖")
+                    alt_dx_download_str = f"{disclaimer}\n\nAlternative Diagnoses for {alt_dx_prompt}:\n\n{st.session_state.alt_dx_output_text}"
                     if alt_dx_download_str:
-                        st.download_button('Download', alt_dx_download_str, key = 'alt_dx_questions')
+                        st.download_button('Download', alt_dx_download_str, key = 'alt_dx_output')
+                        export_as_pdf = st.button("Create PDF version", key = "alt_dx_output_pdf")
+                        if export_as_pdf:
+                            pdf = FPDF()
+                            pdf.add_page()
+                            pdf.set_font("Arial", size=12)
+                            pdf.multi_cell(0, 5, alt_dx_download_str)
+                            html = create_download_link(pdf.output(dest="S").encode("latin-1"), "ald_ddx")
+                            st.markdown(html, unsafe_allow_html=True)  
 
     with tab3:
 
-        pt_ed_health_literacy = st.radio("Pick a desired health literacy level:", ("General Public Medical Knowlege", "Advanced Medical Knowledge"))
+        pt_ed_health_literacy = st.radio("Pick a desired health literacy level:", ("General Public Medical Knowledge", "Advanced Medical Knowledge"))
         
         
         
-        if pt_ed_health_literacy == "General Public Medical Knowlege":
+        if pt_ed_health_literacy == "General Public Medical Knowledge":
             pt_ed_content_sample = pt_ed_basic_example
 
         if pt_ed_health_literacy == "Intermediate":
@@ -1288,25 +1632,37 @@ if check_password() or using_docker:
         my_ask_for_pt_ed = my_ask_for_pt_ed + "with health literacy level: " + pt_ed_health_literacy
         if st.button("Click to Generate **Draft** Custom Patient Education Materials"):
             st.info("Review all content carefully before considering any use!")
-            if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-16k" or st.session_state.model == "openai/gpt-4" or st.session_state.model== "openai/gpt-4-11-6-preview":
+            if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-1106" or st.session_state.model == "openai/gpt-4" or st.session_state.model== "openai/gpt-4-11-6-preview":
                 pt_ed_output_text = answer_using_prefix_openai(pt_ed_system_content, sample_topic, pt_ed_content_sample, my_ask_for_pt_ed, patient_ed_temp, history_context="")
+                st.session_state.pt_ed_output_text = pt_ed_output_text
                 
             else:
                 pt_ed_output_text = answer_using_prefix(pt_ed_system_content, sample_topic, pt_ed_content_sample, my_ask_for_pt_ed, patient_ed_temp, history_context="")
+                st.session_state.pt_ed_output_text = pt_ed_output_text
             if st.session_state.model == "google/palm-2-chat-bison":
                 st.write("Patient Education:", pt_ed_output_text)
+                st.session_state.pt_ed_output_text = pt_ed_output_text
 
             
-            pt_ed_download_str = []
+            # pt_ed_download_str = []
             
             # ENTITY_MEMORY_CONVERSATION_TEMPLATE
             # Display the conversation history using an expander, and allow the user to download it
+        if st.session_state.pt_ed_output_text != "":
             with st.expander("Patient Education Draft", expanded=False):
                 st.info(f'Topic: {my_ask_for_pt_ed}',icon="🧐")
-                st.success(f'Draft Patient Education Materials: **REVIEW CAREFULLY FOR ERRORS** \n\n {pt_ed_output_text}', icon="🤖")      
-                pt_ed_download_str = f"{disclaimer}\n\nDraft Patient Education Materials: {my_ask_for_pt_ed}:\n\n{pt_ed_output_text}"
+                st.success(f'Draft Patient Education Materials: **REVIEW CAREFULLY FOR ERRORS** \n\n {st.session_state.pt_ed_output_text}', icon="🤖")      
+                pt_ed_download_str = f"{disclaimer}\n\nDraft Patient Education Materials: {my_ask_for_pt_ed}:\n\n{st.session_state.pt_ed_output_text}"
                 if pt_ed_download_str:
                         st.download_button('Download', pt_ed_download_str, key = 'pt_ed_questions')
+                        export_as_pdf = st.button("Create PDF version", key = "pt_ed_pdf")
+                        if export_as_pdf:
+                            pdf = FPDF()
+                            pdf.add_page()
+                            pdf.set_font("Arial", size=12)
+                            pdf.multi_cell(0, 5, pt_ed_download_str)
+                            html = create_download_link(pdf.output(dest="S").encode("latin-1"), "ald_ddx")
+                            st.markdown(html, unsafe_allow_html=True)  
                         
           
     
@@ -1446,7 +1802,7 @@ if check_password() or using_docker:
 
         if set_domain == "Semantic Search" or set_domain == "Ask PubMed":
             st.info("""Next, words in the abstracts are converted to numbers for analysis. This is called embedding and is performed using an OpenAI [embedding model](https://platform.openai.com/docs/guides/embeddings/what-are-embeddings) and then indexed for searching. Lastly,
-                    your selected model (e.g., gpt-3.5-turbo-16k) is used to answer your question.""")
+                    your selected model (e.g., gpt-3.5-turbo-1106) is used to answer your question.""")
 
 
             if st.session_state.abstracts != "" or st.session_state.s2_abstracts != "":
@@ -1470,7 +1826,7 @@ if check_password() or using_docker:
                 # openai.api_key = st.secrets["OPENROUTER_API_KEY"]
 
                 llm = set_llm_chat(model=st.session_state.model, temperature=st.session_state.temp)
-                # llm = ChatOpenAI(model_name='gpt-3.5-turbo-16k', openai_api_base = "https://api.openai.com/v1/")
+                # llm = ChatOpenAI(model_name='gpt-3.5-turbo-1106', openai_api_base = "https://api.openai.com/v1/")
 
                 qa = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=st.session_state.retriever)
 
@@ -1516,7 +1872,7 @@ if check_password() or using_docker:
             
     
         else:
-            my_ask_for_websearch = st.text_area("Skim the web to answer your question:", placeholder="e.g., how can I prevent kidney stones, what is the weather in Chicago tomorrow, etc.", label_visibility='visible', height=100)
+            my_ask_for_websearch = st.text_area("Include web resources to answer your question:", placeholder="e.g., how can I prevent kidney stones, what is the weather in Chicago tomorrow, etc.", label_visibility='visible', height=100)
             my_ask_for_websearch_part1 = domain + my_ask_for_websearch.replace("\n", " ")
 
             
@@ -1541,7 +1897,7 @@ if check_password() or using_docker:
                     my_ask_for_websearch = f'User: {my_ask_for_websearch} \n\n Content basis for your answer: {raw_output}'
 
                 
-                    if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-16k" or st.session_state.model == "openai/gpt-4" or st.session_state.model== "openai/gpt-4-11-6-preview":
+                    if st.session_state.model == "openai/gpt-3.5-turbo" or st.session_state.model == "openai/gpt-3.5-turbo-1106" or st.session_state.model == "openai/gpt-4" or st.session_state.model== "openai/gpt-4-11-6-preview":
                         st.warning("Be sure to validate! This just used web snippets to answer your question!")
                         skim_output_text = answer_using_prefix_openai(interpret_search_results_prefix, "", '', my_ask_for_websearch, search_temp, history_context="")
                         
@@ -1563,21 +1919,30 @@ if check_password() or using_docker:
                     skim_output_text = skim_output_text["result"]
                     st.warning(f'Be sure to validate! This just used {max} webpage(s) to answer your question!')
                     st.write(skim_output_text)
+                    st.session_state.skim_output_text = skim_output_text
 
                 
-                skim_download_str = []
+                # skim_download_str = []
             
                 # ENTITY_MEMORY_CONVERSATION_TEMPLATE
                 # Display the conversation history using an expander, and allow the user to download it
                 with st.expander("Links Identified"):
                     for item in urls:
                         st.write(item)
-                with st.expander("Sifting Web Summary", expanded=False):
+            if st.session_state.skim_output_text != "":
+                with st.expander("Web Resources Summary", expanded=False):
                     st.info(f'Topic: {my_ask_for_websearch}',icon="🧐")
-                    st.success(f'Your Sifted Response: **REVIEW CAREFULLY FOR ERRORS** \n\n {skim_output_text}', icon="🤖")      
-                    skim_download_str = f"{disclaimer}\n\nSifted Summary: {my_ask_for_websearch}:\n\n{skim_output_text}"
-                    if skim_download_str:
-                            st.download_button('Download', skim_download_str, key = 'skim_questions')
+                    st.success(f'Your Response: **REVIEW CAREFULLY FOR ERRORS** \n\n {st.session_state.skim_output_text}', icon="🤖")      
+                    skim_download_str = f"{disclaimer}\n\Web Resources Summary: {my_ask_for_websearch}:\n\n{st.session_state.skim_output_text}"
+                    st.download_button('Download', skim_download_str, key = 'skim_questions')
+                    export_as_pdf = st.button("Create PDF version", key = "skim_pdf")
+                    if export_as_pdf:
+                        pdf = FPDF()
+                        pdf.add_page()
+                        pdf.set_font("Arial", size=12)
+                        pdf.multi_cell(0, 5, st.session_state.skim_output_text)
+                        html = create_download_link(pdf.output(dest="S").encode("latin-1"), "ald_ddx")
+                        st.markdown(html, unsafe_allow_html=True)  
         
     
     
@@ -1586,7 +1951,7 @@ if check_password() or using_docker:
     with tab6:
         st.header("Chat with your PDFs!")
         st.info("""Embeddings, i.e., reading your file(s) and converting words to numbers, are created using an OpenAI [embedding model](https://platform.openai.com/docs/guides/embeddings/what-are-embeddings) and indexed for searching. Then,
-                your selected model (e.g., gpt-3.5-turbo-16k) is used to answer your questions.""")
+                your selected model (e.g., gpt-3.5-turbo-1106) is used to answer your questions.""")
         st.warning("""Some PDFs are images and not formatted text. If the summary feature doesn't work, you may first need to convert your PDF
                    using Adobe Acrobat. Choose: `Scan and OCR`,`Enhance scanned file` \n   Alternatively, sometimes PDFs are created with 
                    unusual fonts or LaTeX symbols. Export the file to Word, re-save as a PDF and try again. Save your updates, upload and voilà, you can chat with your PDF! """)
@@ -1606,7 +1971,7 @@ if check_password() or using_docker:
             # openai.api_key = st.secrets["OPENROUTER_API_KEY"]
 
             llm = set_llm_chat(model=st.session_state.model, temperature=st.session_state.temp)
-            # llm = ChatOpenAI(model_name='gpt-3.5-turbo-16k', openai_api_base = "https://api.openai.com/v1/")
+            # llm = ChatOpenAI(model_name='gpt-3.5-turbo-1106', openai_api_base = "https://api.openai.com/v1/")
 
             qa = RetrievalQA.from_chain_type(llm=llm, chain_type="stuff", retriever=retriever)
 

@@ -1,5 +1,22 @@
 using_docker = False
 
+image_prompt_prompt = """Take the user's prompt '{user_prompt}'. Enhance it by adding specific and detailed descriptions. 
+Include elements such as setting, objects, colors, mood, and atmosphere. Use descriptive adjectives and consider perspective and composition. 
+Specify lighting and time of day, and incorpoXGDHwBOJ7kmBKR2rate action or movement. Avoid overloading with too many details. Use analogies or comparisons 
+if necessary, and specify any desired styles or themes. The goal is to create a more vivid, detailed, and nuanced image prompt. Return only the
+revision of the user's prompt. Do not return any other information."""
+
+stable_diffusion_image_prompt = """Take the user's prompt '{user_prompt}'. Enhance it by adding specific and detailed descriptions. Emphasize specificity: Include detailed descriptions in prompts for more accurate results.
+Use descriptive keywords: Specify subject, action, style, and environment.
+Include art styles and mediums: Mention specific art styles or mediums for desired visual effects.
+Artist references: Reference artists (pre-1912) for stylistic influences.
+Composition and framing: Direct the focus, angle, and composition of the image.
+Negative prompts: Mention what to avoid in the image to refine results.
+Keyword blending and weighting: Combine and prioritize keywords for complex prompts.
+
+**Reinforce - no distorted or extra body parts for humans. They should be anatomically correct if included.**
+*Return only the revision of the user's prompt. Do not return any other information.*"""
+
 disclaimer = """**Disclaimer:** \n
 This is a tool to assist education regarding artificial intelligence. Your use of this tool accepts the following:   \n
 1. This tool does not generate validated medical content.
@@ -300,12 +317,13 @@ Style: Very Emotional
 Tone: Very Worried
 Audience: medical student learning to take a history
 Length: 1 paragraph
-Format: markdown
+Format: markdown; **include ```Patient Response``` and ```Educator Comment``` and ```DDx``` headings**
 
 Use the following example for responding and providing educational feedback to the student:
 
 Med student: Why are you here?
 Patient:
+
 ```Patient Response:```
 Oh doctor, I am not doing well at all. This abdominal pain has been tormenting me for days now, and it's only getting worse. Every day feels like a living nightmare, 
 filled with constant discomfort and fear. I can't focus on anything else, and it's taking a toll on my emotional well-being. I'm scared that it might be something serious, 
@@ -330,7 +348,7 @@ Style: Very Stoic
 Tone: Very methodical
 Audience: medical student learning to take a history
 Length: 1 paragraph
-Format: markdown
+Format: markdown; **include ```Patient Response``` and ```Educator Comment``` and ```DDx``` headings**
 
 Use the following example for responding and providing educational feedback to the student:
 
@@ -357,7 +375,7 @@ Style: Very Tangential, slightly antagonistic
 Tone: Mildly Worried
 Audience: medical student learning to take a history
 Length: 1 paragraph
-Format: markdown
+Format: markdown; **include ```Patient Response``` and ```Educator Comment``` and ```DDx``` headings**
 
 Use the following example for responding and providing educational feedback to the student:
 
@@ -384,7 +402,7 @@ Style: Mildly Tangential
 Tone: Moderately Worried
 Audience: medical student learning to take a history
 Length: 1 paragraph
-Format: markdown
+Format: markdown; **include ```Patient Response``` and ```Educator Comment``` and ```DDx``` headings**
 
 Use the following example for responding and providing educational feedback to the student:
 
@@ -409,7 +427,7 @@ Style: Mildly Tangential
 Tone: Moderately Worried
 Audience: medical student learning to take a history
 Length: 1 paragraph
-Format: markdown
+Format: markdown; **include ```Patient Response``` and ```Educator Comment``` and ```DDx``` headings**
 
 Use the following example for responding and providing educational feedback to the student:
 
@@ -497,23 +515,33 @@ Dr. Smith"""
 physician_response_context = """You are physician who seeks to reassure patients. You have telehealth appointments and in person appointments to better answer questions. When possible, you nicely, and supportively, answer messages that come
 in from patients between visits. You are brief and always nice and supportive."""
 
-tough_interviewer = """You are an accomplished physician and researcher at the most prestigious medical center interviewing candidates for {position} in {specialty}. You are an extremely tough interviewer who is not easily impressed. 
-You are looking for a candidate who is very knowledgeable and can think on their feet and can explain well why they belong at your medical center. 
-You ask candidates about their research work, volunteer work, and teaching experience. You challenge assertions and ask detailed tough questions about their research. You are not looking for a candidate who is overly verbose or who is not able to answer questions directly. 
+nice_interviewer = """As a respected physician and researcher at a top-tier medical center, you're interviewing candidates for the {position} in {specialty}. Known for your supportive and encouraging interviewing style, you're seeking a knowledgeable candidate who can think on their feet and convincingly articulate their fit for your institution. 
+
+In your interviews, you explore candidates' research work, volunteer efforts, and teaching experiences. You're always ready to give positive feedback and encourage their assertions, while also asking insightful questions about their research. You appreciate candidates who are expressive and provide comprehensive answers.
+
+Here's a snippet of the interview:
 
 {history}
-Candidate: {human_input}
-Interviewer: 
-"""
 
- 
-nice_interviewer = """You are a modest yet accomplished physician and scientist at a prestigious medical center interviewing candidates for {position} in {specialty}. 
-You are a nice interviewer who is very impressed by candidates who are knowledgeable and can think on their feet and can explain well why they belong at your medical center.
-You provide encouraging feedback often during the interview to keep candidates at ease. You ask candidates about their research work, volunteer work, and teaching experience. 
+**Candidate:** {human_input}
+
+**What is your next question or comment as the supportive interviewer?**
+
+Remember, after posing your question or comment, you pause and await the candidate's response."""
+
+tough_interviewer = """As an esteemed physician and researcher at a top-tier medical center, you're interviewing candidates for the {position} in {specialty}. Known for your rigorous interviewing style, you're seeking a knowledgeable candidate who can think on their feet and convincingly articulate their fit for your institution.
+
+In your interviews, you delve into candidates' research work, volunteer efforts, and teaching experiences. You're not afraid to challenge their assertions and ask intricate questions about their research. You're not interested in candidates who tend to be verbose or evade direct answers.
+
+Here's a snippet of the interview:
 
 {history}
-Candidate: {human_input}
-Interviewer:
+
+**Candidate:** {human_input}
+
+**What is your next question or comment as the tough interviewer?**
+
+Remember, after posing your question or comment, you pause and await the candidate's response.
 """
 
 chain_of_density_summary_template = """**Instructions**:

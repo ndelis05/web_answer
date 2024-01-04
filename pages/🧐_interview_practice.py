@@ -22,6 +22,20 @@ from elevenlabs import clone, generate, play, set_api_key, stream
 st.set_page_config(page_title="Interview Practice!", page_icon="🧐")
 st.title("🧐 Interview Practice")
 
+def talk_stream(model, voice, input):
+    api_key = st.secrets["OPENAI_API_KEY"]
+    from openai import OpenAI
+    client = OpenAI(    
+    base_url="https://api.openai.com/v1",
+    api_key=api_key,
+)
+    response = client.audio.speech.create(
+    model= model,
+    voice= voice,
+    input= input,
+    )
+    response.stream_to_file("last_interviewer.mp3")
+
 def extract_url(text):
     # Use regular expressions to find the URL pattern
     pattern = r"url\":\"(.*?)\""
@@ -100,11 +114,15 @@ def check_password2():
 
     if "password_correct" not in st.session_state:
         # First run, show input for password.
-        st.text_input(
-            "Password", type="password", on_change=password_entered, key="password"
-        )
-        st.write("*Please contact David Liebovitz, MD if you need an updated password for access.*")
-        return False
+        if not using_docker:
+            st.text_input(
+                "Password", type="password", on_change=password_entered, key="password"
+            )
+            st.write("*Please contact David Liebovitz, MD if you need an updated password for access.*")
+            return False
+        else:
+            st.session_state["password_correct"] = True
+            return True
     elif not st.session_state["password_correct"]:
         # Password not correct, show input + error.
         st.text_input(
@@ -157,11 +175,19 @@ def autoplay_audio(url: str):
     )
 
 def transcribe_audio(audio_file_path):
-    openai.api_base = "https://api.openai.com/v1"
-    openai.api_key = st.secrets["OPENAI_API_KEY"]
-    with open(audio_file_path, 'rb') as audio_file:
-        transcription = openai.Audio.transcribe("whisper-1", audio_file)
-    return transcription['text']
+    from openai import OpenAI
+    api_key = st.secrets["OPENAI_API_KEY"]
+    client = OpenAI(    
+        base_url="https://api.openai.com/v1",
+        api_key=api_key,
+    )
+    audio_file = open(audio_file_path, "rb")
+    transcript = client.audio.transcriptions.create(
+    model="whisper-1", 
+    file=audio_file, 
+    response_format="text"
+    )
+    return transcript
 
 if "audio_off" not in st.session_state:
     st.session_state["audio_off"] = False
@@ -172,7 +198,7 @@ if "audio_input" not in st.session_state:
 if "last_response_interview" not in st.session_state:
     st.session_state["last_response_interview"] = "Hi, I'm Dr. Smith! Nice to meet you!"
 
-if check_password2() or using_docker:
+if check_password2():
     st.info("Have fun. Enter responses at the bottom of the page or choose the Microphone option. This tool uses openai's GPT3.5 turbo 16k model.")
     system_context = st.radio("Select an interviewer type :", ("Tough", "Nice",), horizontal = True, index=0)
     specialty = st.text_input("Enter your specialty", placeholder="e.g. Emergency Medicine")
@@ -183,25 +209,11 @@ if check_password2() or using_docker:
         
     if system_context == "Tough":
         template = tough_interviewer
-        voice = 'Rachel'
+        voice = 'fable'
 
     if system_context == "Nice":
         template = nice_interviewer
-        voice = 'Dave'
-
-    # if system_context == "bloody diarrhea":
-    #     template = bloody_diarrhea_pt_template
-    #     voice = 'david'
-        
-    # if system_context == "random symptoms":
-    #     template = random_symptoms_pt_template
-    #     voice = 'oliver'
-
-    if system_context == "You choose!":
-        symptoms = st.text_input("Enter a list of symptoms separated by commas", placeholder="e.g. fever, cough, headache after returning from a trip to Africa")
-        # Create a defaultdict that returns an empty string for missing keys
-        template = f'Here are the symptoms: {symptoms} and respond according to the following template:' + chosen_symptoms_pt_template
-        voice = 'russell'
+        voice = 'shimmer'
         
     if st.button("Set a Scenario"):
         clear_session_state_except_password_correct()
@@ -239,7 +251,7 @@ if check_password2() or using_docker:
 
 
     prompt = PromptTemplate(input_variables=["history", "human_input"], template=formatted_template)
-    llm_chain = LLMChain(llm=ChatOpenAI(openai_api_key=openai_api_key, model = "gpt-3.5-turbo-16k"), prompt=prompt, memory=memory)
+    llm_chain = LLMChain(llm=ChatOpenAI(openai_api_key=openai_api_key, model = "gpt-3.5-turbo-1106"), prompt=prompt, memory=memory)
 
     # Render current messages from StreamlitChatMessageHistory
     for msg in msgs_interview.messages:
@@ -316,7 +328,8 @@ if check_password2() or using_docker:
             # st.write(patient_section)
                 
                 # Define the data
-            path_audio = play_audio_eleven(st.session_state.last_response_interview, voice=voice)
+            # path_audio = play_audio_eleven(st.session_state.last_response_interview, voice=voice)
+            talk_stream("tts-1", voice, st.session_state.last_response_interview)
             
             # data = {
             #     "text": st.session_state.last_response_interview,
@@ -331,5 +344,5 @@ if check_password2() or using_docker:
             # Print the response
             # link_to_audio = extract_url(response_from_audio.text)
             # st.write(path_audio)
-            autoplay_local_audio(path_audio)
+            autoplay_local_audio("last_interviewer.mp3")
     

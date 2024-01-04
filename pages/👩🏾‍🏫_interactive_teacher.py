@@ -1,5 +1,6 @@
 import streamlit as st
 import openai
+from openai import OpenAI
 from prompts import *
 import time
 from urllib.parse import urlparse, urlunparse
@@ -17,7 +18,7 @@ import json
 
 # Set a default model
 if "openai_model" not in st.session_state:
-    st.session_state["openai_model"] = "gpt-4"
+    st.session_state["openai_model"] = "gpt-4-1106-preview"
 
 if "current_response" not in st.session_state:
     st.session_state["current_response"] = ""
@@ -28,11 +29,11 @@ if "current_question" not in st.session_state:
 def set_llm_chat(model, temperature):
     if model == "openai/gpt-3.5-turbo":
         model = "gpt-3.5-turbo"
-    if model == "openai/gpt-3.5-turbo-16k":
-        model = "gpt-3.5-turbo-16k"
+    if model == "openai/gpt-3.5-turbo-1106":
+        model = "gpt-3.5-turbo-1106"
     if model == "openai/gpt-4":
-        model = "gpt-4"
-    if model == "gpt-4" or model == "gpt-3.5-turbo" or model == "gpt-3.5-turbo-16k":
+        model = "gpt-4-1106-preview"
+    if model == "gpt-4-1106-preview" or model == "gpt-3.5-turbo" or model == "gpt-3.5-turbo-1106":
         return ChatOpenAI(model=model, openai_api_base = "https://api.openai.com/v1/", openai_api_key = st.secrets["OPENAI_API_KEY"], temperature=temperature)
     else:
         headers={ "HTTP-Referer": "https://fsm-gpt-med-ed.streamlit.app", # To identify your app
@@ -45,7 +46,7 @@ def truncate_text(text, max_characters):
         truncated_text = text[:max_characters]
         return truncated_text
 
-@st.cache_data
+
 def prepare_rag(text):
     splits = split_texts(text, chunk_size=1000, overlap=100, split_method="recursive")
     st.session_state.retriever = create_retriever(splits)
@@ -72,7 +73,7 @@ def fn_qa_run(_qa, user_question):
     
     return full_answer
 
-@st.cache_data
+
 def create_retriever(texts):  
     
     embeddings = OpenAIEmbeddings(model = "text-embedding-ada-002",
@@ -267,17 +268,21 @@ def check_password():
         """Checks whether a password entered by the user is correct."""
         if st.session_state["password"] == st.secrets["password"]:
             st.session_state["password_correct"] = True
-            del st.session_state["password"]  # don't store password
+            # del st.session_state["password"]  # don't store password
         else:
             st.session_state["password_correct"] = False
 
     if "password_correct" not in st.session_state:
         # First run, show input for password.
-        st.text_input(
-            "Password", type="password", on_change=password_entered, key="password"
-        )
-        st.write("*Please contact David Liebovitz, MD if you need an updated password for access.*")
-        return False
+        if not using_docker:
+            st.text_input(
+                "Password", type="password", on_change=password_entered, key="password"
+            )
+            st.write("*Please contact David Liebovitz, MD if you need an updated password for access.*")
+            return False
+        else:
+            st.session_state["password_correct"] = True
+            return True
     elif not st.session_state["password_correct"]:
         # Password not correct, show input + error.
         st.text_input(
@@ -288,13 +293,25 @@ def check_password():
     else:
         # Password correct.
         return True
+    
+def process_model_name(model):
+    prefix = "openai/"
+    if model.startswith(prefix):
+        model = model[len(prefix):]
+    return model
 
 def compress_summary(summary):
-    openai.api_base = "https://api.openai.com/v1/"
-    openai.api_key = st.secrets['OPENAI_API_KEY']
+    
+    model = process_model_name(st.session_state.model)
+    # st.write('here is the model: ' + model)
+    api_key = st.secrets["OPENAI_API_KEY"]
+    client = OpenAI(
+        base_url="https://api.openai.com/v1",
+        api_key=api_key,
+    )
     with st.spinner("Compressing messsages for summary..."):
-        completion = openai.ChatCompletion.create(
-            model = "gpt-3.5-turbo-16k",
+        completion = client.chat.completions.create(
+            model = "gpt-3.5-turbo-1106",
             temperature = 0.3,
             messages = [
                 {
@@ -308,7 +325,8 @@ def compress_summary(summary):
             ],
             max_tokens = 300, 
         )
-    return completion['choices'][0]['message']['content']
+    return completion.choices[0].message.content
+
     
     
 @st.cache_data
@@ -316,15 +334,18 @@ def interactive_chat(messages, temperature, model, print = True):
 
     if model == "openai/gpt-3.5-turbo":
         model = "gpt-3.5-turbo"
-    if model == "openai/gpt-3.5-turbo-16k":
-        model = "gpt-3.5-turbo-16k"
+    if model == "openai/gpt-3.5-turbo-1106":
+        model = "gpt-3.5-turbo-1106"
     if model == "openai/gpt-4":
-        model = "gpt-4"
+        model = "gpt-4-1106-preview"
     # st.write(f'question: {history_context + my_ask}')
-    if model == "gpt-4" or model == "gpt-3.5-turbo" or model == "gpt-3.5-turbo-16k":
-        openai.api_base = "https://api.openai.com/v1/"
-        openai.api_key = st.secrets['OPENAI_API_KEY']
-        completion = openai.ChatCompletion.create( # Change the function Completion to ChatCompletion
+    if model == "gpt-4-1106-preview" or model == "gpt-3.5-turbo" or model == "gpt-3.5-turbo-1106":
+        api_key = st.secrets["OPENAI_API_KEY"]
+        client = OpenAI(
+        base_url="https://api.openai.com/v1",
+        api_key=api_key,
+        )
+        completion = client.chat.completions.create( # Change the function Completion to ChatCompletion
         # model = 'gpt-3.5-turbo',
         model = model,
         messages = messages,
@@ -333,14 +354,16 @@ def interactive_chat(messages, temperature, model, print = True):
         stream = True,   
         )
     else:      
-        openai.api_base = "https://openrouter.ai/api/v1"
-        openai.api_key = st.secrets["OPENROUTER_API_KEY"]
+        api_key = st.secrets["OPENROUTER_API_KEY"]
+        client = OpenAI(
+            base_url="https://openrouter.ai/api/v1",
+            api_key=api_key,
+        )
         st.write(st.session_state.messages)
         # history_context = "Use these preceding submissions to address any ambiguous context for the input weighting the first three items most: \n" + "\n".join(st.session_state.history) + "now, for the current question: \n"
-        completion = openai.ChatCompletion.create( # Change the function Completion to ChatCompletion
+        completion = client.chat.completions.create( # Change the function Completion to ChatCompletion
         # model = 'gpt-3.5-turbo',
         model = model,
-        route = "fallback",
         messages = messages,
         headers={ "HTTP-Referer": "https://fsm-gpt-med-ed.streamlit.app", # To identify your app
             "X-Title": "GPT and Med Ed"},
@@ -348,25 +371,18 @@ def interactive_chat(messages, temperature, model, print = True):
         max_tokens = 1000,
         stream = True,   
         )
-    start_time = time.time()
-    delay_time = 0.01
-    answer = ""
-    full_answer = ""
-    c = st.empty()
-    for event in completion:   
-        if print:     
-            c.markdown(answer)
-        event_time = time.time() - start_time
-        event_text = event['choices'][0]['delta']
-        answer += event_text.get('content', '')
-        full_answer += event_text.get('content', '')
-        time.sleep(delay_time)
-    # st.write(history_context + prefix + my_ask)
-    # st.write(full_answer)
+    placeholder = st.empty()
+    full_response = ''
+    for chunk in completion:
+        if chunk.choices[0].delta.content is not None:
+            full_response += chunk.choices[0].delta.content
+            # full_response.append(chunk.choices[0].delta.content)
+            placeholder.markdown(full_response)
+    placeholder.markdown(full_response)
     if model == "google/palm-2-chat-bison":
         
-        st.markdown(full_answer)
-    return full_answer # Change how you access the message content
+        st.markdown(full_response)
+    return full_response # Change how you access the message content
 
 def summarize_messages(messages):
     total_chars = sum(len(message['content']) for message in messages)
@@ -402,7 +418,7 @@ def summarize_messages(messages):
 st.set_page_config(page_title='Interactive Teacher for Medical Topics!', layout = 'centered', page_icon = '🧑🏾‍🏫', initial_sidebar_state = 'auto')
 st.title("Interactive Teacher for Foundational Medical Topics!")
 
-if check_password() or using_docker:
+if check_password():
     
     proceed = st.checkbox("Acknowledge - this tool should be used for foundational knowledge only. Use responsibly. Do not use to learn about the latest treatments.")
     
@@ -410,7 +426,7 @@ if check_password() or using_docker:
         
         with st.expander("Settings and ℹ️ About this app"):
             st.session_state.temp = st.slider("Select temperature (Higher values more creative but tangential and more error prone)", 0.0, 1.0, 0.3, 0.01)
-            st.session_state.model = st.selectbox("Model Options", ("openai/gpt-3.5-turbo", "openai/gpt-3.5-turbo-16k",  "openai/gpt-4", "anthropic/claude-instant-v1", "google/palm-2-chat-bison",), index=2)
+            st.session_state.model = st.selectbox("Model Options", ("openai/gpt-3.5-turbo", "openai/gpt-3.5-turbo-1106",  "openai/gpt-4", "anthropic/claude-instant-v1", "google/palm-2-chat-bison",), index=2)
             st.write("ℹ️ Do not use to learn about the latest treatments. Use to bulk up your foundational knowledge where GPT is most reliable.")
         
             # Initialize chat history
@@ -475,9 +491,9 @@ if check_password() or using_docker:
                     #     raw_output = truncate_text(raw_output, 25000)
                     #     st.write(f'Truncated below at ~5000 tokens, but all in vector database:  \n\n  {raw_output}')
                     with st.spinner('Searching the vector database to assemble your answer...'):
-                        skim_output_text = rag("Assess for errors of fact or omission in the following: " + st.session_state.current_response)
+                        skim_output_text = rag(f'Assess for errors of fact or omission in the following: {topic_area_of_concern} from prior response: {st.session_state.current_response}')
                     skim_output_text = skim_output_text["result"]
-                    st.warning(f'This is using the NLM bookshelf to assess accuracy.')
+                    st.warning('This is using the NLM bookshelf to assess accuracy.')
                     
 
                     

@@ -366,7 +366,7 @@ if check_password():
     with st.expander('About Web Answers - Important Disclaimer'):
         st.write("Author: David Liebovitz, MD, Northwestern University")
         st.info(disclaimer)
-        st.session_state.model = st.radio("Select model - leave default for now", ("gpt-3.5-turbo", "gpt-3.5-turbo-16k", "gpt-4"), index=0)
+        st.session_state.model = st.radio("Select model - leave default for now", ("gpt-3.5-turbo", "gpt-3.5-turbo-1106", "gpt-4-1106-preview"), index=0)
         st.session_state.temp = st.slider("Select temperature", 0.0, 1.0, 0.3, 0.01)
         st.write("Last updated 8/12/23")
     
