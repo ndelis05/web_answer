@@ -5,3 +5,5 @@ prompt_backup.py
 pt_latest.mp3
 out/
 .gitignore
+last_message.mp3
+last_interviewer.mp3
