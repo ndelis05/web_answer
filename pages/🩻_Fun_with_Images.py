@@ -6,7 +6,9 @@ from PIL import Image
 from prompts import image_gen_explanation, image_prompt_prompt, stable_diffusion_image_prompt, default_describe_image_prompt
 from openai import OpenAI
 from using_docker import using_docker
+import tempfile
 from io import BytesIO
+import uuid
 
 # Convert the uploaded image file to base64
 def image_to_base64(image: Image) -> str:
@@ -63,6 +65,10 @@ st.session_state.setdefault('displayed_images', [])
 st.session_state.setdefault('user_subject', "")
 st.session_state.setdefault('updated_prompt', "")
 
+# Check if a temporary directory exists for this session; if not, create one
+if 'temp_dir' not in st.session_state:
+    st.session_state['temp_dir'] = tempfile.mkdtemp()
+
 # Page configuration
 st.set_page_config(page_title="Fun Image Generation", page_icon="🩻")
 st.header("🩻 Fun with Images")
@@ -70,9 +76,6 @@ st.info("This is a fun demo of image analysis and image generation using languag
 with st.expander("How will this be useful in the future?"):
     st.markdown(image_gen_explanation)
 
-
-# Create a directory for output images if it doesn't exist
-os.makedirs('./out', exist_ok=True)
 
 if check_password():
     # Main functionality of the app
@@ -285,25 +288,25 @@ if check_password():
 
                 # Update the session state with new images
                 for i, image in enumerate(data["artifacts"]):
-                    # Define the file path for the image
-                    img_path = f'./out/txt2img_{image["seed"]}.png'
+                    # Define the file path for the image within the temporary directory
+                    img_path = os.path.join(st.session_state['temp_dir'], f'txt2img_{image["seed"]}.png')
                     
                     # Write the image to the file system
                     with open(img_path, "wb") as f:
                         f.write(base64.b64decode(image["base64"]))
                         
                     # Add the image path to the session state if it's not already there
-                    if img_path not in st.session_state['displayed_images']:
-                        st.session_state['displayed_images'].append(img_path)
+                    if img_path not in st.session_state.get('displayed_images', []):
+                        st.session_state.setdefault('displayed_images', []).append(img_path)
 
             # Display images and download buttons using the session state
-            for img_path in st.session_state['displayed_images']:
+            for img_path in st.session_state.get('displayed_images', []):
                 img = Image.open(img_path)
-                st.image(img, caption=f'Text-to-Image {img_path}')
+                st.image(img, caption=f'Text-to-Image {os.path.basename(img_path)}')
                 get_image_download_link(img_path)
 
             st.warning("Note: these are obviously NOT anatomically/structurally/physiologically correct, but they are fun! Soon, much more correct generative images will be available.")
-        
+            
         elif image_generator == "DALL·E 3 (20x cost)":
             if 'image_url' not in st.session_state:
                 st.session_state['image_url'] = ""
@@ -344,15 +347,17 @@ if check_password():
 
                 # Download the image
                 response = requests.get(st.session_state.image_url)
-                # img = Image.open(io.BytesIO(response.content))
                 img = Image.open(BytesIO(response.content))
 
-                # Save the image
-                image_path = 'image.png'
+                # Generate a unique filename for the image
+                image_filename = f'image_{uuid.uuid4().hex}.png'
+                image_path = os.path.join(st.session_state['temp_dir'], image_filename)
+
+                # Save the image in the temporary directory
                 img.save(image_path)
 
                 # Display the image
-                st.image(image_path)
+                st.image(image_path, caption=image_filename)
 
                 # Provide a download link
                 with open(image_path, "rb") as img_file:
@@ -360,6 +365,6 @@ if check_password():
                     st.download_button(
                         label=btn_label,
                         data=img_file,
-                        file_name='image.png',
+                        file_name=image_filename,
                         mime='image/png',
                     )
