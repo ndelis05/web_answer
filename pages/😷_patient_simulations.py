@@ -9,7 +9,7 @@ import streamlit as st
 from collections import defaultdict
 from prompts import *
 import tempfile
-import requests
+import requests  
 import json
 import base64
 import openai

@@ -268,7 +268,7 @@ if check_password2():
             openai.api_key = st.secrets["OPENAI_API_KEY"]
             response = llm_chain.run(prompt)
             st.session_state.last_response_interview = response
-            st.chat_message("assistant").write(response)
+            st.chat_message("assistant").write(response)  
             
     else:
         with st.sidebar:
