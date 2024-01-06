@@ -79,8 +79,8 @@ with st.expander("How will this be useful in the future?"):
 
 if check_password():
     # Main functionality of the app
-    analyse_or_generate = st.radio("Do you want to analyse an image or generate an image?", ["Analyse", "Generate"])
-    if analyse_or_generate == "Analyse":
+    analyze_or_generate = st.radio("Do you want to analyze an image or generate an image?", ["Analyze", "Generate"])
+    if analyze_or_generate == "Analyze":
         st.warning("Do not upload PHI; images must already be publicly available to ensure no PHI.")
         uploaded_file = st.file_uploader("Upload an image", accept_multiple_files=False)
         # Assuming default_describe_image_prompt is a string that may contain line feeds
@@ -92,7 +92,7 @@ if check_password():
 
             # Analyze image using OpenAI's model
             default_describe_image_prompt = default_describe_image_prompt.replace('\n', '')
-            added_prompt = st.text_input("Add details to help the analysis or simply click the Analyse Image button!", key="added_prompt")
+            added_prompt = st.text_input("Add details to help the analysis or simply click the analyze Image button!", key="added_prompt")
             describe_image_prompt = default_describe_image_prompt + added_prompt
             describe_image_prompt = describe_image_prompt.replace('\n', '')
             headers = {
@@ -121,7 +121,7 @@ if check_password():
                 "max_tokens": 1000
             }
  
-            if st.button("Analyse Image"):
+            if st.button("Analyze Image"):
                 response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
 
                 # Parse the JSON response
@@ -136,7 +136,7 @@ if check_password():
 
 
 
-    elif analyse_or_generate == "Generate":            
+    elif analyze_or_generate == "Generate":            
         st.warning("Note: any medical images generated are not anatomically correct but are for demonstration purposes.")
         
         image_generator = st.radio("Select the AI image generator you want to use", ["Stable Diffusion", "DALL·E 3 (20x cost)", ])
@@ -146,7 +146,7 @@ if check_password():
 
 
         with st.container():
-            if st.button("Make my prompt better"):
+            if st.button("OPTIONAL: Make my prompt better"):
                 
                 if image_generator == "Stable Diffusion":
                     prompt_for_prompt = stable_diffusion_image_prompt
