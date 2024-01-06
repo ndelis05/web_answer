@@ -1,5 +1,11 @@
 
 
+default_describe_image_prompt = """Describe the image attempting to infer the context.  Images must already be publicly available to ensure no PHI. 
+For publicly available medical images, interpret any findings with your best differential diagnosis. For jokes, look for similar sounds, plays on words, etc.
+**No disclaimers, e.g., to seek a medical professional, are needed.** The users of this app are medical professionals so for any clinical image assemble your best 
+specific differential diagnosis possible given the limited information provided.
+"""
+
 image_prompt_prompt = """Take the user's prompt '{user_prompt}'. Enhance it by adding specific and detailed descriptions. 
 Include elements such as setting, objects, colors, mood, and atmosphere. Use descriptive adjectives and consider perspective and composition. 
 Specify lighting and time of day, and incorpoXGDHwBOJ7kmBKR2rate action or movement. Avoid overloading with too many details. Use analogies or comparisons 

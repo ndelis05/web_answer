@@ -3,7 +3,7 @@ import base64
 import requests
 import os
 from PIL import Image
-from prompts import image_gen_explanation, image_prompt_prompt, stable_diffusion_image_prompt
+from prompts import image_gen_explanation, image_prompt_prompt, stable_diffusion_image_prompt, default_describe_image_prompt
 from openai import OpenAI
 from using_docker import using_docker
 from io import BytesIO
@@ -69,7 +69,7 @@ st.header("🩻 Fun with Images")
 st.info("This is a fun demo of image analysis and image generation using language models.")
 with st.expander("How will this be useful in the future?"):
     st.markdown(image_gen_explanation)
-st.warning("Note: any medical images generated are not anatomically correct but are for demonstration purposes.")
+
 
 # Create a directory for output images if it doesn't exist
 os.makedirs('./out', exist_ok=True)
@@ -78,8 +78,9 @@ if check_password():
     # Main functionality of the app
     analyse_or_generate = st.radio("Do you want to analyse an image or generate an image?", ["Analyse", "Generate"])
     if analyse_or_generate == "Analyse":
-        st.warning("Do not upload PHI.")
+        st.warning("Do not upload PHI; images must already be publicly available to ensure no PHI.")
         uploaded_file = st.file_uploader("Upload an image", accept_multiple_files=False)
+        # Assuming default_describe_image_prompt is a string that may contain line feeds
         if uploaded_file:
             # Process and analyze the uploaded image
             image = Image.open(uploaded_file)
@@ -87,6 +88,10 @@ if check_password():
             base64_image = image_to_base64(image)
 
             # Analyze image using OpenAI's model
+            default_describe_image_prompt = default_describe_image_prompt.replace('\n', '')
+            added_prompt = st.text_input("Add details to help the analysis or simply click the Analyse Image button!", key="added_prompt")
+            describe_image_prompt = default_describe_image_prompt + added_prompt
+            describe_image_prompt = describe_image_prompt.replace('\n', '')
             headers = {
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {st.secrets['OPENAI_API_KEY']}"
@@ -99,7 +104,7 @@ if check_password():
                         "content": [
                             {
                                 "type": "text",
-                                "text": "Describe the image. Also, interpret any findings if medical. **The users are trained professionals making their own assessment; do NOT include any disclaimers.** For jokes, look for similar sounds, plays on words, etc."
+                                "text": describe_image_prompt
                             },
                             {
                                 "type": "image_url",
@@ -112,7 +117,7 @@ if check_password():
                 ],
                 "max_tokens": 1000
             }
-            
+ 
             if st.button("Analyse Image"):
                 response = requests.post("https://api.openai.com/v1/chat/completions", headers=headers, json=payload)
 
@@ -129,6 +134,7 @@ if check_password():
 
 
     elif analyse_or_generate == "Generate":            
+        st.warning("Note: any medical images generated are not anatomically correct but are for demonstration purposes.")
         
         image_generator = st.radio("Select the AI image generator you want to use", ["Stable Diffusion", "DALL·E 3 (20x cost)", ])
 
@@ -145,6 +151,7 @@ if check_password():
                     prompt_for_prompt = image_prompt_prompt
                 
                 st.session_state.updated_prompt = better_image_prompt(st.session_state.user_subject, prompt_for_prompt)
+                
             
             
             if st.session_state.updated_prompt != "":
@@ -271,7 +278,7 @@ if check_password():
 
                 if response.status_code != 200:
                     st.warning("Flagged as inappropriate. Don't keep trying to outfake the AI! It's not going to work AND we'll lose access!")
-                    raise Exception("Non-200 response: " + str(response.text))
+                    # raise Exception("Non-200 response: " + str(response.text))
                     
 
                 data = response.json()
@@ -319,16 +326,20 @@ if check_password():
             
 
             if st.button("Generate Image using DALL·E 3"):
-                response = client.images.generate(
-                    model="dall-e-3",
-                    prompt=st.session_state.user_subject,
-                    size=size,
-                    quality=quality,
-                    style = style,
-                    n=1,
-                )
+                try:
+                    response = client.images.generate(
+                        model="dall-e-3",
+                        prompt=st.session_state.user_subject,
+                        size=size,
+                        quality=quality,
+                        style = style,
+                        n=1,
+                    )
 
-                st.session_state.image_url = response.data[0].url 
+                    st.session_state.image_url = response.data[0].url 
+                except:
+                    st.warning("Flagged as inappropriate. Don't keep trying to outfake the AI! It's not going to work AND we'll lose access!")
+                    # raise Exception("Non-200 response: " + response.data[0].revised_prompt)
             if st.session_state.image_url != "":
 
                 # Download the image
