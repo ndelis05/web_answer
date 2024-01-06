@@ -1,34 +1,36 @@
-import streamlit as st
-import openai
-from openai import OpenAI
-import requests
-import time
+import base64
 import json
 import os
-from io import StringIO
 import random
+import requests
+import time
+import getpass
 import itertools
+from io import StringIO
+from typing import Any, Dict, List, Optional, Union
+
+import fitz  # PyMuPDF
+import streamlit as st
+import openai
+from bs4 import BeautifulSoup
+from fpdf import FPDF
+from PIL import Image
+from urllib.parse import urlparse, urlunparse
+from openai import OpenAI
+
+# Specific imports from modules where only specific functions/classes are used
+from langchain.chains import QAGenerationChain, RetrievalQA
+from langchain.chat_models import ChatOpenAI
+from langchain.embeddings.openai import OpenAIEmbeddings
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.vectorstores import FAISS
+
+
 from prompts import *
 from using_docker import using_docker
 from functions import *
-import langchain
-from urllib.parse import urlparse, urlunparse
-from bs4 import BeautifulSoup
-from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.callbacks.streaming_stdout import StreamingStdOutCallbackHandler
-from langchain.chat_models import ChatOpenAI
-from langchain.chains import RetrievalQA
-from langchain.embeddings.openai import OpenAIEmbeddings
-from langchain.callbacks.manager import CallbackManager
-from langchain.chains import QAGenerationChain
-from langchain.vectorstores import FAISS
-import os
-import fitz
-from io import StringIO
-from PIL import Image
-from typing import List, Optional, Union, Dict, Any
-import base64
-from fpdf import FPDF
+
+
 
 def create_download_link(val, filename):
     b64 = base64.b64encode(val)  # val looks like b'...'

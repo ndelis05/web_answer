@@ -50,32 +50,32 @@ def extract_url(text):
         st.write("Error generating audio... Try again in a moment")
         return None
 
-def play_audio_eleven(text, voice="Rachel"):
-    set_api_key(st.secrets["ELEVEN_API_KEY"])    
+# def play_audio_eleven(text, voice="Rachel"):
+#     set_api_key(st.secrets["ELEVEN_API_KEY"])    
 
-    audio = generate(text=text, voice=voice, stream = False)
-    filename = "pt_latest.mp3"
-    with open(filename, "wb") as f:
-        f.write(audio)  # write the bytes directly to the file
+#     audio = generate(text=text, voice=voice, stream = False)
+#     filename = "pt_latest.mp3"
+#     with open(filename, "wb") as f:
+#         f.write(audio)  # write the bytes directly to the file
 
-    # st.audio(filename, format='audio/mp3', start_time=0)
+#     # st.audio(filename, format='audio/mp3', start_time=0)
 
-    return filename
+#     return filename
 
-def play_audio_eleven_all(text, voice="Rachel"):
-    set_api_key(st.secrets["ELEVEN_API_KEY"])    
+# def play_audio_eleven_all(text, voice="Rachel"):
+#     set_api_key(st.secrets["ELEVEN_API_KEY"])    
 
-    audio = generate(text=text, voice=voice, stream = False)
+#     audio = generate(text=text, voice=voice, stream = False)
     
     
 
-    play(audio, notebook=False, use_ffmpeg=False)
+#     play(audio, notebook=False, use_ffmpeg=False)
     
-    filename = "pt_latest.mp3"
-    with open(filename, "wb") as f:
-        f.write(audio)  # write the bytes directly to the file
+#     filename = "pt_latest.mp3"
+#     with open(filename, "wb") as f:
+#         f.write(audio)  # write the bytes directly to the file
 
-    return filename
+#     return filename
 
 def autoplay_local_audio(filepath: str):
     # Read the audio file from the local file system
